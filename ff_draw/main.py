@@ -42,7 +42,7 @@ class FFDraw:
 
     def start_gui_thread(self):
         assert not self.gui_thread
-        self.gui_thread = threading.Thread(target=self.gui.start, daemon=False)
+        self.gui_thread = threading.Thread(target=self.gui.start, daemon=True)
         self.gui_thread.start()
 
     def update(self, _=None):
