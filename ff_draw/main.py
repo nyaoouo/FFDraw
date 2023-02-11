@@ -28,7 +28,7 @@ class FFDraw:
 
     def __init__(self, pid: int):
         self.mem = mem.XivMem(pid)
-        self.sq_pack = SqPack(pathlib.Path(self.mem.base_module.filename.decode(sys.getdefaultencoding())).parent)
+        self.sq_pack = SqPack(pathlib.Path(self.mem.base_module.filename.decode(os.environ['PathEncoding'])).parent)
         self.gui = gui.Drawing(self)
         self.parser = func_parser.FuncParser(self)
         self.omens = {}
