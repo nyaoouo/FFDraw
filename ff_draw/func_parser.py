@@ -44,7 +44,7 @@ def make_value(value, res: ResMap):
         case 'actor_facing':
             return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res)}).facing)'
         case 'actor_exists':
-            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res)}) != None)'
+            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res)}) != None))'
         case 'actor_distance':
             return f'glm.distance(' \
                    f'main.mem.actor_table.get_actor_by_id({make_value(value.get("a1", 0), res)}).pos,' \
@@ -69,13 +69,13 @@ def make_value(value, res: ResMap):
             cond = make_value(value.get('cond', 0), res)
             return f'(({ts}) if ({cond}) else ({fs}))'
         case 'gt':
-            return f"({make_value(value.get('v1', 0), res)}>{make_value(value.get('v2', 0), res)})"
+            return f"(int({make_value(value.get('v1', 0), res)}>{make_value(value.get('v2', 0), res)}))"
         case 'lt':
-            return f"({make_value(value.get('v1', 0), res)}<{make_value(value.get('v2', 0), res)})"
+            return f"(int({make_value(value.get('v1', 0), res)}<{make_value(value.get('v2', 0), res)}))"
         case 'gte':
-            return f"({make_value(value.get('v1', 0), res)}>={make_value(value.get('v2', 0), res)})"
+            return f"(int({make_value(value.get('v1', 0), res)}>={make_value(value.get('v2', 0), res)}))"
         case 'lte':
-            return f"({make_value(value.get('v1', 0), res)}<={make_value(value.get('v2', 0), res)})"
+            return f"(int({make_value(value.get('v1', 0), res)}<={make_value(value.get('v2', 0), res)}))"
         case 'add':
             return "(" + ("+".join(make_value(v, res) for v in value.get('values', []))) + ")"
         case 'mul':
