@@ -1,3 +1,5 @@
+import os
+import sys
 import typing
 
 import glm
@@ -119,9 +121,10 @@ class XivMem:
         self.pid = pid
         self.handle = ny_winapi.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
         self.base_module = ny_proc.get_base_module(self.handle)
-        self.scanner = StaticPatternSearcher(PE(self.base_module.filename, fast_load=True), self.base_module.lpBaseOfDll)
+        file_name = self.base_module.filename.decode(os.environ['PathEncoding'])
+        self.scanner = StaticPatternSearcher(PE(file_name, fast_load=True), self.base_module.lpBaseOfDll)
         self.hwnd = utils.get_hwnd(self.pid)
-        self.game_version, self.game_build_date = utils.get_game_version_info(self.base_module.filename)
+        self.game_version, self.game_build_date = utils.get_game_version_info(file_name)
         self.screen_address = self.scanner.find_point('48 ? ? * * * * e8 ? ? ? ? 42 ? ? ? 39 05')[0] + 0x1b4
         self.actor_table = ActorTable(self.handle, self.scanner.find_point('4c ? ? * * * * 89 ac cb')[0], Offsets630 if self.game_version >= (6, 3, 0) else Offsets)
 
