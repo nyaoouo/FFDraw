@@ -1,14 +1,14 @@
 import glfw
-from win32gui import GetWindowRect
+from win32gui import ClientToScreen, GetClientRect
 import OpenGL.GL as gl
 
 
 def set_window_cover(window, hwnd):
     try:
-        x1, y1, x2, y2 = GetWindowRect(hwnd)
+        x1, y1, x2, y2 = GetClientRect(hwnd)
     except Exception:
         raise SystemExit()
-    glfw.set_window_pos(window, x1, y1)
+    glfw.set_window_pos(window, *ClientToScreen(hwnd, (x1, y1)))
     x_size = abs(x2 - x1)
     y_size = abs(y2 - y1)
     glfw.set_window_size(window, x_size, y_size)
