@@ -52,6 +52,14 @@ def make_value(value, res: ResMap, args: dict[str, typing.Any]):
             return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).pos)'
         case 'actor_facing':
             return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).facing)'
+        case 'actor_has_status':
+            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).status.has_status({make_value(value.get("status_id", 0), res, args)},{make_value(value.get("source_id", 0), res, args)})))'
+        case 'actor_status_remain':
+            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).status.find_status_remain({make_value(value.get("status_id", 0), res, args)},{make_value(value.get("source_id", 0), res, args)}))'
+        case 'actor_status_param':
+            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).status.find_status_param({make_value(value.get("status_id", 0), res, args)},{make_value(value.get("source_id", 0), res, args)}))'
+        case 'actor_status_source':
+            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).status.find_status_source({make_value(value.get("status_id", 0), res, args)}))'
         case 'actor_exists':
             return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}) != None))'
         case 'actor_can_select':

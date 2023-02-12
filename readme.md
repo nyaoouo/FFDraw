@@ -172,14 +172,51 @@
 
 ---
 
-#### 关键字：actor_facing
+#### 关键字：actor_has_status
+
+* 类型： `1/0`
+* 描述：返回角色是否拥有某状态
+
+|    参数     |   类型   |   描述    |
+|:---------:|:------:|:-------:|
+|    id     | number |  实体id   |
+| status_id | number |  状态id   |
+| source_id | number | 来源id，可选 |
+---
+
+#### 关键字：actor_status_remain
 
 * 类型： `number`
-* 描述：返回对应实体的面向
+* 描述：返回角色某状态的剩余时间，无则为0
 
-|  参数  |      类型       |    描述    |
-|:----:|:-------------:|:--------:|
-|  id  |    number     |   实体id   |
+|    参数     |   类型   |   描述    |
+|:---------:|:------:|:-------:|
+|    id     | number |  实体id   |
+| status_id | number |  状态id   |
+| source_id | number | 来源id，可选 |
+---
+
+#### 关键字：actor_status_param
+
+* 类型： `number`
+* 描述：返回角色某状态的参数，无则为0
+
+|    参数     |   类型   |   描述    |
+|:---------:|:------:|:-------:|
+|    id     | number |  实体id   |
+| status_id | number |  状态id   |
+| source_id | number | 来源id，可选 |
+---
+
+#### 关键字：actor_status_source
+
+* 类型： `number`
+* 描述：返回角色某状态的来源id，无则为0
+
+|    参数     |   类型   |   描述    |
+|:---------:|:------:|:-------:|
+|    id     | number |  实体id   |
+| status_id | number |  状态id   |
 
 ---
 
