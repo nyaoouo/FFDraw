@@ -214,7 +214,16 @@ class FuncParser:
                     duration=command.get('duration', 0),
                 ).oid
             case 'destroy_omen':
-                if _omen := self.main.omens.get(command.get('id')):
+                oid = command.get('id')
+                omens = self.main.omens
+                if oid == -1:
+                    cnt = 0
+                    while omens:
+                        if _omen := omens.pop(next(iter(omens.keys()), None)):
+                            _omen.destroy()
+                            cnt += 1
+                    return cnt
+                elif _omen := self.main.omens.get(oid):
                     _omen.destroy()
                     return 1
                 return 0
