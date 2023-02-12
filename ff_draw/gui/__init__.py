@@ -1,11 +1,11 @@
 import logging
-import math
 import queue
-import sys
 import threading
+import time
 import typing
-import traceback
 import os
+
+from nylib.utils import Counter
 
 os.environ['PYGLFW_LIBRARY'] = os.path.join(os.environ['ExcPath'], 'res', 'glfw3.dll')
 os.environ['PYGLFW_PREVIEW'] = 'True'
@@ -20,6 +20,55 @@ from .utils import common_shader, models
 
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
+
+
+class DrawTimeMission:
+    counter = Counter()
+    logger = logging.getLogger('DrawTimeMission')
+
+    def __init__(self, func, sec, call_time):
+        self.mid = self.counter.get()
+        self.func = func
+        self.sec = sec
+        self.call_time = call_time
+        self.next_call = time.perf_counter() + sec
+
+    def update(self, current):
+        if current >= self.next_call:
+            try:
+                self.func()
+            except Exception as e:
+                self.logger.error(f'error in DrawTimeMission-{self.mid}:', exc_info=e)
+                return True
+            self.call_time -= 1
+            if self.call_time == 0: return True
+            self.next_call += self.sec
+        return False
+
+
+class DrawTimeMgr:
+    def __init__(self):
+        self.last_frame = 0
+        self.this_frame = time.perf_counter()
+        self.fps = 0
+        self.missions = {}
+
+    def update(self):
+        self.last_frame = self.this_frame
+        self.this_frame = time.perf_counter()
+        self.fps = int(1 // (self.this_frame - self.last_frame))
+        for k, mission in tuple(self.missions.items()):
+            if mission.update(self.this_frame):
+                self.missions.pop(k, None)
+
+    def add_mission(self, func, sec, call_time=1):
+        m = DrawTimeMission(func, sec, call_time)
+        self.missions[m.mid] = m
+        return m
+
+    def remove_mission(self, k:int|DrawTimeMission):
+        if isinstance(k,DrawTimeMission): k = k.mid
+        return self.missions.pop(k,None)
 
 
 class Drawing:
@@ -37,6 +86,7 @@ class Drawing:
         self.interfaces = set()
         self.always_draw = False
         self.hwnd = main.mem.hwnd
+        self.timer = DrawTimeMgr()
 
     def _init_everything_in_work_process(self):
         self.work_thread = threading.get_ident()
@@ -54,6 +104,7 @@ class Drawing:
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
         gl.glEnable(gl.GL_BLEND)
         # gl.glEnable(gl.GL_DEPTH_TEST)
+        self.timer.update()
 
         while not self.work_queue.empty():
             try:
