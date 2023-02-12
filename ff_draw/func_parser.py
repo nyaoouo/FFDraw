@@ -40,6 +40,8 @@ def make_value(value, res: ResMap):
             return '(omen.remaining_time)'
         case 'progress':
             return "(omen.progress)"
+        case 'destroy_omen':
+            return "(setattr(omen,'working',False))"
         case 'eval':
             code_key = res.add_res(compile(value.get("code"), '<precompile>', 'eval', dont_inherit=True, optimize=2))
             args = "{'omen':omen,'glm':glm," + ','.join(f'{repr(k)}:{make_value(v, res)}' for k, v in value.get('args', {}).items()) + '}'
