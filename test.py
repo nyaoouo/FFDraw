@@ -146,5 +146,44 @@ demo_6 = {
         'duration': 10,
     }
 }
-
-print(post(f'http://127.0.0.1:8001/rpc', json=demo_6).text)
+# 如果身上有再生并且剩余时间小于13则画一个小圈圈
+demo_7 = {
+    'cmd': 'add_omen',
+    'color': 'g_friend',
+    'shape_scale': {
+        'key': 'if',
+        'cond': {
+            'key': 'actor_has_status',
+            'id': {'key': 'me'},
+            'status_id': 158,
+        },
+        'true': {
+            'key': 'if',
+            'cond': {
+                'key': 'lt',
+                'v1': {
+                    'key': 'actor_status_remain',
+                    'id': {'key': 'me'},
+                    'status_id': 158,
+                },
+                'v2': 13,
+            },
+            'true': {
+                'key': 'circle',
+                'range': 5,
+            },
+            'false': 0,
+        },
+        'false': 0,
+    },
+    'pos': {
+        'key': 'actor_pos',
+        'id': {'key': 'me'},
+    },
+    'facing': {
+        'key': 'actor_facing',
+        'id': {'key': 'me'},
+    },
+    'duration': 10,
+}
+print(post(f'http://127.0.0.1:8001/rpc', json=demo_7).text)

@@ -1,3 +1,4 @@
+import struct
 import typing
 import glm
 from nylib.utils.win32 import memory as ny_mem
@@ -5,12 +6,47 @@ from nylib.utils.win32 import memory as ny_mem
 if typing.TYPE_CHECKING:
     from . import XivMem
 
-
-def is_invalid_actor_id(aid):
-    return not aid or aid == 0xe0000000
+status_struct = struct.Struct('HHfI')
 
 
-class Offsets:
+class StatusManager:
+    def __init__(self, actor: 'Actor', address):
+        self.actor = actor
+        self.handle = actor.handle
+        self.address = address
+
+    def __iter__(self):
+        """id,param,remain,source_id"""
+        for i in range(30):
+            yield status_struct.unpack(ny_mem.read_bytes(self.handle, self.address + 8 + (i * status_struct.size), status_struct.size))
+
+    def _iter_filter(self, status_id: int, source_id=0):
+        for status_id_, param, remain, source_id_ in self:
+            if status_id == status_id_ and (not source_id or source_id_ == source_id):
+                yield status_id_, param, remain, source_id_
+
+    def has_status(self, status_id: int, source_id=0):
+        for _ in self._iter_filter(status_id, source_id):
+            return True
+        return False
+
+    def find_status_remain(self, status_id: int, source_id=0):
+        for status_id_, param, remain, source_id_ in self._iter_filter(status_id, source_id):
+            return remain
+        return 0
+
+    def find_status_param(self, status_id: int, source_id=0):
+        for status_id_, param, remain, source_id_ in self._iter_filter(status_id, source_id):
+            return param
+        return 0
+
+    def find_status_source(self, status_id: int):
+        for status_id_, param, remain, source_id_ in self._iter_filter(status_id):
+            return source_id_
+        return 0
+
+
+class ActorOffsets:
     name = 0x30
     id = 0x74
     base_id = 0x80
@@ -21,22 +57,24 @@ class Offsets:
     hide_flag = 0x104
     pc_target_id = 0xC60
     b_npc_target_id = 0x1A68
+    status = 0x1b40
 
 
-class Offsets630(Offsets):
+class ActorOffsets630(ActorOffsets):
     status_flag = 0x95
     pos = 0xB0
     draw_object = 0x100
     hide_flag = 0x114
     pc_target_id = 0xC80
     b_npc_target_id = 0x1A88
+    status = 0x1B60
 
 
 class Actor:
-    def __init__(self, mgr: 'ActorTable', offsets, handle, address):
+    def __init__(self, mgr: 'ActorTable', offsets, address):
         self.mgr = mgr
         self.offsets = offsets
-        self.handle = handle
+        self.handle = self.mgr.handle
         self.address = address
 
     @property
@@ -85,6 +123,10 @@ class Actor:
         p_draw_object = ny_mem.read_address(self.handle, self.address + self.offsets.draw_object)
         return ny_mem.read_byte(self.handle, p_draw_object + 0x88) & 1
 
+    @property
+    def status(self):
+        return StatusManager(self, self.address + self.offsets.status)
+
 
 class ActorTable:
     cache: dict[int, Actor]
@@ -97,9 +139,9 @@ class ActorTable:
         self.sorted_count_address = self.base_address + main.scanner.find_val('44 ? ? * * * * 45 ? ? 41 ? ? ? 48 ? ? 78')[0]
         self.me_ptr = main.scanner.find_point('48 ? ? * * * * 49 39 87')[0]
         if main.game_version >= (6, 3, 0):
-            self.actor_offset = Offsets630
+            self.actor_offset = ActorOffsets630
         else:
-            self.actor_offset = Offsets
+            self.actor_offset = ActorOffsets
 
     def __getitem__(self, item):  # by sorted idx
         if item < self.sorted_length:
@@ -115,11 +157,11 @@ class ActorTable:
 
     def get_actor_by_sorted_idx(self, idx):
         if a_ptr := ny_mem.read_uint64(self.handle, self.sorted_table_address + 8 * idx):
-            return Actor(self, self.actor_offset, self.handle, a_ptr)
+            return Actor(self, self.actor_offset, a_ptr)
 
     def get_actor_by_idx(self, idx):
         if a_ptr := ny_mem.read_uint64(self.handle, self.base_address + 8 * idx):
-            return Actor(self, self.actor_offset, self.handle, a_ptr)
+            return Actor(self, self.actor_offset, a_ptr)
 
     def iter_actor_by_type(self, actor_type: int):
         for actor in self:
@@ -153,4 +195,4 @@ class ActorTable:
     @property
     def me(self):
         if a_ptr := ny_mem.read_uint64(self.handle, self.me_ptr):
-            return Actor(self, self.actor_offset, self.handle, a_ptr)
+            return Actor(self, self.actor_offset, a_ptr)
