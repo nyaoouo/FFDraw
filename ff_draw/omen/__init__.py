@@ -10,10 +10,12 @@ from nylib.utils import Counter
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
 
-enemy_color_surface = glm.vec4(1.0, 0.6, 0.6, 0.1)
-enemy_color_line = glm.vec4(1.0, 0.2, 0.2, .7)
-friendly_color_surface = glm.vec4(0.6, 1.0, 0.6, 0.1)
-friendly_color_line = glm.vec4(0.2, 1.0, 0.2, .7)
+preset_colors = {
+    'enemy': (glm.vec4(1.0, 0.6, 0.6, 0.1), glm.vec4(1.0, 0.2, 0.2, .7)),
+    'g_enemy': (glm.vec4(1.0, 0.6, 0.2, 0.1), glm.vec4(1.0, 0.8, 0.5, .7)),
+    'friend': (glm.vec4(0.6, 1.0, 0.6, 0.1), glm.vec4(0.2, 1.0, 0.2, .7)),
+    'g_friend': (glm.vec4(0.6, 0.8, 1.0, 0.1), glm.vec4(0.7, 0.9, 1.0, .7)),
+}
 
 omen_counter = Counter()
 pi_2 = math.pi / 2
@@ -91,15 +93,8 @@ class BaseOmen:
             surface_color = self.get_color(self.get_maybe_callable(self.surface_color))
             line_color = self.get_color(self.get_maybe_callable(self.line_color))
         else:
-            match self.get_maybe_callable(self.surface_line_color):
-                case 'enemy':
-                    surface_color = enemy_color_surface
-                    line_color = enemy_color_line
-                case 'friend':
-                    surface_color = friendly_color_surface
-                    line_color = friendly_color_line
-                case other:
-                    surface_color, line_color = other
+            slc = self.get_maybe_callable(self.surface_line_color)
+            surface_color, line_color = preset_colors.get(slc) if isinstance(slc, str) else slc
         pos = self.get_maybe_callable(self.pos)
         facing = self.get_maybe_callable(self.facing) or 0
         line_width = self.get_maybe_callable(self.line_width)

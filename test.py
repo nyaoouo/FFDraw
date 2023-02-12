@@ -37,8 +37,8 @@ demo_2 = {
             'key': 'actor_exists',
             'id': {'key': 'target', 'id': {'key': 'me'}},
         },
-        'true': 'enemy',
-        'false': 'friend',
+        'true': 'g_enemy',
+        'false': 'g_friend',
     },
     'shape_scale': {
         'key': 'donut',
@@ -121,4 +121,4 @@ demo_5 = {
     'duration': 10,
 }
 
-print(post(f'http://127.0.0.1:8001/rpc', json=demo_5).text)
+print(post(f'http://127.0.0.1:8001/rpc', json=demo_2).text)
