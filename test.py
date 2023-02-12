@@ -43,7 +43,7 @@ demo_2 = {
     'shape_scale': {
         'key': 'donut',
         'inner': 10,
-        'range': 20,
+        'range': 15,
     },
     'pos': {
         'key': 'fallback',
@@ -102,10 +102,11 @@ demo_4 = {
     },
     'duration': 10,
 }
-# 恩惠终结：贰
+# 恩惠终结：贰，使用自定义颜色
 demo_5 = {
     'cmd': 'add_omen',
-    'color': 'friend',
+    'surface': [1, .1, .5, .3],
+    'line': [1, .1, .5, .7],
     'shape_scale': {
         'key': 'action_shape',
         'id': 21866,
@@ -121,4 +122,4 @@ demo_5 = {
     'duration': 10,
 }
 
-print(post(f'http://127.0.0.1:8001/rpc', json=demo_2).text)
+print(post(f'http://127.0.0.1:8001/rpc', json=demo_5).text)
