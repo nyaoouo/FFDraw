@@ -50,6 +50,10 @@ def make_value(value, res: ResMap):
             return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res)}).facing)'
         case 'actor_exists':
             return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res)}) != None))'
+        case 'actor_can_select':
+            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res)}).can_select))'
+        case 'actor_is_visible':
+            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res)}).is_visible))'
         case 'actor_distance':
             return f'glm.distance(' \
                    f'main.mem.actor_table.get_actor_by_id({make_value(value.get("a1", 0), res)}).pos,' \
