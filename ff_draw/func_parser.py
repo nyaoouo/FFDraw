@@ -32,7 +32,7 @@ def actor_distance_func(actor):
 def make_value(value, res: ResMap):
     if isinstance(value, list):
         args = (''.join(make_value(v, res) + ',' for v in value))
-        return f'(safe_lazy({glm_vec_map[len(value)]},{args},_default=(lambda *a:a)))' if 0 < len(value) < 5 else f'({args})'
+        return f'(safe_lazy({glm_vec_map[len(value)]},{args}_default=(lambda *a:a)))' if 0 < len(value) < 5 else f'({args})'
     if not isinstance(value, dict):
         return '(' + repr(value) + ')'
     match value.get('key'):
