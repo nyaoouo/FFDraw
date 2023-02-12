@@ -1,5 +1,6 @@
 ### Python template
 # Byte-compiled / optimized / DLL files
+.ignore/
 .idea/
 __pycache__/
 *.py[cod]

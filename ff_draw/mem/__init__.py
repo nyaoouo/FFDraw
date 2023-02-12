@@ -32,7 +32,8 @@ class Offsets630(Offsets):
 
 
 class Actor:
-    def __init__(self, offsets, handle, address):
+    def __init__(self, mgr: 'ActorTable', offsets, handle, address):
+        self.mgr = mgr
         self.offsets = offsets
         self.handle = handle
         self.address = address
@@ -75,45 +76,69 @@ class Actor:
 
 
 class ActorTable:
-    max_size = 424
-    _cache: dict[int, Actor]
+    cache: dict[int, Actor]
 
-    def __init__(self, handle, address, actor_offset):
+    def __init__(self, handle, scanner: StaticPatternSearcher, actor_offset: typing.Type[Offsets]):
         self.handle = handle
-        self.address = address
+        self.base_address = scanner.find_point('4c ? ? * * * * 89 ac cb')[0]
+        self.sorted_table_address = self.base_address + scanner.find_val('4e ? ? ? * * * * 41 ? ? ? 3b ? 73')[0]
+        self.sorted_count_address = self.base_address + scanner.find_val('44 ? ? * * * * 45 ? ? 41 ? ? ? 48 ? ? 78')[0]
+        self.me_ptr = scanner.find_point('48 ? ? * * * * 49 39 87')[0]
         self.actor_offset = actor_offset
-        self._cache = {}
 
-    def _set_actor_cache(self, actor: Actor):
-        aid = actor.id
-        if is_invalid_actor_id(aid):
-            self._cache[aid] = actor
+    def __getitem__(self, item):  # by sorted idx
+        if item < self.sorted_length:
+            return self.get_actor_by_sorted_idx(item)
 
-    def __getitem__(self, item):
-        assert item < self.max_size
-        if a_ptr := ny_mem.read_uint64(self.handle, self.address + 8 * item):
-            actor = Actor(self.actor_offset, self.handle, a_ptr)
-            if not is_invalid_actor_id(aid := actor.id): self._cache[aid] = actor
-            return actor
+    def __iter__(self):  # by sorted idx
+        for i in range(self.sorted_length):
+            if a := self.get_actor_by_sorted_idx(i):
+                yield a
 
-    def __iter__(self):
-        for i in range(self.max_size):
-            if actor := self[i]:
+    def __len__(self):
+        return self.sorted_length
+
+    def get_actor_by_sorted_idx(self, idx):
+        if a_ptr := ny_mem.read_uint64(self.handle, self.sorted_table_address + 8 * idx):
+            return Actor(self, self.actor_offset, self.handle, a_ptr)
+
+    def get_actor_by_idx(self, idx):
+        if a_ptr := ny_mem.read_uint64(self.handle, self.base_address + 8 * idx):
+            return Actor(self, self.actor_offset, self.handle, a_ptr)
+
+    def iter_actor_by_type(self, actor_type: int):
+        for actor in self:
+            atype = actor.id >> 28
+            if atype == actor_type:
                 yield actor
+            elif atype < actor_type:
+                continue
+            else:
+                break
 
     def get_actor_by_id(self, actor_id):
-        if is_invalid_actor_id(actor_id):
-            return None
-        if (actor := self._cache.get(actor_id)) and actor.id == actor_id:
-            return actor
-        self._cache.pop(actor_id, None)
-        for actor in self:
-            if actor.id == actor_id:
-                return actor
+        left = 0
+        right = self.sorted_length - 1
+        while left <= right:
+            if not (a := self.get_actor_by_sorted_idx(idx := (left + right) // 2)):
+                # error occurred, maybe just game update
+                return
+            aid = a.id
+            if aid < actor_id:
+                left = idx + 1
+            elif aid > actor_id:
+                right = idx - 1
+            else:
+                return a
+
+    @property
+    def sorted_length(self):
+        return ny_mem.read_int(self.handle, self.sorted_count_address)
 
     @property
     def me(self):
-        return self[0]
+        if a_ptr := ny_mem.read_uint64(self.handle, self.me_ptr):
+            return Actor(self, self.actor_offset, self.handle, a_ptr)
 
 
 class XivMem:
@@ -126,7 +151,10 @@ class XivMem:
         self.hwnd = utils.get_hwnd(self.pid)
         self.game_version, self.game_build_date = utils.get_game_version_info(file_name)
         self.screen_address = self.scanner.find_point('48 ? ? * * * * e8 ? ? ? ? 42 ? ? ? 39 05')[0] + 0x1b4
-        self.actor_table = ActorTable(self.handle, self.scanner.find_point('4c ? ? * * * * 89 ac cb')[0], Offsets630 if self.game_version >= (6, 3, 0) else Offsets)
+        self.actor_table = ActorTable(
+            self.handle, self.scanner,
+            Offsets630 if self.game_version >= (6, 3, 0) else Offsets
+        )
 
     def load_screen(self):
         buf = ny_mem.read_bytes(self.handle, self.screen_address, 0x48)
