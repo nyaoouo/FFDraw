@@ -121,5 +121,30 @@ demo_5 = {
     },
     'duration': 10,
 }
+# 给所有玩家画一个小扇形
+demo_6 = {
+    'cmd': 'foreach',
+    'name': 'target_id',
+    'values': {'key': 'actors_by_type', 'type': 1},
+    'func': {
+        'cmd': 'add_omen',
+        'surface': [1, .1, .5, .3],
+        'line': [1, .1, .5, .7],
+        'shape_scale': {
+            'key': 'fan',
+            'deg': 90,
+            'range': .5,
+        },
+        'pos': {
+            'key': 'actor_pos',
+            'id': {'key': 'arg', 'name': 'target_id'},
+        },
+        'facing': {
+            'key': 'actor_facing',
+            'id': {'key': 'arg', 'name': 'target_id'},
+        },
+        'duration': 10,
+    }
+}
 
-print(post(f'http://127.0.0.1:8001/rpc', json=demo_5).text)
+print(post(f'http://127.0.0.1:8001/rpc', json=demo_6).text)

@@ -3026,7 +3026,7 @@ class DawnMemberUIParam(DataRow):
 class DawnQuestMember(DataRow):
     _sign = b'DawnQuestMember|eJzLywMBAAkMApU='
     sheet_name = 'DawnQuestMember'
-    _display = 'e_npc_id'
+    _display = 'base_id'
     base: int_t = RowData(0)
     exclusive_group: int_t = RowData(1)
     e_npc_id: 'ENpcResident' = RowForeign(2, 'ENpcResident')
@@ -5435,7 +5435,7 @@ class HWDDevLevelWebText(DataRow):
 class HWDDevLively(DataRow):
     _sign = b'HWDDevLively|eJzLy8sDAAKXAUs='
     sheet_name = 'HWDDevLively'
-    _display = 'e_npc_id'
+    _display = 'base_id'
     e_npc_id: 'ENpcBase' = RowForeign(0, 'ENpcBase')
     idle_timeline: int_t = RowData(1)
     behavior_pack_id: int_t = RowData(2)
