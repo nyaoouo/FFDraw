@@ -13,7 +13,7 @@ def is_invalid_actor_id(aid):
 class Offsets:
     name = 0x30
     id = 0x74
-    e_npc_id = 0x80
+    base_id = 0x80
     actor_type = 0x8c
     status_flag = 0x94
     pos = 0xA0
@@ -48,8 +48,8 @@ class Actor:
         return ny_mem.read_uint(self.handle, self.address + self.offsets.id)
 
     @property
-    def e_npc_id(self):
-        return ny_mem.read_uint(self.handle, self.address + self.offsets.e_npc_id)
+    def base_id(self):
+        return ny_mem.read_uint(self.handle, self.address + self.offsets.base_id)
 
     @property
     def pos(self):
