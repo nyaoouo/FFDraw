@@ -20,13 +20,19 @@ class Offsets:
     id = 0x74
     e_npc_id = 0x80
     actor_type = 0x8c
+    status_flag = 0x94
     pos = 0xA0
+    draw_object = 0xF0
+    hide_flag = 0x104
     pc_target_id = 0xC60
     b_npc_target_id = 0x1A68
 
 
 class Offsets630(Offsets):
+    status_flag = 0x95
     pos = 0xB0
+    draw_object = 0x100
+    hide_flag = 0x114
     pc_target_id = 0xC80
     b_npc_target_id = 0x1A88
 
@@ -73,6 +79,16 @@ class Actor:
     @property
     def target_id(self):
         return self.pc_target_id if self.actor_type == 1 else self.b_npc_target_id
+
+    @property
+    def can_select(self):
+        if ny_mem.read_byte(self.handle, self.address + self.offsets.status_flag) & 0b110 != 0b110: return False
+        return ny_mem.read_uint(self.handle, self.address + self.offsets.hide_flag) >> 11 == 0
+
+    @property
+    def is_visible(self):
+        p_draw_object = ny_mem.read_address(self.handle, self.address + self.offsets.draw_object)
+        return ny_mem.read_byte(self.handle, p_draw_object + 0x88) & 1
 
 
 class ActorTable:
