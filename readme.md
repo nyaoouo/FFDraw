@@ -55,7 +55,7 @@
 | `shape_scale` |             `(number, number[3])`              |               一般用于使用特殊值（后详），为形状、比例的二元组，当存在时忽略 `shape` 和 `scale` 参数                |
 |   `surface`   |            `number[3]`/`number[4]`             |                           填充颜色的rgba值，如果输入长度为3，默认alpha为1                           |
 |    `line`     |            `number[3]`/`number[4]`             |                           线条颜色的rgba值，如果输入长度为3，默认alpha为1                           |
-|    `color`    | `"enemy"`/`"friendly"`/`number[3]`/`number[4]` | 输入为 `"enemy"`/`"friendly"` 时会套用预设配色，否则等同于`surface`参数，当存在时忽略 `surface` 和 `line` 参数 |
+|    `color`    | `"enemy"`/`"friend"`/`number[3]`/`number[4]` | 输入为 `"enemy"`/`"friend"` 时会套用预设配色，否则等同于`surface`参数，当存在时忽略 `surface` 和 `line` 参数 |
 |     `pos`     |                  `number[3]`                   |                       图像在游戏3d空间里面的位置，对应 `[东西刻度，上下刻度，南北刻度]`                        |
 |   `facing`    |                    `number`                    |                                图像沿着y轴的旋转量，以rad为单位                                 |
 |  `duration`   |                    `number`                    |                               图像的存活时间，空则一直存在需要手动清除                                |
@@ -177,7 +177,7 @@
 #### 关键字：player_by_distance_idx
 
 * 类型： number
-* 描述：根据与某实体的距离排序所有玩家并返回指定index的角色id（可能造成严重性能负担，谨慎使用）
+* 描述：根据与某实体的距离排序所有玩家并返回指定index的角色id（可能造成性能负担，谨慎使用）
 
 | 参数  |      类型       |   描述    |
 |:---:|:-------------:|:-------:|
