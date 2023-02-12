@@ -94,7 +94,7 @@ class BaseOmen:
             line_color = self.get_color(self.get_maybe_callable(self.line_color))
         else:
             slc = self.get_maybe_callable(self.surface_line_color)
-            surface_color, line_color = preset_colors.get(slc) if isinstance(slc, str) else slc
+            surface_color, line_color = preset_colors.get(slc) if isinstance(slc, str) else (slc, None)
         pos = self.get_maybe_callable(self.pos)
         facing = self.get_maybe_callable(self.facing) or 0
         line_width = self.get_maybe_callable(self.line_width)
