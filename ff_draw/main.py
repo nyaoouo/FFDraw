@@ -39,6 +39,7 @@ class FFDraw:
         for plugin in self.plugins:
             if plugin.__class__.update != plugins.FFDrawPlugin.update:
                 self.gui.interfaces.add(plugin.update)
+        # self.gui.timer.add_mission((lambda: self.logger.debug(f'fps:{self.gui.timer.fps}')), 1, 0)
 
     def start_gui_thread(self):
         assert not self.gui_thread
