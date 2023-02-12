@@ -10,10 +10,10 @@ from nylib.utils import Counter
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
 
-enemy_color_surface = glm.vec4(1.0, 0.4, 0.4, 0.3)
-enemy_color_line = glm.vec4(1.0, 0.0, 0.0, .7)
-friendly_color_surface = glm.vec4(0.4, 1.0, 0.4, 0.3)
-friendly_color_line = glm.vec4(0.0, 1.0, 0.0, .7)
+enemy_color_surface = glm.vec4(1.0, 0.6, 0.6, 0.1)
+enemy_color_line = glm.vec4(1.0, 0.2, 0.2, .7)
+friendly_color_surface = glm.vec4(0.6, 1.0, 0.6, 0.1)
+friendly_color_line = glm.vec4(0.2, 1.0, 0.2, .7)
 
 omen_counter = Counter()
 pi_2 = math.pi / 2
