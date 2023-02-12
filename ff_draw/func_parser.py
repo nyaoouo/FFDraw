@@ -24,6 +24,11 @@ class ResMap:
         return k
 
 
+def actor_distance_func(actor):
+    src_pos = actor.pos
+    return lambda a: glm.distance(src_pos, a.pos)
+
+
 def make_value(value, res: ResMap):
     if isinstance(value, list):
         args = (','.join(make_value(v, res) for v in value))
@@ -51,7 +56,7 @@ def make_value(value, res: ResMap):
                    f'main.mem.actor_table.get_actor_by_id({make_value(value.get("a2", 0), res)}).pos' \
                    f')'
         case 'player_by_distance_idx':  # 慎用
-            return f'(sorted((a for a in self.main.mem.actor_table if a.actor_type == 1)), key=actor_distance(main.mem.actor_table.get_actor_by_id({make_value(value.get("src", 0), res)})))[{make_value(value.get("idx", 0), res)}])'
+            return f'(sorted((a for a in main.mem.actor_table.iter_actor_by_type(1)), key=actor_distance(main.mem.actor_table.get_actor_by_id({make_value(value.get("src", 0), res)})))[{make_value(value.get("idx", 0), res)}])'
         case 'actor_relative_facing':
             return f'glm.polar(' \
                    f'main.mem.actor_table.get_actor_by_id({make_value(value.get("dst", 0), res)}).pos-' \
@@ -128,12 +133,8 @@ class FuncParser:
         self.action_sheet = main.sq_pack.sheets.action_sheet
         self.parse_name_space = {
             'glm': glm, 'main': self.main, 'safe_lazy': safe_lazy,
-            'actor_distance': self.actor_distance, 'action_shape_scale': self.action_shape_scale
+            'actor_distance': actor_distance_func, 'action_shape_scale': self.action_shape_scale
         }
-
-    def actor_distance(self, src):
-        src_pos = self.main.mem.actor_table.get_actor_by_id(src).pos
-        return lambda a: glm.distance(src_pos, a.pos)
 
     @cache
     def action_shape_scale(self, action_id):
