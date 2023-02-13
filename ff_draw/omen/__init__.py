@@ -31,10 +31,17 @@ class BaseOmen:
             shape=None, scale=None,
             shape_scale=None,
             facing=0,
+
             surface_color=None,
             line_color=None,
             surface_line_color=None,
             line_width=3.0,
+
+            label='',
+            label_color=None,
+            label_scale=1,
+            label_at=1,
+
             duration=0,
             alpha=None,
     ):
@@ -52,6 +59,12 @@ class BaseOmen:
         self.line_color = line_color
         self.surface_line_color = surface_line_color
         self.line_width = line_width
+
+        self.label = label
+        self.label_color = label_color or (0, 0, 0)
+        self.label_scale = label_scale
+        self.label_at = label_at
+
         self.duration = duration
         self.alpha = alpha or 1
         self.current_alpha = 1
@@ -87,26 +100,39 @@ class BaseOmen:
         else:
             shape, scale = self.get_maybe_callable(self.shape_scale) or (None, None)
         if not self.working: self.destroy()
-        if not shape: return
-        self.current_alpha = self.get_maybe_callable(self.alpha)
+        pos = None
+        if shape:
+            self.current_alpha = self.get_maybe_callable(self.alpha)
 
-        if self.surface_line_color is None:
-            surface_color = self.get_color(self.get_maybe_callable(self.surface_color))
-            line_color = self.get_color(self.get_maybe_callable(self.line_color))
-        else:
-            slc = self.get_maybe_callable(self.surface_line_color)
-            surface_color, line_color = self.preset_colors.get(slc) if isinstance(slc, str) else (slc, None)
-        pos = self.get_maybe_callable(self.pos)
-        facing = self.get_maybe_callable(self.facing) or 0
-        line_width = self.get_maybe_callable(self.line_width)
-        self.main.gui.add_3d_shape(
-            shape,
-            glm.translate(pos) * glm.rotate(facing, glm.vec3(0, 1, 0)) * glm.scale(scale),
-            surface_color, line_color, line_width,
-        )
-        if shape == 0x20002:  # 0x20000|2 *cross
+            if self.surface_line_color is None:
+                surface_color = self.get_color(self.get_maybe_callable(self.surface_color))
+                line_color = self.get_color(self.get_maybe_callable(self.line_color))
+            else:
+                slc = self.get_maybe_callable(self.surface_line_color)
+                surface_color, line_color = self.preset_colors.get(slc) if isinstance(slc, str) else (slc, None)
+            pos = self.get_maybe_callable(self.pos)
+            facing = self.get_maybe_callable(self.facing) or 0
+            line_width = self.get_maybe_callable(self.line_width)
             self.main.gui.add_3d_shape(
                 shape,
-                glm.translate(pos) * glm.rotate(facing + pi_2, glm.vec3(0, 1, 0)) * glm.scale(scale),
+                glm.translate(pos) * glm.rotate(facing, glm.vec3(0, 1, 0)) * glm.scale(scale),
                 surface_color, line_color, line_width,
             )
+            if shape == 0x20002:  # 0x20000|2 *cross
+                self.main.gui.add_3d_shape(
+                    shape,
+                    glm.translate(pos) * glm.rotate(facing + pi_2, glm.vec3(0, 1, 0)) * glm.scale(scale),
+                    surface_color, line_color, line_width,
+                )
+        if label := self.get_maybe_callable(self.label):
+            if pos is None: pos = self.get_maybe_callable(self.pos)
+            view = self.main.gui.get_view()
+            label_pos,is_in_screen = view.world_to_screen(*pos)
+            if is_in_screen:
+                self.main.gui.text_mgr.render_text(
+                    label,
+                    (label_pos * glm.vec2(1, -1) + 1) * view.screen_size / 2,
+                    self.get_maybe_callable(self.label_scale),
+                    self.get_maybe_callable(self.label_color),
+                    self.get_maybe_callable(self.label_at)
+                )

@@ -15,7 +15,7 @@ import glfw
 import OpenGL.GL as gl
 from win32gui import GetForegroundWindow
 
-from . import window, view
+from . import window, view, text
 from .utils import common_shader, models
 
 if typing.TYPE_CHECKING:
@@ -66,13 +66,14 @@ class DrawTimeMgr:
         self.missions[m.mid] = m
         return m
 
-    def remove_mission(self, k:int|DrawTimeMission):
-        if isinstance(k,DrawTimeMission): k = k.mid
-        return self.missions.pop(k,None)
+    def remove_mission(self, k: int | DrawTimeMission):
+        if isinstance(k, DrawTimeMission): k = k.mid
+        return self.missions.pop(k, None)
 
 
 class Drawing:
     logger = logging.getLogger('Gui/Drawing')
+    text_mgr: text.TextManager = None
 
     def __init__(self, main: "FFDraw"):
         self.main = main
@@ -93,10 +94,13 @@ class Drawing:
         self.window = window.init_window(self.hwnd)
         self.program = common_shader.get_common_shader()
         self.models = models.Models()
+        self.text_mgr = text.TextManager(self.main.config.setdefault('gui', {}).setdefault('font_path', './res/kaiu.ttf'))
 
     def _process_single_frame(self):
-        self._view = None
         glfw.poll_events()
+        self._view = view.View()
+        self._view.projection_view, self._view.screen_size = self.main.mem.load_screen()
+        self.text_mgr.set_projection(glm.ortho(0, *self._view.screen_size, 0))
         gl.glClearColor(0, 0, 0, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
         gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
@@ -151,9 +155,6 @@ class Drawing:
     def get_view(self) -> view.View:
         if threading.get_ident() != self.work_thread:
             raise Exception("must be called in gui work thread")
-        if self._view is None:
-            self._view = view.View()
-            self._view.projection_view, self._view.screen_size = self.main.mem.load_screen()
         return self._view
 
     def add_3d_shape(self, shape: int, transform: glm.mat4, surface_color: glm.vec4 = None, line_color: glm.vec4 = None,

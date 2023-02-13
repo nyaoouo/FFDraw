@@ -13,21 +13,23 @@ from fpt4.utils.sqpack import SqPack
 
 from . import gui, omen, mem, func_parser, plugins
 
+cfg_path = pathlib.Path(os.environ['ExcPath']) / 'config.json'
+
 
 class FFDraw:
     omens: dict[int, omen.BaseOmen]
     logger = logging.getLogger('FFDraw')
 
     def __init__(self, pid: int):
-        self.config = json.loads(cfg_path.read_text('utf-8')) if (cfg_path := pathlib.Path(os.environ['ExcPath']) / 'config.json').exists() else {}
-        self.path_encoding = self.config.get('path_encoding', sys.getfilesystemencoding())
+        self.config = json.loads(cfg_path.read_text('utf-8')) if cfg_path.exists() else {}
+        self.path_encoding = self.config.setdefault('path_encoding', sys.getfilesystemencoding())
         self.logger.debug(f'set path_encoding:%s', self.path_encoding)
 
         self.mem = mem.XivMem(self, pid)
         self.sq_pack = SqPack(pathlib.Path(self.mem.base_module.filename.decode(self.path_encoding)).parent)
 
         self.gui = gui.Drawing(self)
-        self.gui.always_draw = self.config.get('gui', {}).get('always_draw', False)
+        self.gui.always_draw = self.config.setdefault('gui', {}).setdefault('always_draw', False)
         self.gui.interfaces.add(self.update)
         self.gui_thread = None
 
@@ -35,7 +37,7 @@ class FFDraw:
 
         self.omens = {}
         self.preset_omen_colors = omen.preset_colors.copy()
-        for k, v in self.config.get('omen', {}).get('preset_colors', {}).items():
+        for k, v in self.config.setdefault('omen', {}).setdefault('preset_colors', {}).items():
             surface_color = glm.vec4(*v['surface']) if 'surface' in v else None
             line_color = glm.vec4(*v['line']) if 'surface' in v else None
             self.logger.debug(f'load color {k}: surface={surface_color} line={line_color}')
@@ -43,14 +45,15 @@ class FFDraw:
 
         self.plugins = []
         self.load_plugins()
+        self.save_config()
 
-        if (print_fps_cfg := self.config.get('debug', {}).get('print_fps', {})).get('enable', False):
-            self.gui.timer.add_mission((lambda: self.logger.debug(f'fps:{self.gui.timer.fps}')), print_fps_cfg.get('interval', 1), 0)
+    def save_config(self):
+        cfg_path.write_text(json.dumps(self.config, ensure_ascii=False, indent=4), encoding='utf-8')
 
     def load_plugins(self):
         plugin_path = os.path.join(os.environ['ExcPath'], 'plugins')
         sys.path.append(plugin_path)
-        disable_plugins = self.config.get('disable_plugins', [])
+        disable_plugins = self.config.setdefault('disable_plugins', [])
         for i, mod in enumerate(pkgutil.iter_modules([plugin_path])):
             if mod.name not in disable_plugins:
                 self.logger.debug(f'load plugin {mod.name}')

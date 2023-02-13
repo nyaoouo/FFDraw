@@ -157,7 +157,7 @@ class FuncParser:
             'glm': glm, 'main': self.main, 'safe_lazy': safe_lazy,
             'actor_distance': actor_distance_func, 'action_shape_scale': self.action_shape_scale
         }
-        self.print_compile = self.main.config.get('debug', {}).get('print_compile', {}).get('enable', False)
+        self.print_compile = self.main.config.setdefault('debug', {}).setdefault('print_compile', {}).setdefault('enable', False)
 
     @cache
     def action_shape_scale(self, action_id):
@@ -209,6 +209,10 @@ class FuncParser:
                     surface_color=surface_color,
                     line_color=line_color,
                     surface_line_color=surface_line,
+                    label=self.parse_value_lambda(command.get('label', ''), args),
+                    label_color=self.parse_value_lambda(command.get('label_color', [0, 0, 0]), args),
+                    label_scale=self.parse_value_lambda(command.get('label_scale', 1), args),
+                    label_at=self.parse_value_lambda(command.get('label_at', 1), args),
                     duration=command.get('duration', 0),
                 ).oid
             case 'destroy_omen':
