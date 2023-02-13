@@ -2,10 +2,10 @@ import glm
 
 
 class View:
-    def __init__(self):
-        self.projection_view = None
-        self.screen_size = None
+    projection_view: glm.mat4 = None
+    screen_size: glm.vec2 = None
 
+    def __init__(self):
         self._camera_pos = None
         self._camera_rot = None
 

@@ -49,17 +49,21 @@
 
 * 描述：添加一个图形并且返回 omen_id
 
-|      参数       |                类型                |                                        描述                                         |
-|:-------------:|:--------------------------------:|:---------------------------------------------------------------------------------:|
-|    `shape`    |             `number`             |                             图形的形状，高十六位为类型，低十六位为参数（后详）                             |
-|    `scale`    |           `number[3]`            |                            图形的比例，对应`[东西刻度，上下刻度，南北刻度]`                             |
-| `shape_scale` |      `(number, number[3])`       |               一般用于使用特殊值（后详），为形状、比例的二元组，当存在时忽略 `shape` 和 `scale` 参数                |
-|   `surface`   |     `number[3]`/`number[4]`      |                           填充颜色的rgba值，如果输入长度为3，默认alpha为1                           |
-|    `line`     |     `number[3]`/`number[4]`      |                           线条颜色的rgba值，如果输入长度为3，默认alpha为1                           |
+|      参数       |                类型                |                                   描述                                    |
+|:-------------:|:--------------------------------:|:-----------------------------------------------------------------------:|
+|    `shape`    |             `number`             |                        图形的形状，高十六位为类型，低十六位为参数（后详）                        |
+|    `scale`    |           `number[3]`            |                       图形的比例，对应`[东西刻度，上下刻度，南北刻度]`                        |
+| `shape_scale` |      `(number, number[3])`       |          一般用于使用特殊值（后详），为形状、比例的二元组，当存在时忽略 `shape` 和 `scale` 参数           |
+|   `surface`   |     `number[3]`/`number[4]`      |                      填充颜色的rgba值，如果输入长度为3，默认alpha为1                      |
+|    `line`     |     `number[3]`/`number[4]`      |                      线条颜色的rgba值，如果输入长度为3，默认alpha为1                      |
 |    `color`    | `string`/`number[3]`/`number[4]` | 输入为 `string` 时会套用预设配色（后详），否则等同于`surface`参数，当存在时忽略 `surface` 和 `line` 参数 |
-|     `pos`     |           `number[3]`            |                       图像在游戏3d空间里面的位置，对应 `[东西刻度，上下刻度，南北刻度]`                        |
-|   `facing`    |             `number`             |                                图像沿着y轴的旋转量，以rad为单位                                 |
-|  `duration`   |             `number`             |                               图像的存活时间，空则一直存在需要手动清除                                |
+|     `pos`     |           `number[3]`            |                  图像在游戏3d空间里面的位置，对应 `[东西刻度，上下刻度，南北刻度]`                   |
+|   `facing`    |             `number`             |                           图像沿着y轴的旋转量，以rad为单位                            |
+|  `duration`   |             `number`             |                          图像的存活时间，空则一直存在需要手动清除                           |
+|    `label`    |             `string`             |                               在指定位置显示的文字                                |
+| `label_color` |           `number[3]`            |                                 显示文字的颜色                                 |
+| `label_scale` |             `number`             |                                 显示文字的比例                                 |
+|  `label_at`   |             `number`             |             显示文字的相对坐标的位置（[参见这里](./ff_draw/gui/text.py#L41)）             |
 
 ---
 
@@ -183,6 +187,7 @@
 |    id     | number |  实体id   |
 | status_id | number |  状态id   |
 | source_id | number | 来源id，可选 |
+
 ---
 
 #### 关键字：actor_status_remain
@@ -195,6 +200,7 @@
 |    id     | number |  实体id   |
 | status_id | number |  状态id   |
 | source_id | number | 来源id，可选 |
+
 ---
 
 #### 关键字：actor_status_param
@@ -207,6 +213,7 @@
 |    id     | number |  实体id   |
 | status_id | number |  状态id   |
 | source_id | number | 来源id，可选 |
+
 ---
 
 #### 关键字：actor_status_source
@@ -540,6 +547,7 @@
 | 参数  |   类型   |   描述    |
 |:---:|:------:|:-------:|
 | id  | number | base_id |
+
 ---
 
 #### 关键字：actors_in_party

@@ -102,7 +102,7 @@ demo_4 = {
     },
     'duration': 10,
 }
-# 恩惠终结：贰，使用自定义颜色
+# 恩惠终结：贰，使用自定义颜色和显示文字
 demo_5 = {
     'cmd': 'add_omen',
     'surface': [1, .1, .5, .3],
@@ -119,6 +119,8 @@ demo_5 = {
         'key': 'actor_facing',
         'id': {'key': 'me'},
     },
+    'label': '恩惠终结：贰',
+    'label_at': 3,
     'duration': 10,
 }
 # 给所有玩家画一个小扇形
@@ -186,4 +188,4 @@ demo_7 = {
     },
     'duration': 10,
 }
-print(post(f'http://127.0.0.1:8001/rpc', json=demo_7).text)
+print(post(f'http://127.0.0.1:8001/rpc', json=demo_5).text)
