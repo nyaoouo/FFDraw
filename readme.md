@@ -18,7 +18,7 @@
 
 ### 注
 
-* 如果遇到编码问题 `utf8 cant decode` 之类，请创建一个 `path_encoding.txt` 填写 `gbk` 并重启程序
+* 如果遇到编码问题 `utf8 cant decode` 之类，请修改 `config.json` 中的 `path_encoding` 为 `gbk` 并重启程序
 
 ## 使用
 

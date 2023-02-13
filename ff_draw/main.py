@@ -11,14 +11,6 @@ import aiohttp.web
 import glm
 from fpt4.utils.sqpack import SqPack
 
-
-def load_plugins():
-    plugin_path = os.path.join(os.environ['ExcPath'], 'plugins')
-    sys.path.append(plugin_path)
-    for i, mod in enumerate(pkgutil.iter_modules([plugin_path])):
-        importlib.import_module(mod.name)
-
-
 from . import gui, omen, mem, func_parser, plugins
 
 
@@ -27,19 +19,48 @@ class FFDraw:
     logger = logging.getLogger('FFDraw')
 
     def __init__(self, pid: int):
-        self.mem = mem.XivMem(pid)
-        self.sq_pack = SqPack(pathlib.Path(self.mem.base_module.filename.decode(os.environ['PathEncoding'])).parent)
+        self.config = json.loads(cfg_path.read_text('utf-8')) if (cfg_path := pathlib.Path(os.environ['ExcPath']) / 'config.json').exists() else {}
+        self.path_encoding = self.config.get('path_encoding', sys.getfilesystemencoding())
+        self.logger.debug(f'set path_encoding:%s', self.path_encoding)
+
+        self.mem = mem.XivMem(self, pid)
+        self.sq_pack = SqPack(pathlib.Path(self.mem.base_module.filename.decode(self.path_encoding)).parent)
+
         self.gui = gui.Drawing(self)
-        self.parser = func_parser.FuncParser(self)
-        self.omens = {}
-        self.gui.always_draw = True
+        self.gui.always_draw = self.config.get('gui', {}).get('always_draw', False)
         self.gui.interfaces.add(self.update)
         self.gui_thread = None
+
+        self.parser = func_parser.FuncParser(self)
+
+        self.omens = {}
+        self.preset_omen_colors = omen.preset_colors.copy()
+        for k, v in self.config.get('omen', {}).get('preset_colors', {}).items():
+            surface_color = glm.vec4(*v['surface']) if 'surface' in v else None
+            line_color = glm.vec4(*v['line']) if 'surface' in v else None
+            self.logger.debug(f'load color {k}: surface={surface_color} line={line_color}')
+            self.preset_omen_colors[k] = surface_color, line_color
+
+        self.plugins = []
+        self.load_plugins()
+
+        if (print_fps_cfg := self.config.get('debug', {}).get('print_fps', {})).get('enable', False):
+            self.gui.timer.add_mission((lambda: self.logger.debug(f'fps:{self.gui.timer.fps}')), print_fps_cfg.get('interval', 1), 0)
+
+    def load_plugins(self):
+        plugin_path = os.path.join(os.environ['ExcPath'], 'plugins')
+        sys.path.append(plugin_path)
+        disable_plugins = self.config.get('disable_plugins', [])
+        for i, mod in enumerate(pkgutil.iter_modules([plugin_path])):
+            if mod.name not in disable_plugins:
+                self.logger.debug(f'load plugin {mod.name}')
+                importlib.import_module(mod.name)
+            else:
+                self.logger.debug(f'disable plugin {mod.name}')
         self.plugins = [p(self) for p in plugins.plugins if p != plugins.FFDrawPlugin]
         for plugin in self.plugins:
             if plugin.__class__.update != plugins.FFDrawPlugin.update:
                 self.gui.interfaces.add(plugin.update)
-        # self.gui.timer.add_mission((lambda: self.logger.debug(f'fps:{self.gui.timer.fps}')), 1, 0)
 
     def start_gui_thread(self):
         assert not self.gui_thread
@@ -81,6 +102,3 @@ class FFDraw:
         app = aiohttp.web.Application()
         app.add_routes([aiohttp.web.post('/rpc', self.rpc_handler)])
         aiohttp.web.run_app(app, host=host, port=port)
-
-
-load_plugins()

@@ -88,7 +88,7 @@ def make_value(value, res: ResMap, args: dict[str, typing.Any]):
             ts = make_value(value.get('true', 0), res, args)
             fs = make_value(value.get('false', 0), res, args)
             cond = make_value(value.get('cond', 0), res, args)
-            return f'(({ts}) if ({cond}) else ({fs}))'
+            return f'(({ts})if({cond})else({fs}))'
         case 'gt':
             return f"(int({make_value(value.get('v1', 0), res, args)}>{make_value(value.get('v2', 0), res, args)}))"
         case 'lt':
@@ -157,6 +157,7 @@ class FuncParser:
             'glm': glm, 'main': self.main, 'safe_lazy': safe_lazy,
             'actor_distance': actor_distance_func, 'action_shape_scale': self.action_shape_scale
         }
+        self.print_compile = self.main.config.get('debug', {}).get('print_compile', {}).get('enable', False)
 
     @cache
     def action_shape_scale(self, action_id):
@@ -170,12 +171,12 @@ class FuncParser:
 
     def parse_value_lambda(self, value, args):
         code = optimize_code(make_value(value, res := ResMap(), args))
-        self.logger.debug(f'compile_debug:{value}=>{code}')
+        if self.print_compile: self.logger.debug(f'compile_debug:{value}=>{code}')
         return eval(f'lambda omen:({code})', res.res_list | self.parse_name_space)
 
     def parse_value(self, value, args):
         code = optimize_code(make_value(value, res := ResMap(), args))
-        self.logger.debug(f'compile_debug:{value}=>{code}')
+        if self.print_compile: self.logger.debug(f'compile_debug:{value}=>{code}')
         return eval(code, res.res_list | self.parse_name_space)
 
     def parse_func(self, command, args=None):

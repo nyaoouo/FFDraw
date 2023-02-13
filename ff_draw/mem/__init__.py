@@ -1,4 +1,6 @@
 import os
+import typing
+
 import glm
 from win32con import PROCESS_ALL_ACCESS
 
@@ -7,13 +9,17 @@ from nylib.pefile import PE
 from nylib.pattern import StaticPatternSearcher
 from . import utils, actor, party
 
+if typing.TYPE_CHECKING:
+    from ff_draw.main import FFDraw
+
 
 class XivMem:
-    def __init__(self, pid: int):
+    def __init__(self, main: 'FFDraw', pid: int):
+        self.main = main
         self.pid = pid
         self.handle = ny_winapi.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
         self.base_module = ny_proc.get_base_module(self.handle)
-        file_name = self.base_module.filename.decode(os.environ['PathEncoding'])
+        file_name = self.base_module.filename.decode(self.main.path_encoding)
         self.scanner = StaticPatternSearcher(PE(file_name, fast_load=True), self.base_module.lpBaseOfDll)
         self.hwnd = utils.get_hwnd(self.pid)
         self.game_version, self.game_build_date = utils.get_game_version_info(file_name)
