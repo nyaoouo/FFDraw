@@ -40,6 +40,7 @@ class BaseOmen:
     ):
         self.oid = omen_counter.get()
         self.main = main
+        self.preset_colors = self.main.preset_omen_colors
         self.working = True
         self.start_at = time.time()
         self.shape = shape
@@ -94,7 +95,7 @@ class BaseOmen:
             line_color = self.get_color(self.get_maybe_callable(self.line_color))
         else:
             slc = self.get_maybe_callable(self.surface_line_color)
-            surface_color, line_color = preset_colors.get(slc) if isinstance(slc, str) else (slc, None)
+            surface_color, line_color = self.preset_colors.get(slc) if isinstance(slc, str) else (slc, None)
         pos = self.get_maybe_callable(self.pos)
         facing = self.get_maybe_callable(self.facing) or 0
         line_width = self.get_maybe_callable(self.line_width)

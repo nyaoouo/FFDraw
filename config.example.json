@@ -1,0 +1,36 @@
+{
+    "path_encoding": "utf-8",
+    "gui": {
+        "always_draw": false
+    },
+    "omen": {
+        "preset_colors": {
+            "my_custom_color": {
+                "surface": [
+                    0.7,
+                    1.0,
+                    0.2,
+                    0.2
+                ],
+                "line": [
+                    0.7,
+                    1.0,
+                    0.5,
+                    0.7
+                ]
+            }
+        }
+    },
+    "disable_plugins": [
+        "radar"
+    ],
+    "debug": {
+        "print_fps": {
+            "enable": false,
+            "interval": 1
+        },
+        "print_compile": {
+            "enable": false
+        }
+    }
+}
