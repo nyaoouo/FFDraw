@@ -24,7 +24,7 @@
     },
     "disable_plugins": [
         "radar",
-        "fps",
+        "fps"
     ],
     "fps": {
         "interval": 1
