@@ -13,15 +13,20 @@ glm_vec_map = '', 'glm.vec1', 'glm.vec2', 'glm.vec3', 'glm.vec4',
 
 
 class ResMap:
-    def __init__(self):
+    def __init__(self, enable_eval=False):
         self.counter = 0
         self.res_list = {}
+        self.enable_eval = enable_eval
 
     def add_res(self, data):
         k = f'res_{self.counter}'
         self.counter += 1
         self.res_list[k] = data
         return k
+
+    def add_eval_code(self, code):
+        if not self.enable_eval: raise Exception('eval is not enabled')
+        return self.add_res(compile(code, '<precompile>', 'eval', dont_inherit=True, optimize=2))
 
 
 def actor_distance_func(actor):
@@ -45,7 +50,7 @@ def make_value(value, res: ResMap, args: dict[str, typing.Any]):
         case 'destroy_omen':
             return "(setattr(omen,'working',False))"
         case 'eval':
-            code_key = res.add_res(compile(value.get("code"), '<precompile>', 'eval', dont_inherit=True, optimize=2))
+            code_key = res.add_eval_code(value.get("code"))
             value_args = "{'omen':omen,'glm':glm," + ','.join(f'{repr(k)}:{make_value(v, res, args)}' for k, v in value.get('args', {}).items()) + '}'
             return f'(eval({code_key},{value_args}))'
         case 'actor_pos':
@@ -157,7 +162,12 @@ class FuncParser:
             'glm': glm, 'main': self.main, 'safe_lazy': safe_lazy,
             'actor_distance': actor_distance_func, 'action_shape_scale': self.action_shape_scale
         }
-        self.print_compile = self.main.config.setdefault('debug', {}).setdefault('print_compile', {}).setdefault('enable', False)
+        compile_config = self.main.config.setdefault('compile', {})
+        self.print_compile = compile_config.setdefault('print_debug', {}).setdefault('enable', False)
+        self.enable_eval = compile_config.setdefault('enable_eval', False)
+        if self.enable_eval and not self.main.rpc_password:
+            self.logger.warning(r'enable_eval is set as true but there is no rpc password, please set a rpc password to enable eval function')
+            self.enable_eval = False
 
     @cache
     def action_shape_scale(self, action_id):
@@ -170,12 +180,12 @@ class FuncParser:
         return shape, scale
 
     def parse_value_lambda(self, value, args):
-        code = optimize_code(make_value(value, res := ResMap(), args))
+        code = optimize_code(make_value(value, res := ResMap(enable_eval=self.enable_eval), args))
         if self.print_compile: self.logger.debug(f'compile_debug:{value}=>{code}')
         return eval(f'lambda omen:({code})', res.res_list | self.parse_name_space)
 
     def parse_value(self, value, args):
-        code = optimize_code(make_value(value, res := ResMap(), args))
+        code = optimize_code(make_value(value, res := ResMap(enable_eval=self.enable_eval), args))
         if self.print_compile: self.logger.debug(f'compile_debug:{value}=>{code}')
         return eval(code, res.res_list | self.parse_name_space)
 

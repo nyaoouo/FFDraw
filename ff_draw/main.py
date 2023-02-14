@@ -22,7 +22,12 @@ class FFDraw:
 
     def __init__(self, pid: int):
         self.config = json.loads(cfg_path.read_text('utf-8')) if cfg_path.exists() else {}
+        self.rpc_password = self.config.setdefault('rpc_password', '')
         self.path_encoding = self.config.setdefault('path_encoding', sys.getfilesystemencoding())
+        web_server_cfg = self.config.setdefault('web_server', {})
+        self.http_host = web_server_cfg.setdefault('host', '127.0.0.1')
+        self.http_port = web_server_cfg.setdefault('port', 8001)
+
         self.logger.debug(f'set path_encoding:%s', self.path_encoding)
 
         self.mem = mem.XivMem(self, pid)
@@ -101,7 +106,8 @@ class FFDraw:
             self.logger.warning('exception in processing rpc request line:' + line, exc_info=e)
             return aiohttp.web.json_response({'success': False})
 
-    def start_http_server(self, host='0.0.0.0', port=8001):
+    def start_http_server(self, host=None, port=None):
         app = aiohttp.web.Application()
-        app.add_routes([aiohttp.web.post('/rpc', self.rpc_handler)])
-        aiohttp.web.run_app(app, host=host, port=port)
+        rpc_path = ('/rpc/' + self.rpc_password) if self.rpc_password else '/rpc'
+        app.add_routes([aiohttp.web.post(rpc_path, self.rpc_handler)])
+        aiohttp.web.run_app(app, host=host or self.http_host, port=port or self.http_port)
