@@ -25,6 +25,7 @@ class XivMem:
         self.game_version, self.game_build_date = utils.get_game_version_info(file_name)
         self.screen_address = self.scanner.find_point('48 ? ? * * * * e8 ? ? ? ? 42 ? ? ? 39 05')[0] + 0x1b4
         self.replay_flag_address = self.scanner.find_point('f6 05 * * * * ? 45 ? ? 8b')[0]
+        self.territory_type_address = self.scanner.find_point('0f b7 ? * * * * 48 8d ? ? ? f3 0f ? ? 33 d2')[0]
         self.actor_table = actor.ActorTable(self)
         self.party = party.PartyManager(self)
 
@@ -35,3 +36,7 @@ class XivMem:
     @property
     def is_in_replay(self):
         return (ny_mem.read_ubyte(self.handle, self.replay_flag_address) & 0b100) > 0
+
+    @property
+    def territory_type(self):
+        return ny_mem.read_int(self.handle, self.territory_type_address)
