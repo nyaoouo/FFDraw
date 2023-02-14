@@ -58,13 +58,16 @@ class FFDraw:
     def load_plugins(self):
         plugin_path = os.path.join(os.environ['ExcPath'], 'plugins')
         sys.path.append(plugin_path)
+        enable_plugins = self.config.setdefault('enable_plugins', [])
         disable_plugins = self.config.setdefault('disable_plugins', [])
         for i, mod in enumerate(pkgutil.iter_modules([plugin_path])):
-            if mod.name not in disable_plugins:
+            if mod.name in enable_plugins:
                 self.logger.debug(f'load plugin {mod.name}')
                 importlib.import_module(mod.name)
             else:
                 self.logger.debug(f'disable plugin {mod.name}')
+                if mod.name not in disable_plugins:
+                    disable_plugins.append(mod.name)
         self.plugins = [p(self) for p in plugins.plugins if p != plugins.FFDrawPlugin]
         for plugin in self.plugins:
             if plugin.__class__.update != plugins.FFDrawPlugin.update:

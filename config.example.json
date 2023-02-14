@@ -1,8 +1,19 @@
 {
-    "path_encoding": "utf-8",
+    "rpc_password": "this_is_a_password",
+    "path_encoding": "gbk",
+    "web_server": {
+        "host": "127.0.0.1",
+        "port": 8001
+    },
     "gui": {
-        "always_draw": false,
-        "font_path": "./res/kaiu.ttf"
+        "font_path": "./res/kaiu.ttf",
+        "always_draw": false
+    },
+    "compile": {
+        "print_debug": {
+            "enable": false
+        },
+        "enable_eval": false
     },
     "omen": {
         "preset_colors": {
@@ -22,16 +33,10 @@
             }
         }
     },
-    "disable_plugins": [
-        "radar",
-        "fps"
+    "enable_plugins": [
+        "radar"
     ],
-    "fps": {
-        "interval": 1
-    },
-    "debug": {
-        "print_compile": {
-            "enable": false
-        }
-    }
+    "disable_plugins": [
+        "fps"
+    ]
 }
