@@ -1,3 +1,4 @@
+import logging
 import typing
 
 if typing.TYPE_CHECKING:
@@ -9,6 +10,7 @@ class FFDrawPlugin:
 
     def __init__(self, main):
         self.main = main
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def __init_subclass__(cls, **kwargs):
         super(FFDrawPlugin, cls).__init_subclass__()
