@@ -88,13 +88,14 @@ class Drawing:
         self.always_draw = False
         self.hwnd = main.mem.hwnd
         self.timer = DrawTimeMgr()
+        self.font_path = self.main.config.setdefault('gui', {}).setdefault('font_path', './res/kaiu.ttf')
 
     def _init_everything_in_work_process(self):
         self.work_thread = threading.get_ident()
         self.window = window.init_window(self.hwnd)
         self.program = common_shader.get_common_shader()
         self.models = models.Models()
-        self.text_mgr = text.TextManager(self.main.config.setdefault('gui', {}).setdefault('font_path', './res/kaiu.ttf'))
+        self.text_mgr = text.TextManager(self.font_path)
 
     def _process_single_frame(self):
         glfw.poll_events()
