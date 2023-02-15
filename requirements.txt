@@ -8,3 +8,4 @@ freetype-py
 requests
 pynput
 imgui
+aiohttp
