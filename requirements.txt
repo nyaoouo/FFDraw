@@ -6,3 +6,5 @@ pywin32
 numpy
 freetype-py
 requests
+pynput
+imgui

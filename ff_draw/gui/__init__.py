@@ -7,8 +7,9 @@ import os
 
 from nylib.utils import Counter
 
-os.environ['PYGLFW_LIBRARY'] = os.path.join(os.environ['ExcPath'], 'res', 'glfw3.dll')
+os.environ['PYGLFW_LIBRARY'] = os.path.join(res_path := os.path.join(os.environ['ExcPath'], 'res'), 'glfw3.dll')
 os.environ['PYGLFW_PREVIEW'] = 'True'
+os.environ["PATH"] += os.pathsep + res_path
 
 import glm
 import glfw
@@ -18,8 +19,16 @@ from win32gui import GetForegroundWindow
 from . import window, view, text
 from .utils import common_shader, models
 
+try:
+    import imgui
+except ImportError:
+    use_imgui = False
+else:
+    use_imgui = True
+
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
+    from . import ffd_imgui
 
 
 class DrawTimeMission:
@@ -74,6 +83,7 @@ class DrawTimeMgr:
 class Drawing:
     logger = logging.getLogger('Gui/Drawing')
     text_mgr: text.TextManager = None
+    imgui_renderer: 'ffd_imgui.OpenglPynputRenderer' = None
 
     def __init__(self, main: "FFDraw"):
         self.main = main
@@ -96,12 +106,22 @@ class Drawing:
         self.program = common_shader.get_common_shader()
         self.models = models.Models()
         self.text_mgr = text.TextManager(self.font_path)
+        if use_imgui:
+            self.logger.debug('imgui is enabled')
+            imgui.create_context()
+            from . import ffd_imgui
+            self.imgui_renderer = ffd_imgui.OpenglPynputRenderer(self.window)
 
     def _process_single_frame(self):
         glfw.poll_events()
         self._view = view.View()
         self._view.projection_view, self._view.screen_size = self.main.mem.load_screen()
         self.text_mgr.set_projection(glm.ortho(0, *self._view.screen_size, 0))
+        process_draw = self.always_draw or GetForegroundWindow() == self.hwnd
+        if use_imgui:
+            self.imgui_renderer.process_inputs(process_draw)
+            imgui.new_frame()
+
         gl.glClearColor(0, 0, 0, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
         gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
@@ -120,7 +140,7 @@ class Drawing:
                 f(*a)
             except Exception as e:
                 self.logger.error(f"work queue error:", exc_info=e)
-        if self.always_draw or GetForegroundWindow() == self.hwnd:
+        if process_draw:
             window.set_window_cover(self.window, self.hwnd)
             for draw_func in self.interfaces.copy():
                 try:
@@ -132,6 +152,10 @@ class Drawing:
         else:
             gl.glClearColor(0, 0, 0, 0)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+
+        if use_imgui:
+            imgui.render()
+            self.imgui_renderer.render(imgui.get_draw_data())
         glfw.swap_buffers(self.window)
 
     def process_single_frame(self):
@@ -146,12 +170,17 @@ class Drawing:
             self.err_cnt = 0
 
     def start(self):
-        self._init_everything_in_work_process()
-        glfw.swap_interval(1)
-        while not glfw.window_should_close(self.window):
-            self.process_single_frame()
-        self.work_thread = None
-        glfw.terminate()
+        try:
+            self._init_everything_in_work_process()
+            glfw.swap_interval(1)
+            while not glfw.window_should_close(self.window):
+                self.process_single_frame()
+            self.work_thread = None
+            if use_imgui:
+                self.imgui_renderer.shutdown()
+            glfw.terminate()
+        except Exception as e:
+            self.logger.error('error in main thread', exc_info=e)
 
     def get_view(self) -> view.View:
         if threading.get_ident() != self.work_thread:
