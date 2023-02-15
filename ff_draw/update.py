@@ -25,11 +25,6 @@ def check(select_host='github'):
         is_latest, local_version = _check(select_host)
     except Exception as e:
         logger.error('check update fail, please check network connection or change update source', exc_info=e)
-    else:
-        if is_latest:
-            logger.info(f'local version: {local_version} is up to date')
-        else:
-            logger.info(f'local version: {local_version} require update')
 
 
 def _check(select_host='github'):
@@ -40,6 +35,7 @@ def _check(select_host='github'):
     (res := requests.get(update_host[select_host] + update_uri)).raise_for_status()
     if _match := re.match(r'^(\d+)\.(\d+)\.(\d+)$', res.text):
         remote_version = int(_match.group(1)), int(_match.group(2)), int(_match.group(3)),
+    logger.info(f'local version: {local_version}    remote version: {remote_version}')
     for l, r, d in zip(local_version, remote_version, update_desc):
         if r > l:
             logger.warning(f'there is a {d} update from {local_version} => {remote_version}')
