@@ -5,3 +5,4 @@ pyglm
 pywin32
 numpy
 freetype-py
+requests

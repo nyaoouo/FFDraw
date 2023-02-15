@@ -1,5 +1,8 @@
 import os
+import sys
 from ctypes import *
+
+from win32con import PROCESS_ALL_ACCESS
 
 from .winapi import kernel32, psapi, structure, advapi32
 from . import exception
@@ -154,3 +157,20 @@ def pid_by_executable(executable_name: bytes):
     for process in list_processes():
         if process.szExeFile == executable_name:
             yield process.th32ProcessID
+
+
+def open_process(process_id: int, desired_access=PROCESS_ALL_ACCESS, inherit_handle=False):
+    if handle := kernel32.OpenProcess(desired_access, inherit_handle, process_id):
+        return handle
+    raise exception.WinAPIError(windll.kernel32.GetLastError(), "OpenProcess")
+
+
+def is_admin():
+    try:
+        return windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+
+def runas():
+    windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)

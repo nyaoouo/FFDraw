@@ -9,9 +9,10 @@ import threading
 
 import aiohttp.web
 import glm
+import requests
 from fpt4.utils.sqpack import SqPack
 
-from . import gui, omen, mem, func_parser, plugins
+from . import gui, omen, mem, func_parser, plugins, update
 
 cfg_path = pathlib.Path(os.environ['ExcPath']) / 'config.json'
 
@@ -29,6 +30,10 @@ class FFDraw:
         self.http_port = web_server_cfg.setdefault('port', 8001)
 
         self.logger.debug(f'set path_encoding:%s', self.path_encoding)
+
+        threading.Thread(target=update.check, args=(
+            self.config.setdefault('update_source', 'github'),
+        )).start()
 
         self.mem = mem.XivMem(self, pid)
         self.sq_pack = SqPack(pathlib.Path(self.mem.base_module.filename.decode(self.path_encoding)).parent)
