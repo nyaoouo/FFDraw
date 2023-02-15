@@ -22,11 +22,14 @@ update_desc = [
 
 def check(select_host='github'):
     try:
-        required_update, local_version = _check(select_host)
+        is_latest, local_version = _check(select_host)
     except Exception as e:
         logger.error('check update fail, please check network connection or change update source', exc_info=e)
     else:
-        logger.info(f'local version: {local_version}')
+        if is_latest:
+            logger.info(f'local version: {local_version} is up to date')
+        else:
+            logger.info(f'local version: {local_version} require update')
 
 
 def _check(select_host='github'):
