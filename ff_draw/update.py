@@ -22,7 +22,7 @@ update_desc = [
 
 def check(select_host='github'):
     try:
-        is_latest, local_version = _check(select_host)
+        is_latest = _check(select_host)
     except Exception as e:
         logger.error('check update fail, please check network connection or change update source', exc_info=e)
 
@@ -39,7 +39,7 @@ def _check(select_host='github'):
     for l, r, d in zip(local_version, remote_version, update_desc):
         if r > l:
             logger.warning(f'there is a {d} update from {local_version} => {remote_version}')
-            return False, local_version
+            return False
         elif r < l:  # custom source?
-            return True, local_version
-    return True, local_version
+            return True
+    return True
