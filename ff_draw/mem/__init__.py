@@ -1,10 +1,8 @@
-import os
 import typing
 
 import glm
-from win32con import PROCESS_ALL_ACCESS
 
-from nylib.utils.win32 import memory as ny_mem, process as ny_proc, winapi as ny_winapi
+from nylib.utils.win32 import memory as ny_mem, process as ny_proc
 from nylib.pefile import PE
 from nylib.pattern import StaticPatternSearcher
 from . import utils, actor, party
@@ -17,7 +15,7 @@ class XivMem:
     def __init__(self, main: 'FFDraw', pid: int):
         self.main = main
         self.pid = pid
-        self.handle = ny_winapi.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
+        self.handle = ny_proc.open_process(pid)
         self.base_module = ny_proc.get_base_module(self.handle)
         file_name = self.base_module.filename.decode(self.main.path_encoding)
         self.scanner = StaticPatternSearcher(PE(file_name, fast_load=True), self.base_module.lpBaseOfDll)
