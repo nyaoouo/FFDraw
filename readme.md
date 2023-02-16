@@ -20,7 +20,8 @@
 ### 注
 
 * 如果遇到编码问题 `utf8 cant decode` 之类，请修改 `config.json` 中的 `path_encoding` 为 `gbk` 并重启程序
-* 关于跨域：设置 `web_server/enable_cors`，另外如果你不打算给链接设置ssl， chrome 请在 [chrome://flags/](chrome://flags/) 中设置 `Block insecure private network requests` 为 `disable` [(ref)](https://developer.chrome.com/articles/cors-rfc1918-feedback/#chrome%27s-plans-to-enable-cors-rfc1918)
+* 关于跨域：设置 `web_server/enable_cors`，另外如果你不打算给链接设置ssl， chrome 请在 [chrome://flags/](chrome://flags/) 中设置 `Block insecure private network requests`
+  为 `disable` [(ref)](https://developer.chrome.com/articles/cors-rfc1918-feedback/#chrome%27s-plans-to-enable-cors-rfc1918)
 
 ## 使用
 
@@ -594,6 +595,29 @@
 | 参数  | 类型  | 描述  |
 |:---:|:---:|:---:|
 |  -  |  -  |  -  |
+
+---
+
+#### 关键字：pi
+
+* 类型： `number`
+* 描述：返回pi的倍数
+
+| 参数  |   类型   |  描述   |
+|:---:|:------:|:-----:|
+|  val  | number | 返回的倍数 |
+
+---
+
+#### 关键字：rad_deg
+
+* 类型： `number`
+* 描述：在rad和deg间转换
+
+| 参数  | 类型 |         描述         |
+|:---:|:------:|:------------------:|
+| rad | number |  优先判断，将rad转换为deg   |
+| deg | number | 如果rad为空，将deg转换为rad |
 
 ## 插件开发
 
