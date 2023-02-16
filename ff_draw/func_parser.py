@@ -1,4 +1,5 @@
 import logging
+import math
 import typing
 from functools import cache
 
@@ -34,6 +35,7 @@ def actor_distance_func(actor):
     return lambda a: glm.distance(src_pos, a.pos)
 
 
+# TODO: to jump map
 def make_value(parser: 'FuncParser', value, res: ResMap, args: dict[str, typing.Any]):
     if isinstance(value, list):
         value_args = (''.join(make_value(parser, v, res, args) + ',' for v in value))
@@ -41,6 +43,16 @@ def make_value(parser: 'FuncParser', value, res: ResMap, args: dict[str, typing.
     if not isinstance(value, dict):
         return '(' + repr(value) + ')'
     match value.get('key'):
+        case 'pi':
+            val = ('*' + make_value(parser, val, res, args)) if (val := value.get("val", 1)) != 1 else ''
+            return "(math.pi" + val + ")"
+        case 'rad_deg':
+            if 'rad' in value:
+                return f'(math.degrees({make_value(parser, value["rad"], res, args)}))'
+            elif 'deg' in value:
+                return f'(math.radians({make_value(parser, value["deg"], res, args)}))'
+            else:
+                return '(0)'
         case 'now':
             return "(" + res.add_res(parser.parse_value(value.get('value'), args)) + ")"
         case 'arg':
@@ -164,7 +176,7 @@ class FuncParser:
         self.action_sheet = main.sq_pack.sheets.action_sheet
         self.parse_name_space = {
             'glm': glm, 'main': self.main, 'safe_lazy': safe_lazy,
-            'actor_distance': actor_distance_func, 'action_shape_scale': self.action_shape_scale
+            'actor_distance': actor_distance_func, 'action_shape_scale': self.action_shape_scale, 'math': math
         }
         compile_config = self.main.config.setdefault('compile', {})
         self.print_compile = compile_config.setdefault('print_debug', {}).setdefault('enable', False)
