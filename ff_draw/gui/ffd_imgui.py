@@ -97,6 +97,7 @@ class OpenglPynputRenderer(ProgrammablePipelineRenderer):
         io.mouse_wheel = dy
 
     def on_key_change(self, key: str | keyboard.Key | keyboard.KeyCode, is_press):
+        if not key:return
         io = self.io
         if isinstance(key, keyboard.Key):
             key = key.value
