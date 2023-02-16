@@ -20,6 +20,7 @@
 ### 注
 
 * 如果遇到编码问题 `utf8 cant decode` 之类，请修改 `config.json` 中的 `path_encoding` 为 `gbk` 并重启程序
+* 关于跨域：设置 `web_server/enable_cors`，另外如果你不打算给链接设置ssl， chrome 请在 [chrome://flags/](chrome://flags/) 中设置 `Block insecure private network requests` 为 `disable` [(ref)](https://developer.chrome.com/articles/cors-rfc1918-feedback/#chrome%27s-plans-to-enable-cors-rfc1918)
 
 ## 使用
 

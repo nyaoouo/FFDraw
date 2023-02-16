@@ -9,8 +9,14 @@ import threading
 
 import aiohttp.web
 import glm
-import requests
 from fpt4.utils.sqpack import SqPack
+
+try:
+    import aiohttp_cors
+except ImportError:
+    use_aiohttp_cors = False
+else:
+    use_aiohttp_cors = True
 
 from . import gui, omen, mem, func_parser, plugins, update
 
@@ -28,6 +34,7 @@ class FFDraw:
         web_server_cfg = self.config.setdefault('web_server', {})
         self.http_host = web_server_cfg.setdefault('host', '127.0.0.1')
         self.http_port = web_server_cfg.setdefault('port', 8001)
+        self.enable_cors = web_server_cfg.setdefault('enable_cors', False) and use_aiohttp_cors
 
         self.logger.debug(f'set path_encoding:%s', self.path_encoding)
 
@@ -117,5 +124,15 @@ class FFDraw:
     def start_http_server(self, host=None, port=None):
         app = aiohttp.web.Application()
         rpc_path = ('/rpc/' + self.rpc_password) if self.rpc_password else '/rpc'
-        app.add_routes([aiohttp.web.post(rpc_path, self.rpc_handler)])
+        app.router.add_post(rpc_path, self.rpc_handler)
+        if self.enable_cors:
+            cors = aiohttp_cors.setup(app, defaults={
+                "*": aiohttp_cors.ResourceOptions(
+                    allow_credentials=True,
+                    expose_headers="*",
+                    allow_headers="*",
+                )
+            })
+            for route in list(app.router.routes()):
+                cors.add(route)
         aiohttp.web.run_app(app, host=host or self.http_host, port=port or self.http_port)
