@@ -1,6 +1,7 @@
 config.json
 imgui.ini
 release/
+FFDraw.exe
 
 ### Python template
 # Byte-compiled / optimized / DLL files

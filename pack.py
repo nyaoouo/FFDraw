@@ -10,8 +10,8 @@ os.system(
     '--icon=sage.ico ' +
     '..\main.py'
 )
-shutil.copy(r'dist/main.exe', '../FFDraw.exe')
 os.chdir('../')
 with zipfile.ZipFile(time.strftime("release/ffd_release_%Y_%m_%d_%H_%M_%S.zip"), 'w') as zf:
+    zf.write(r'pack_assets/dist/main.exe', 'FFDraw/FFDraw.exe', compresslevel=9, compress_type=zipfile.ZIP_DEFLATED)
     for f in subprocess.check_output("git ls-files", shell=True).decode('utf-8').splitlines():
         zf.write(f, 'FFDraw/' + f, compresslevel=9,compress_type=zipfile.ZIP_DEFLATED)
