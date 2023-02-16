@@ -1,5 +1,6 @@
 config.json
 imgui.ini
+release/
 
 ### Python template
 # Byte-compiled / optimized / DLL files
