@@ -34,100 +34,104 @@ def actor_distance_func(actor):
     return lambda a: glm.distance(src_pos, a.pos)
 
 
-def make_value(value, res: ResMap, args: dict[str, typing.Any]):
+def make_value(parser: 'FuncParser', value, res: ResMap, args: dict[str, typing.Any]):
     if isinstance(value, list):
-        value_args = (''.join(make_value(v, res, args) + ',' for v in value))
+        value_args = (''.join(make_value(parser, v, res, args) + ',' for v in value))
         return f'(safe_lazy({glm_vec_map[len(value)]},{value_args}_default=(lambda *a:a)))' if 0 < len(value) < 5 else f'({value_args})'
     if not isinstance(value, dict):
         return '(' + repr(value) + ')'
     match value.get('key'):
+        case 'now':
+            return "(" + res.add_res(parser.parse_value(value.get('value'), args)) + ")"
         case 'arg':
             return args[value.get('name', 'v')]
         case 'remain':
             return '(omen.remaining_time)'
+        case 'is_hit':
+            return f'(int(omen.is_hit({make_value(parser, value.get("pos"), res, args)})))'
         case 'progress':
             return "(omen.progress)"
         case 'destroy_omen':
             return "(setattr(omen,'working',False))"
         case 'eval':
             code_key = res.add_eval_code(value.get("code"))
-            value_args = "{'omen':omen,'glm':glm," + ','.join(f'{repr(k)}:{make_value(v, res, args)}' for k, v in value.get('args', {}).items()) + '}'
+            value_args = "{'omen':omen,'glm':glm," + ','.join(f'{repr(k)}:{make_value(parser, v, res, args)}' for k, v in value.get('args', {}).items()) + '}'
             return f'(eval({code_key},{value_args}))'
         case 'actor_pos':
-            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).pos)'
+            return f'(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}).pos)'
         case 'actor_facing':
-            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).facing)'
+            return f'(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}).facing)'
         case 'actor_has_status':
-            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).status.has_status({make_value(value.get("status_id", 0), res, args)},{make_value(value.get("source_id", 0), res, args)})))'
+            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}).status.has_status({make_value(parser, value.get("status_id", 0), res, args)},{make_value(parser, value.get("source_id", 0), res, args)})))'
         case 'actor_status_remain':
-            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).status.find_status_remain({make_value(value.get("status_id", 0), res, args)},{make_value(value.get("source_id", 0), res, args)}))'
+            return f'(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}).status.find_status_remain({make_value(parser, value.get("status_id", 0), res, args)},{make_value(parser, value.get("source_id", 0), res, args)}))'
         case 'actor_status_param':
-            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).status.find_status_param({make_value(value.get("status_id", 0), res, args)},{make_value(value.get("source_id", 0), res, args)}))'
+            return f'(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}).status.find_status_param({make_value(parser, value.get("status_id", 0), res, args)},{make_value(parser, value.get("source_id", 0), res, args)}))'
         case 'actor_status_source':
-            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).status.find_status_source({make_value(value.get("status_id", 0), res, args)}))'
+            return f'(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}).status.find_status_source({make_value(parser, value.get("status_id", 0), res, args)}))'
         case 'actor_exists':
-            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}) != None))'
+            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}) != None))'
         case 'actor_can_select':
-            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).can_select))'
+            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}).can_select))'
         case 'actor_is_visible':
-            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).is_visible))'
+            return f'(int(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}).is_visible))'
         case 'actor_distance':
             return f'glm.distance(' \
-                   f'main.mem.actor_table.get_actor_by_id({make_value(value.get("a1", 0), res, args)}).pos,' \
-                   f'main.mem.actor_table.get_actor_by_id({make_value(value.get("a2", 0), res, args)}).pos' \
+                   f'main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("a1", 0), res, args)}).pos,' \
+                   f'main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("a2", 0), res, args)}).pos' \
                    f')'
         case 'player_by_distance_idx':  # 慎用
-            return f'(sorted((a for a in main.mem.actor_table.iter_actor_by_type(1)), key=actor_distance(main.mem.actor_table.get_actor_by_id({make_value(value.get("src", 0), res, args)})))[{make_value(value.get("idx", 0), res, args)}])'
+            return f'(sorted((a for a in main.mem.actor_table.iter_actor_by_type(1)), key=actor_distance(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("src", 0), res, args)})))[{make_value(parser, value.get("idx", 0), res, args)}])'
         case 'actor_relative_facing':
             return f'glm.polar(' \
-                   f'main.mem.actor_table.get_actor_by_id({make_value(value.get("dst", 0), res, args)}).pos-' \
-                   f'main.mem.actor_table.get_actor_by_id({make_value(value.get("src", 0), res, args)}).pos' \
+                   f'main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("dst", 0), res, args)}).pos-' \
+                   f'main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("src", 0), res, args)}).pos' \
                    f').y'
         case 'me':
             return f'(main.mem.actor_table.me.id)'
         case 'target':
-            return f'(main.mem.actor_table.get_actor_by_id({make_value(value.get("id", 0), res, args)}).target_id)'
+            return f'(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("id", 0), res, args)}).target_id)'
         case 'fallback':
-            return f'(safe_lazy((lambda : {make_value(value.get("expr"), res, args)}), _default=(lambda : {make_value(value.get("default"), res, args)})))'
+            return f'(safe_lazy((lambda : {make_value(parser, value.get("expr"), res, args)}), _default=(lambda : {make_value(parser, value.get("default"), res, args)})))'
         case 'if':
-            ts = make_value(value.get('true', 0), res, args)
-            fs = make_value(value.get('false', 0), res, args)
-            cond = make_value(value.get('cond', 0), res, args)
+            ts = make_value(parser, value.get('true', 0), res, args)
+            fs = make_value(parser, value.get('false', 0), res, args)
+            cond = make_value(parser, value.get('cond', 0), res, args)
             return f'(({ts})if({cond})else({fs}))'
         case 'gt':
-            return f"(int({make_value(value.get('v1', 0), res, args)}>{make_value(value.get('v2', 0), res, args)}))"
+            return f"(int({make_value(parser, value.get('v1', 0), res, args)}>{make_value(parser, value.get('v2', 0), res, args)}))"
         case 'lt':
-            return f"(int({make_value(value.get('v1', 0), res, args)}<{make_value(value.get('v2', 0), res, args)}))"
+            return f"(int({make_value(parser, value.get('v1', 0), res, args)}<{make_value(parser, value.get('v2', 0), res, args)}))"
         case 'gte':
-            return f"(int({make_value(value.get('v1', 0), res, args)}>={make_value(value.get('v2', 0), res, args)}))"
+            return f"(int({make_value(parser, value.get('v1', 0), res, args)}>={make_value(parser, value.get('v2', 0), res, args)}))"
         case 'lte':
-            return f"(int({make_value(value.get('v1', 0), res, args)}<={make_value(value.get('v2', 0), res, args)}))"
+            return f"(int({make_value(parser, value.get('v1', 0), res, args)}<={make_value(parser, value.get('v2', 0), res, args)}))"
         case 'add':
-            return "(" + ("+".join(make_value(v, res, args) for v in value.get('values', []))) + ")"
+            return "(" + ("+".join(make_value(parser, v, res, args) for v in value.get('values', []))) + ")"
         case 'mul':
-            return "(" + ("*".join(make_value(v, res, args) for v in value.get('values', []))) + ")"
+            return "(" + ("*".join(make_value(parser, v, res, args) for v in value.get('values', []))) + ")"
         case 'div':
-            return "(" + ("/".join(make_value(v, res, args) for v in value.get('values', []))) + ")"
+            return "(" + ("/".join(make_value(parser, v, res, args) for v in value.get('values', []))) + ")"
         case 'min':
-            return "(min(" + (",".join(make_value(v, res, args) for v in value.get('values', []))) + "))"
+            return "(min(" + (",".join(make_value(parser, v, res, args) for v in value.get('values', []))) + "))"
         case 'max':
-            return "(max(" + (",".join(make_value(v, res, args) for v in value.get('values', []))) + "))"
+            return "(max(" + (",".join(make_value(parser, v, res, args) for v in value.get('values', []))) + "))"
         case 'fan':
-            return f"((0x50000|{make_value(value.get('deg', 0), res, args)}),({make_value(value.get('range', 0), res, args)},)*3)"
+            return f"((0x50000|{make_value(parser, value.get('deg', 0), res, args)}),({make_value(parser, value.get('range', 0), res, args)},)*3)"
         case 'circle':
-            return f"((0x10000),({make_value(value.get('range', 0), res, args)},)*3)"
+            return f"((0x10000),({make_value(parser, value.get('range', 0), res, args)},)*3)"
         case 'rect':
-            return f"((0x20000),({make_value(value.get('width', 0), res, args)},1,{make_value(value.get('range', 0), res, args)}))"
+            return f"((0x20000),({make_value(parser, value.get('width', 0), res, args)},1,{make_value(parser, value.get('range', 0), res, args)}))"
         case 'cross':
-            return f"((0x20002),({make_value(value.get('width', 0), res, args)},1,{make_value(value.get('range', 0), res, args)}))"
+            return f"((0x20002),({make_value(parser, value.get('width', 0), res, args)},1,{make_value(parser, value.get('range', 0), res, args)}))"
         case 'donut':
-            return f"((0x10000|int({make_value(value.get('inner', 0), res, args)}/{make_value(value.get('range', 0), res, args)}*0xffff)),({make_value(value.get('range', 0), res, args)},)*3)"
+            return f"((0x10000|int({make_value(parser, value.get('inner', 0), res, args)}/{make_value(parser, value.get('range', 0), res, args)}*0xffff)),({make_value(parser, value.get('range', 0), res, args)},)*3)"
         case 'action_shape':
-            return f"(action_shape_scale({make_value(value.get('id', 0), res, args)}))"
+            return f"(action_shape_scale({make_value(parser, value.get('id', 0), res, args)}))"
         case 'actors_by_type':
-            return f"([a.id for a in main.mem.actor_table if a.actor_type == ({make_value(value.get('type', 0), res, args)})])"
+            return f"([a.id for a in main.mem.actor_table if a.actor_type == ({make_value(parser, value.get('type', 0), res, args)})])"
         case 'actors_by_base_id':
-            return f"([a.id for a in main.mem.actor_table if a.base_id == ({make_value(value.get('id', 0), res, args)})])"
+            return f"([a.id for a in main.mem.actor_table if a.base_id == ({make_value(parser, value.get('id', 0), res, args)})])"
         case 'actors_in_party':
             return f"([m.id for m in main.mem.party.party_list])"
 
@@ -180,12 +184,12 @@ class FuncParser:
         return shape, scale
 
     def parse_value_lambda(self, value, args):
-        code = optimize_code(make_value(value, res := ResMap(enable_eval=self.enable_eval), args))
+        code = optimize_code(make_value(self, value, res := ResMap(enable_eval=self.enable_eval), args))
         if self.print_compile: self.logger.debug(f'compile_debug:{value}=>{code}')
         return eval(f'lambda omen:({code})', res.res_list | self.parse_name_space)
 
     def parse_value(self, value, args):
-        code = optimize_code(make_value(value, res := ResMap(enable_eval=self.enable_eval), args))
+        code = optimize_code(make_value(self, value, res := ResMap(enable_eval=self.enable_eval), args))
         if self.print_compile: self.logger.debug(f'compile_debug:{value}=>{code}')
         return eval(code, res.res_list | self.parse_name_space)
 
@@ -193,6 +197,8 @@ class FuncParser:
         assert isinstance(command, dict)
         if args is None: args = {}
         match command.get('cmd'):
+            case 'with_args':
+                return self.parse_func(command.get('func'), args | {k: self.parse_value(v, args) for k, v in command.get('args', {}).items()})
             case 'foreach':
                 return [self.parse_func(command.get('func'), args | {command.get('name', 'v'): v}) for v in self.parse_value(command.get('values'), args)]
             case 'add_omen':

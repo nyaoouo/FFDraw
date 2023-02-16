@@ -188,4 +188,38 @@ demo_7 = {
     },
     'duration': 10,
 }
-print(post(f'http://127.0.0.1:8001/rpc', json=demo_5).text)
+
+# 在脚下生成一个omen，如果人在里面会显示为红色，否则为绿色
+demo_8 = {
+    'cmd': 'add_omen',
+    'color': {
+        'key': 'if',
+        'cond': {
+            'key': 'is_hit',
+            'pos': {
+                'key': 'actor_pos',
+                'id': {'key': 'me'},
+            }
+        },
+        'true': 'enemy',
+        'false': 'friend',
+    },
+    # 'shape_scale': {'key': 'fan', 'deg': 60, 'range': 5, },
+    'shape_scale': {'key': 'cross', 'width': 5, 'range': 10, },
+    'pos': {
+        'key': 'now',
+        'value': {
+            'key': 'actor_pos',
+            'id': {'key': 'me'},
+        },
+    },
+    'facing': {
+        'key': 'now',
+        'value': {
+            'key': 'actor_facing',
+            'id': {'key': 'me'},
+        },
+    },
+    'duration': 10,
+}
+print(post(f'http://127.0.0.1:8001/rpc', json=demo_8).text)
