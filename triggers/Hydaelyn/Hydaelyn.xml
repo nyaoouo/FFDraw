@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<TriggernometryExport Version="1">
+  <ExportedFolder Id="7ccc3f2e-423c-4ffa-9d2a-b751951f7b2b" Name="海德林测试" Enabled="true">
+    <Folders />
+    <Triggers>
+      <Trigger Enabled="true" Name="结晶冰（分散）" Id="77b8f4e3-7bf5-4c9d-8f2b-012a5070a9e2" RegularExpression="1[56]:[^:]*:海德林:659C:">
+        <Actions>
+          <Action OrderNumber="1" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;foreach&quot;,&quot;name&quot;:&quot;target_id&quot;,&quot;values&quot;:{&quot;key&quot;:&quot;actors_by_type&quot;,&quot;type&quot;:1},&quot;func&quot;:{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[1,0.1,0.5,0.1],&quot;line&quot;:[1,0.1,0.5,0.7],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;action_shape&quot;,&quot;id&quot;:26020},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;duration&quot;:15}}" OBSEndPoint="" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+      </Trigger>
+      <Trigger Enabled="true" Name="结晶水（44分摊）" Id="8171d3f0-90a5-4389-a50e-fb5f4e14e2d7" RegularExpression="1[56]:[^:]*:海德林:659A:">
+        <Actions>
+          <Action OrderNumber="1" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[0,255,127,0.2],&quot;line&quot;:[64,224,205,1],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;circle&quot;,&quot;range&quot;:3},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;me&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;me&quot;}},&quot;label&quot;:&quot;44\u5206\u7ec4\u5206\u644a&quot;,&quot;label_at&quot;:3,&quot;duration&quot;:15}" OBSEndPoint="" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+      </Trigger>
+      <Trigger Enabled="true" Name="结晶土（8人分摊）" Id="26bb1809-eb22-4c10-8306-ef99193736cd" RegularExpression="1[56]:[^:]*:海德林:659E:">
+        <Actions>
+          <Action OrderNumber="1" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[0,255,127,0.2],&quot;line&quot;:[64,224,205,1],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;circle&quot;,&quot;range&quot;:4},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;me&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;me&quot;}},&quot;label&quot;:&quot;\u6240\u6709\u4eba\u5206\u644a&quot;,&quot;label_at&quot;:3,&quot;label_color&quot;:[220,20,60],&quot;duration&quot;:15}" OBSEndPoint="" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+      </Trigger>
+      <Trigger Enabled="true" Name="结晶水2（44分摊）" Id="45702280-0721-40c4-9872-714d7061a890" RegularExpression="1[56]:[^:]*:海德林:6ED5:">
+        <Actions>
+          <Action OrderNumber="1" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[0,255,127,0.2],&quot;line&quot;:[64,224,205,1],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;circle&quot;,&quot;range&quot;:3},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;me&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;me&quot;}},&quot;label&quot;:&quot;44\u5206\u7ec4\u5206\u644a&quot;,&quot;label_at&quot;:3,&quot;duration&quot;:15}" OBSEndPoint="" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+      </Trigger>
+      <Trigger Enabled="true" Name="结晶土2（8人分摊）" Id="9f18a133-d7d0-4652-824c-5a2ebaa9660f" RegularExpression="1[56]:[^:]*:海德林:659B:">
+        <Actions>
+          <Action OrderNumber="1" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[0,255,127,0.2],&quot;line&quot;:[64,224,205,1],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;circle&quot;,&quot;range&quot;:4},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;me&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;me&quot;}},&quot;label&quot;:&quot;\u6240\u6709\u4eba\u5206\u644a&quot;,&quot;label_at&quot;:3,&quot;label_color&quot;:[220,20,60],&quot;duration&quot;:15}" OBSEndPoint="" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+      </Trigger>
+      <Trigger Enabled="true" Name="结晶冰2（分散）" Id="df9449e3-f7b6-4afe-a0e9-87ead1066b53" RegularExpression="1[56]:[^:]*:海德林:659D:">
+        <Actions>
+          <Action OrderNumber="1" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;foreach&quot;,&quot;name&quot;:&quot;target_id&quot;,&quot;values&quot;:{&quot;key&quot;:&quot;actors_by_type&quot;,&quot;type&quot;:1},&quot;func&quot;:{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[1,0.1,0.5,0.1],&quot;line&quot;:[1,0.1,0.5,0.7],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;action_shape&quot;,&quot;id&quot;:26020},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;duration&quot;:15}}" OBSEndPoint="" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+      </Trigger>
+      <Trigger Enabled="true" Name="责任（切换形态）" Id="4f685a3b-16c4-40a1-9c6c-a0553952664b" RegularExpression="1A:B3(?&lt;type&gt;C|D|E):.+?:(海德林|ハイデリン|Hydaelyn):">
+        <Actions>
+          <Action OrderNumber="1" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;foreach&quot;,&quot;name&quot;:&quot;target_id&quot;,&quot;values&quot;:{&quot;key&quot;:&quot;actors_by_base_id&quot;,&quot;id&quot;:13549},&quot;func&quot;:{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[255,255,0,0.2],&quot;line&quot;:[255,215,0,1],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;cross&quot;,&quot;width&quot;:10,&quot;range&quot;:20},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;duration&quot;:5}}" UseTTSTextExpression="十字十字" UseTTSRateExpression="2" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="true" Grouping="Or">
+              <ConditionSingle Enabled="true" ExpressionL="${type}" ExpressionTypeL="String" ExpressionR="C" ExpressionTypeR="String" ConditionType="StringEqualNocase" />
+            </Condition>
+          </Action>
+          <Action OrderNumber="2" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;foreach&quot;,&quot;name&quot;:&quot;target_id&quot;,&quot;values&quot;:{&quot;key&quot;:&quot;actors_by_base_id&quot;,&quot;id&quot;:13549},&quot;func&quot;:{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[255,255,0,0.2],&quot;line&quot;:[255,215,0,1],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;circle&quot;,&quot;range&quot;:10},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;duration&quot;:5}}" UseTTSTextExpression="钢铁远离" UseTTSRateExpression="2" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="true" Grouping="Or">
+              <ConditionSingle Enabled="true" ExpressionL="${type}" ExpressionTypeL="String" ExpressionR="D" ExpressionTypeR="String" ConditionType="StringEqualNocase" />
+            </Condition>
+          </Action>
+          <Action OrderNumber="3" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;foreach&quot;,&quot;name&quot;:&quot;target_id&quot;,&quot;values&quot;:{&quot;key&quot;:&quot;actors_by_base_id&quot;,&quot;id&quot;:13549},&quot;func&quot;:{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[255,255,0,0.2],&quot;line&quot;:[255,215,0,1],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;donut&quot;,&quot;inner&quot;:5,&quot;range&quot;:30},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;duration&quot;:5}}" UseTTSTextExpression="月环靠近" UseTTSRateExpression="2" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="true" Grouping="Or">
+              <ConditionSingle Enabled="true" ExpressionL="${type}" ExpressionTypeL="String" ExpressionR="E" ExpressionTypeR="String" ConditionType="StringEqualNocase" />
+            </Condition>
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+      </Trigger>
+      <Trigger Enabled="true" Name="英雄的荣耀（前刀）" Id="dfb1f939-4e04-4195-a720-bfc8c5d228a9" RegularExpression="^.{14} (?:\w+ )14:.{8}:[^:]*:65A8:">
+        <Actions>
+          <Action OrderNumber="1" JsonEndpointExpression="http://127.0.0.1:8001/rpc" JsonPayloadExpression="{&quot;cmd&quot;:&quot;foreach&quot;,&quot;name&quot;:&quot;target_id&quot;,&quot;values&quot;:{&quot;key&quot;:&quot;actors_by_base_id&quot;,&quot;id&quot;:13549},&quot;func&quot;:{&quot;cmd&quot;:&quot;add_omen&quot;,&quot;surface&quot;:[255,255,0,0.2],&quot;line&quot;:[255,215,0,1],&quot;shape_scale&quot;:{&quot;key&quot;:&quot;fan&quot;,&quot;deg&quot;:180,&quot;range&quot;:40},&quot;pos&quot;:{&quot;key&quot;:&quot;actor_pos&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;facing&quot;:{&quot;key&quot;:&quot;actor_facing&quot;,&quot;id&quot;:{&quot;key&quot;:&quot;arg&quot;,&quot;name&quot;:&quot;target_id&quot;}},&quot;duration&quot;:7}}" UseTTSTextExpression="去背后" UseTTSRateExpression="1" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="GenericJson">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+          <Action OrderNumber="2" TextAuraFontSize="9" TextAuraFontName="宋体" TriggerId="e793bac4-b9f9-413f-a429-4e9464d1560c" TriggerText="Tip_Subtitle:去背后:5:0:0:main" Enabled="False" ActionType="Trigger">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+      </Trigger>
+      <Trigger Enabled="true" Name="光轮（前后刀）" Id="2198f580-e764-43dd-8b9d-97ba94438c33" RegularExpression="^.{14} (?:\w+ )14:.{8}:[^:]*:(6F11|6C92):" PeriodRefire="Deny" RefirePeriodExpression="100">
+        <Actions>
+          <Action OrderNumber="1" UseTTSTextExpression="去左右" UseTTSRateExpression="1" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="UseTTS">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+          <Action OrderNumber="2" TextAuraFontSize="9" TextAuraFontName="宋体" TriggerId="e793bac4-b9f9-413f-a429-4e9464d1560c" TriggerText="Tip_Subtitle:去左右:5:0:0:main" ActionType="Trigger">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+        <Conditions />
+      </Trigger>
+      <Trigger Enabled="true" Name="外侧光环（左右刀）" Id="76910bc2-0fbb-49bf-ad7b-400bf926198a" RegularExpression="^.{14} (?:\w+ )14:.{8}:[^:]*:(65C5|6F13):">
+        <Actions>
+          <Action OrderNumber="1" UseTTSTextExpression="去前后" UseTTSRateExpression="1" TextAuraFontSize="9" TextAuraFontName="宋体" ActionType="UseTTS">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+          <Action OrderNumber="2" TextAuraFontSize="9" TextAuraFontName="宋体" TriggerId="e793bac4-b9f9-413f-a429-4e9464d1560c" TriggerText="Tip_Subtitle:去前后:5:0:0:main" ActionType="Trigger">
+            <Condition Enabled="false" Grouping="Or" />
+          </Action>
+        </Actions>
+        <Condition Enabled="false" Grouping="Or" />
+        <Conditions />
+      </Trigger>
+    </Triggers>
+  </ExportedFolder>
+</TriggernometryExport>
