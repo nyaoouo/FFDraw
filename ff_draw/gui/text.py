@@ -1,10 +1,16 @@
 import logging
 import struct
 
-import freetype
 import glm
 from OpenGL.GL import *
 from OpenGL.GL import shaders
+
+try:
+    import freetype
+except ImportError:
+    use_text = False
+else:
+    use_text = True
 
 font_buffer_struct = struct.Struct('16f')
 font_buffer_size = font_buffer_struct.size
@@ -68,8 +74,9 @@ class TextManager:
     logger = logging.getLogger('TextManager')
 
     def __init__(self, font_path):
-        self.face = freetype.Face(font_path)
+        if not use_text: return
         self.characters = {}
+        self.face = freetype.Face(font_path)
         self.face.set_char_size(2048)
 
         # compiling shaders
@@ -97,6 +104,7 @@ class TextManager:
         glBindVertexArray(0)
 
     def _make_character(self, c):
+        if not use_text: return
         self.face.load_char(c)
         glyph = self.face.glyph
 
@@ -116,6 +124,7 @@ class TextManager:
         return res
 
     def prepare_string(self, s):
+        if not use_text: return
         for c in s:
             if c not in self.characters:
                 yield self._make_character(c)
@@ -123,6 +132,7 @@ class TextManager:
                 yield self.characters[c]
 
     def string_size(self, s):
+        if not use_text: return
         y = x = 0
         for _, (_x, _y) in self.prepare_string(s):
             x += _x
@@ -130,11 +140,13 @@ class TextManager:
         return glm.vec2(x, -y)
 
     def set_projection(self, projection: glm.mat4):
+        if not use_text: return
         glUseProgram(self.program)
         glUniformMatrix4fv(glGetUniformLocation(self.program, "projection"), 1, GL_FALSE, glm.value_ptr(projection))
         glUseProgram(0)
 
     def render_text(self, text, text_pos: glm.vec2, scale=1, color=(1, 1, 1), at=TextPosition.left_bottom):
+        if not use_text: return
         glUseProgram(self.program)
         glUniform3f(glGetUniformLocation(self.program, "textColor"), *color)
 
