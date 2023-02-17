@@ -61,6 +61,8 @@ def make_value(parser: 'FuncParser', value, res: ResMap, args: dict[str, typing.
             return '(omen.remaining_time)'
         case 'is_hit':
             return f'(int(omen.is_hit({make_value(parser, value.get("pos"), res, args)})))'
+        case 'count_hit_actor':
+            return f'(sum(int(omen.is_hit(_a.pos)) for _a in (main.mem.actor_table.get_actor_by_id(_i) for _i in ({make_value(parser, value.get("ids"), res, args)})) if _a))'
         case 'progress':
             return "(omen.progress)"
         case 'destroy_omen':
@@ -128,6 +130,8 @@ def make_value(parser: 'FuncParser', value, res: ResMap, args: dict[str, typing.
             return "(min(" + (",".join(make_value(parser, v, res, args) for v in value.get('values', []))) + "))"
         case 'max':
             return "(max(" + (",".join(make_value(parser, v, res, args) for v in value.get('values', []))) + "))"
+        case 'string_format':
+            return f"({make_value(parser, value.get('format', []), res, args)}.format({','.join(make_value(parser, v, res, args) for v in value.get('args', []))}))"
         case 'fan':
             return f"((0x50000|{make_value(parser, value.get('deg', 0), res, args)}),({make_value(parser, value.get('range', 0), res, args)},)*3)"
         case 'circle':
@@ -213,6 +217,22 @@ class FuncParser:
                 return self.parse_func(command.get('func'), args | {k: self.parse_value(v, args) for k, v in command.get('args', {}).items()})
             case 'foreach':
                 return [self.parse_func(command.get('func'), args | {command.get('name', 'v'): v}) for v in self.parse_value(command.get('values'), args)]
+            case 'add_line':
+                width = self.parse_value_lambda(command.get('width',3), args)
+                color = self.parse_value_lambda(command.get('color'), args)
+                src = self.parse_value_lambda(command.get('src'), args)
+                dst = self.parse_value_lambda(command.get('dst'), args)
+                return omen_module.Line(
+                    main=self.main,
+                    src=src, dst=dst,
+                    line_color=color,
+                    line_width=width,
+                    label=self.parse_value_lambda(command.get('label', ''), args),
+                    label_color=self.parse_value_lambda(command.get('label_color', [0, 0, 0]), args),
+                    label_scale=self.parse_value_lambda(command.get('label_scale', 1), args),
+                    label_at=self.parse_value_lambda(command.get('label_at', 1), args),
+                    duration=command.get('duration', 0),
+                ).oid
             case 'add_omen':
                 if 'shape_scale' in command:
                     shape = scale = None

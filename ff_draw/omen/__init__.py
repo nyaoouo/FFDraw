@@ -125,23 +125,17 @@ class BaseOmen:
             self.facing = self.get_maybe_callable(self._facing) or 0
             self.current_alpha = self.get_maybe_callable(self._alpha)
             if self._surface_line_color is None:
-                self.surface_color = self.get_color(self.get_maybe_callable(self._surface_color))
-                self.line_color = self.get_color(self.get_maybe_callable(self._line_color))
+                surface_color = self.get_maybe_callable(self._surface_color)
+                line_color = self.get_maybe_callable(self._line_color)
+                self.surface_color = self.get_color(self.preset_colors.get(surface_color)[0] if surface_color in self.preset_colors else surface_color)
+                self.line_color = self.get_color(self.preset_colors.get(line_color)[1] if line_color in self.preset_colors else line_color)
             else:
                 slc = self.get_maybe_callable(self._surface_line_color)
                 self.surface_color, self.line_color = self.preset_colors.get(slc) if isinstance(slc, str) else (slc, None)
             self.line_width = self.get_maybe_callable(self._line_width)
-            self.main.gui.add_3d_shape(
-                self.shape,
-                glm.translate(self.pos) * glm.rotate(self.facing, glm.vec3(0, 1, 0)) * glm.scale(self.scale),
-                self.surface_color, self.line_color, self.line_width,
-            )
+            self.render()
             if self.shape == 0x20002:  # 0x20000|2 *cross
-                self.main.gui.add_3d_shape(
-                    self.shape,
-                    glm.translate(self.pos) * glm.rotate(self.facing + pi_2, glm.vec3(0, 1, 0)) * glm.scale(self.scale),
-                    self.surface_color, self.line_color, self.line_width,
-                )
+                self.render(True)
         self.label = self.get_maybe_callable(self._label)
         if self.label:
             if self.pos is None: self.pos = self.get_maybe_callable(self._pos)
@@ -155,3 +149,56 @@ class BaseOmen:
                     self.get_maybe_callable(self._label_color),
                     self.get_maybe_callable(self._label_at)
                 )
+
+    def render(self, cross=False):
+        f = self.facing + pi_2 if cross else self.facing
+        self.main.gui.add_3d_shape(
+            self.shape,
+            glm.translate(self.pos) * glm.rotate(f, glm.vec3(0, 1, 0)) * glm.scale(self.scale),
+            self.surface_color, self.line_color, self.line_width,
+        )
+
+
+def on_get_line_shape(omen: 'Line'):
+    omen._pos = omen.src = src = omen.get_maybe_callable(omen._src)
+    omen.dst = dst = omen.get_maybe_callable(omen._dst)
+    if not (src and dst and src != dst): return 0
+    dis = glm.distance(src, dst)
+    omen._scale = glm.vec3(dis, 1, dis)
+    omen._facing = glm.polar(dst - src).y
+    omen.long = math.atan2(src.y-dst.y, glm.distance(src.xz, dst.xz))
+    return 0x80000
+
+
+class Line(BaseOmen):
+    src: glm.vec3 = None
+    dst: glm.vec3 = None
+    long = 0
+
+    def __init__(self, main: 'FFDraw', src, dst, line_color=None, line_width=3.0, label='',
+                 label_color=None, label_scale=1, label_at=1, duration=0, alpha=None):
+        self._src = src
+        self._dst = dst
+        super().__init__(
+            main=main,
+            pos=lambda o: o.pos,
+            shape=on_get_line_shape, scale=lambda o: o.shape,
+            facing=lambda o: o.facing,
+            line_color=line_color,
+            line_width=line_width,
+
+            label=label,
+            label_color=label_color,
+            label_scale=label_scale,
+            label_at=label_at,
+
+            duration=duration,
+            alpha=alpha,
+        )
+
+    def render(self, _=None):
+        self.main.gui.add_3d_shape(
+            self.shape,
+            glm.translate(self.pos) * glm.rotate(self.facing, glm.vec3(0, 1, 0)) * glm.rotate(self.long, glm.vec3(1, 0, 0)) * glm.scale(self.scale),
+            self.surface_color, self.line_color, self.line_width,
+        )

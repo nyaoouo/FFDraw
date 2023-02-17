@@ -16,7 +16,7 @@
 * 去 [release](https://github.com/nyaoouo/FFDraw/releases/latest) 下载带exe的发布
 * 双击 `FFDraw.exe` 运行
 * 注：exe版本未必属于最新版本，也未必适应你的运行环境，请尽量使用python版本或从其他人获取最新版本的build (安装 `pyinstaller` 并运行 `pack.py`)
-* 注2：cn版本与正常版本差异为默认值适配国内网络、国服默认路径编码，无需手动设置，两个版本均能适用与国服与国际服  
+* 注2：cn版本与正常版本差异为默认值适配国内网络、国服默认路径编码，无需手动设置，两个版本均能适用与国服与国际服
 
 ### 注
 
@@ -69,6 +69,22 @@
 | `label_color` |           `number[3]`            |                                 显示文字的颜色                                 |
 | `label_scale` |             `number`             |                                 显示文字的比例                                 |
 |  `label_at`   |             `number`             |             显示文字的相对坐标的位置（[参见这里](./ff_draw/gui/text.py#L41)）             |
+
+---
+#### 指令：add_line
+
+* 描述：添加一个线条 omen_id
+
+|      参数       |                类型                |             描述             |
+|:-------------:|:--------------------------------:|:--------------------------:|
+|     `src`     |           `number[3]`            |           线条的来源            |
+|     `dst`     |           `number[3]`            |           线条的目标            |
+|    `width`    |             `number`             |          线条粗幼，默认3          |
+|    `color`    | `string`/`number[3]`/`number[4]` | 线条颜色，输入为 `string` 时会套用预设配色 |
+|    `label`    |             `string`             |         在指定位置显示的文字         |
+| `label_color` |           `number[3]`            |          显示文字的颜色           |
+| `label_scale` |             `number`             |          显示文字的比例           |
+|  `label_at`   |             `number`             |        显示文字的相对坐标的位置        |
 
 ---
 
@@ -178,6 +194,17 @@
 | 参数  |     类型      |  描述   |
 |:---:|:-----------:|:-----:|
 | pos | `number[3]` | 查询坐标 |
+
+---
+
+#### 关键字：count_hit_actor
+
+* 类型： `number`
+* 描述：当前图形覆盖了多少个actor
+
+| 参数  |     类型     |     描述      |
+|:---:|:----------:|:-----------:|
+| ids | `number[]` | actor id 列表 |
 
 ---
 
@@ -482,6 +509,18 @@
 |  参数  |    类型    | 描述  |
 |:----:|:--------:|:---:|
 | values | number[] | 数值 |
+
+---
+
+#### 关键字：string_format
+
+* 类型： `string`
+* 描述：`format`.format(*`args`)
+
+|   参数   |   类型   | 描述  |
+|:------:|:------:|:---:|
+| format | string | 格式  |
+|  args  | any[]  | 数值  |
 
 ---
 
