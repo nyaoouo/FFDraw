@@ -119,12 +119,18 @@ class FFDraw:
             return aiohttp.web.json_response({'success': True, 'res': self.parser.parse_func(json.loads(line))})
         except Exception as e:
             self.logger.warning('exception in processing rpc request line:' + line, exc_info=e)
-            return aiohttp.web.json_response({'success': False})
+            return aiohttp.web.json_response({'success': False, 'msg': 'server exception'})
+
+    async def rpc_handler_required_password(self, request):
+        return aiohttp.web.json_response({'success': False, 'msg': 'required password'})
 
     def start_http_server(self, host=None, port=None):
         app = aiohttp.web.Application()
-        rpc_path = ('/rpc/' + self.rpc_password) if self.rpc_password else '/rpc'
-        app.router.add_post(rpc_path, self.rpc_handler)
+        if self.rpc_password:
+            app.router.add_post('/rpc/' + self.rpc_password, self.rpc_handler)
+            app.router.add_post('/rpc', self.rpc_handler_required_password)
+        else:
+            app.router.add_post('/rpc', self.rpc_handler)
         if self.enable_cors:
             cors = aiohttp_cors.setup(app, defaults={
                 "*": aiohttp_cors.ResourceOptions(
