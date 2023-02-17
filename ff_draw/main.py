@@ -21,6 +21,7 @@ else:
 from . import gui, omen, mem, func_parser, plugins, update
 
 cfg_path = pathlib.Path(os.environ['ExcPath']) / 'config.json'
+default_cn = bool(os.environ.get('DefaultCn'))
 
 
 class FFDraw:
@@ -30,7 +31,10 @@ class FFDraw:
     def __init__(self, pid: int):
         self.config = json.loads(cfg_path.read_text('utf-8')) if cfg_path.exists() else {}
         self.rpc_password = self.config.setdefault('rpc_password', '')
-        self.path_encoding = self.config.setdefault('path_encoding', sys.getfilesystemencoding())
+        if default_cn:
+            self.path_encoding = self.config.setdefault('path_encoding', 'gbk')
+        else:
+            self.path_encoding = self.config.setdefault('path_encoding', sys.getfilesystemencoding())
         web_server_cfg = self.config.setdefault('web_server', {})
         self.http_host = web_server_cfg.setdefault('host', '127.0.0.1')
         self.http_port = web_server_cfg.setdefault('port', 8001)
@@ -39,7 +43,7 @@ class FFDraw:
         self.logger.debug(f'set path_encoding:%s', self.path_encoding)
 
         threading.Thread(target=update.check, args=(
-            self.config.setdefault('update_source', 'github'),
+            self.config.setdefault('update_source', ('fastgit' if default_cn else 'github')),
         )).start()
 
         self.mem = mem.XivMem(self, pid)

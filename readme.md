@@ -16,6 +16,7 @@
 * 去 [release](https://github.com/nyaoouo/FFDraw/releases/latest) 下载带exe的发布
 * 双击 `FFDraw.exe` 运行
 * 注：exe版本未必属于最新版本，也未必适应你的运行环境，请尽量使用python版本或从其他人获取最新版本的build (安装 `pyinstaller` 并运行 `pack.py`)
+* 注2：cn版本与正常版本差异为默认值适配国内网络、国服默认路径编码，无需手动设置，两个版本均能适用与国服与国际服  
 
 ### 注
 

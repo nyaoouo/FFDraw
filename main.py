@@ -10,7 +10,8 @@ from nylib.logging import install
 from nylib.utils.win32.process import enable_privilege, pid_by_executable, is_admin, runas
 from ff_draw.main import FFDraw
 
-if __name__ == "__main__":
+
+def main():
     install()
     try:
         if not is_admin():
@@ -23,3 +24,7 @@ if __name__ == "__main__":
     except Exception as e:
         logging.critical('critical error occurred', exc_info=e)
         os.system('pause')
+
+
+if __name__ == "__main__":
+    main()
