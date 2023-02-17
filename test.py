@@ -222,4 +222,46 @@ demo_8 = {
     },
     'duration': 10,
 }
-print(post(f'http://127.0.0.1:8001/rpc', json=demo_8).text)
+# 在脚下生成一个omen，并且label里面有多少玩家
+demo_9 = {
+    'cmd': 'add_omen',
+    'color': 'friend',
+    # 'shape_scale': {'key': 'fan', 'deg': 60, 'range': 5, },
+    'shape_scale': {'key': 'circle', 'range': 5, },
+    'pos': {
+        'key': 'actor_pos',
+        'id': {'key': 'me'},
+    },
+    'facing': {
+        'key': 'actor_facing',
+        'id': {'key': 'me'},
+    },
+    'duration': 10,
+    'label': {
+        'key': 'string_format',
+        'format': 'hit:{}',
+        'args': [{
+            'key': 'count_hit_actor',
+            'ids': {'key': 'actors_by_type', 'type': 1},
+        }],
+    },
+}
+# 画一条和目标的连线
+demo_10 = {
+    'cmd': 'add_line',
+    'color': 'enemy',
+    'src': {
+        'key': 'actor_pos',
+        'id': {'key': 'me'},
+    },
+    'dst': {
+        'key': 'fallback',
+        'expr': {
+            'key': 'actor_pos',
+            'id': {'key': 'target', 'id': {'key': 'me'}},
+        },
+        'default': None,
+    },
+    'duration': 10,
+}
+print(post(f'http://127.0.0.1:8001/rpc', json=demo_10).text)
