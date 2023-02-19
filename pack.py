@@ -1,5 +1,6 @@
 import os
 import pathlib
+import shutil
 import subprocess
 import time
 import zipfile
@@ -16,6 +17,7 @@ os.system(
     '..\main_cn.py'
 )
 os.chdir('../')
+shutil.copy(r'pack_assets/dist/main.exe','FFDraw.exe')
 p = pathlib.Path(time.strftime("pack_assets/release/%Y_%m_%d_%H_%M_%S"))
 p.mkdir(parents=True)
 with zipfile.ZipFile(p / 'ffd_cn_release.zip', 'w') as zf_cn, zipfile.ZipFile(p / 'ffd_release.zip', 'w') as zf:

@@ -9,6 +9,10 @@ if typing.TYPE_CHECKING:
 status_struct = struct.Struct('HHfI')
 
 
+def is_invalid_id(i):
+    return i == 0 or i == 0xe0000000
+
+
 class StatusManager:
     def __init__(self, actor: 'Actor', address):
         self.actor = actor
@@ -174,6 +178,8 @@ class ActorTable:
                 break
 
     def get_actor_by_id(self, actor_id):
+        if is_invalid_id(actor_id):
+            return None
         left = 0
         right = self.sorted_length - 1
         while left <= right:

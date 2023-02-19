@@ -18,7 +18,7 @@ except ImportError:
 else:
     use_aiohttp_cors = True
 
-from . import gui, omen, mem, func_parser, plugins, update
+from . import gui, omen, mem, func_parser, plugins, update, sniffer
 
 cfg_path = pathlib.Path(os.environ['ExcPath']) / 'config.json'
 default_cn = bool(os.environ.get('DefaultCn'))
@@ -53,6 +53,8 @@ class FFDraw:
         self.gui.always_draw = self.config.setdefault('gui', {}).setdefault('always_draw', False)
         self.gui.interfaces.add(self.update)
         self.gui_thread = None
+
+        self.sniffer = sniffer.Sniffer(self)
 
         self.parser = func_parser.FuncParser(self)
 
@@ -94,6 +96,9 @@ class FFDraw:
         self.gui_thread = threading.Thread(target=self.gui.start, daemon=True)
         self.gui_thread.start()
 
+    def start_sniffer(self):
+        self.sniffer.start()
+
     def update(self, _=None):
         for omen in list(self.omens.values()):
             try:
@@ -101,21 +106,6 @@ class FFDraw:
             except Exception as e:
                 self.logger.error(f"error when drawing omen:", exc_info=e)
                 omen.destroy()
-        # try:
-        #     self.draw_me()
-        # except Exception as e:
-        #     self.logger.error(f"error when drawing point:", exc_info=e)
-
-    def draw_me(self):
-        if me := self.mem.actor_table.me:
-            self.gui.add_3d_shape(
-                0x50000 | 90,
-                glm.translate(me.pos) *
-                glm.rotate(me.facing, glm.vec3(0, 1, 0)) *
-                glm.scale(glm.vec3(5, 5, 5)),
-                glm.vec4(.5, .5, 1, .3),
-                glm.vec4(.5, .5, 1, .7),
-            )
 
     async def rpc_handler(self, request):
         line = await request.text()
