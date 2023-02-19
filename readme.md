@@ -665,3 +665,6 @@
 * 编写python模块置于plugins文件夹中，会自动导入
 * `update(main:FFDraw)->any` 每帧调用，一般用于直接调用gui进行绘制
 * `process_command(command:dict)->bool` httpapi在找不到指令cmd时调用，返回true为已处理
+
+## 预设
+* UCOB https://github.com/zfxsquare/FFD_trigger
