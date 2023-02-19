@@ -668,3 +668,4 @@
 
 ## 预设
 * UCOB https://github.com/zfxsquare/FFD_trigger
+* p5s https://github.com/qingqingthe/FFD_trigger
