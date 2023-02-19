@@ -10,12 +10,13 @@ os.environ['ExcPath'] = str(exc_path)
 from nylib.logging import install
 from nylib.utils.win32.process import enable_privilege, pid_by_executable, is_admin, runas
 
-install()
-logging.debug(f'current Pid:%s', os.getpid())
 
 def main():
+    multiprocessing.freeze_support()
     try:
         from ff_draw.main import FFDraw
+        install()
+        logging.debug(f'current Pid:%s')
         if not is_admin():
             runas()
             exit()
@@ -30,6 +31,4 @@ def main():
 
 
 if __name__ == "__main__":
-    if getattr(sys, 'frozen', False):
-        multiprocessing.freeze_support()
     main()
