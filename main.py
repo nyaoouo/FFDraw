@@ -9,13 +9,13 @@ os.environ['ExcPath'] = str(exc_path)
 
 from nylib.logging import install
 from nylib.utils.win32.process import enable_privilege, pid_by_executable, is_admin, runas
-from ff_draw.main import FFDraw
 
 install()
 logging.debug(f'current Pid:%s', os.getpid())
 
 def main():
     try:
+        from ff_draw.main import FFDraw
         if not is_admin():
             runas()
             exit()
