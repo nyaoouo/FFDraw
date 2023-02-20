@@ -10,7 +10,7 @@ if use_imgui:
 class Radar(FFDrawPlugin):
     def __init__(self, main):
         super().__init__(main)
-        self.print_name = self.main.config.setdefault('radar', {}).setdefault('print_name', True)
+        self.print_name = self.data.setdefault('print_name', True)
         self.show_imgui_window = use_imgui
 
     def render_imgui_window(self):
@@ -21,8 +21,8 @@ class Radar(FFDrawPlugin):
         #     self.main.save_config()
         clicked, self.print_name = imgui.checkbox("show name", self.print_name)
         if clicked:
-            self.main.config.setdefault('radar', {})['print_name'] = self.print_name
-            self.main.save_config()
+            self.data['print_name'] = self.print_name
+            self.storage.save()
 
     def update(self, main):
         if self.show_imgui_window:

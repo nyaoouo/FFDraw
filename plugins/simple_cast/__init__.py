@@ -19,7 +19,7 @@ class SimpleCast(FFDrawPlugin):
     def __init__(self, main):
         super().__init__(main)
         self.main.sniffer.on_zone_server_message[ZoneServer.ActorCast].append(self.on_cast)
-        self.show_friend = self.main.config.setdefault('simple_cast', {}).setdefault('show_friend', True)
+        self.show_friend = self.data.setdefault('show_friend', True)
         self.show_imgui_window = True
 
         # TODO: 等统一接口
@@ -103,8 +103,8 @@ class SimpleCast(FFDrawPlugin):
             if expanded:
                 clicked, self.show_friend = imgui.checkbox("show_friend", self.show_friend)
                 if clicked:
-                    self.main.config.setdefault('simple_cast', {})['show_friend'] = self.show_friend
-                    self.main.save_config()
+                    self.data['show_friend'] = self.show_friend
+                    self.storage.save()
             # if (me := main.mem.actor_table.me) and (tg := main.mem.actor_table.get_actor_by_id(me.target_id)):
             #     battalion_mode = self.main.sq_pack.sheets.territory_type_sheet[self.main.mem.territory_type].battalion_mode
             #     me_key = self.get_battalion_key(me, battalion_mode)

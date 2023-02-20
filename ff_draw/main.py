@@ -20,7 +20,6 @@ else:
 
 from . import gui, omen, mem, func_parser, plugins, update, sniffer
 
-cfg_path = pathlib.Path(os.environ['ExcPath']) / 'config.json'
 default_cn = bool(os.environ.get('DefaultCn'))
 
 
@@ -29,7 +28,9 @@ class FFDraw:
     logger = logging.getLogger('FFDraw')
 
     def __init__(self, pid: int):
-        self.config = json.loads(cfg_path.read_text('utf-8')) if cfg_path.exists() else {}
+        self.app_data_path = pathlib.Path(os.environ['ExcPath'])/'AppData'
+        self.cfg_path = self.app_data_path / 'config.json'
+        self.config = json.loads(self.cfg_path.read_text('utf-8')) if self.cfg_path.exists() else {}
         self.rpc_password = self.config.setdefault('rpc_password', '')
         if default_cn:
             self.path_encoding = self.config.setdefault('path_encoding', 'gbk')
@@ -71,7 +72,8 @@ class FFDraw:
         self.save_config()
 
     def save_config(self):
-        cfg_path.write_text(json.dumps(self.config, ensure_ascii=False, indent=4), encoding='utf-8')
+        self.cfg_path.parent.mkdir(exist_ok=True,parents=True)
+        self.cfg_path.write_text(json.dumps(self.config, ensure_ascii=False, indent=4), encoding='utf-8')
 
     def load_plugins(self):
         plugin_path = os.path.join(os.environ['ExcPath'], 'plugins')
@@ -82,15 +84,19 @@ class FFDraw:
             self.config['enable_plugins'] = enable_plugins = {k: True for k in enable_plugins}
 
         for i, mod in enumerate(pkgutil.iter_modules([plugin_path])):
-            if enable_plugins.setdefault(mod.name,False):
+            if enable_plugins.setdefault(mod.name, False):
                 self.logger.debug(f'load plugin {mod.name}')
                 importlib.import_module(mod.name)
             else:
                 self.logger.debug(f'disable plugin {mod.name}')
-        self.plugins = [p(self) for p in plugins.plugins if p != plugins.FFDrawPlugin]
-        for plugin in self.plugins:
-            if plugin.__class__.update != plugins.FFDrawPlugin.update:
-                self.gui.interfaces.add(plugin.update)
+
+        self.plugins = []
+        for p in plugins.plugins:
+            if p != plugins.FFDrawPlugin:
+                self.plugins.append(plugin := p(self))
+                plugin.storage.save()
+                if p.update != plugins.FFDrawPlugin.update:
+                    self.gui.interfaces.add(plugin.update)
 
     def start_gui_thread(self):
         assert not self.gui_thread
