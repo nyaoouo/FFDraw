@@ -2,8 +2,13 @@ import bisect
 import ipaddress
 import logging
 import multiprocessing.connection
+import typing
 
-from scapy.all import AsyncSniffer
+import numpy as np  # use to avoid warning in subprocess
+from nylib.logging import install
+
+if typing.TYPE_CHECKING:
+    from scapy.all import AsyncSniffer
 
 
 class TcpBuffer:
@@ -58,13 +63,14 @@ class TcpBuffer:
 class SniffRunner:
     target: tuple[str, int] = None
     logger = logging.getLogger('SniffRunner')
-    sniff: AsyncSniffer | None = None
+    sniff: 'AsyncSniffer | None' = None
 
     def __init__(self, pipe: multiprocessing.connection.Connection):
         self.buffers = {}
         self.pipe = pipe
 
     def on_target_change(self, t: tuple[str, int] | None):
+        from scapy.all import AsyncSniffer
         if self.sniff:
             self.sniff.stop()
         self.sniff = None
@@ -119,4 +125,8 @@ class SniffRunner:
 
 
 def start_sniff(pipe: multiprocessing.connection.Connection):
-    SniffRunner(pipe).start()
+    install()
+    try:
+        SniffRunner(pipe).start()
+    except Exception as e:
+        logging.error('error in sniff runner', exc_info=e)
