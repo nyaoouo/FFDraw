@@ -3,7 +3,7 @@ import multiprocessing
 import os
 import pathlib
 import typing
-from nylib.utils import serialize_data, KeyRoute
+from nylib.utils import serialize_data, KeyRoute, BroadcastHook
 from nylib.utils.win32.network import find_process_tcp_connections
 from . import enums, sniffer
 from .message_structs import zone_server, zone_client, chat_server, chat_client
@@ -40,18 +40,24 @@ class Sniffer:
         self.on_chat_client_message = KeyRoute(lambda m: m.proto_no)
         self.on_zone_server_message = KeyRoute(lambda m: m.proto_no)
         self.on_zone_client_message = KeyRoute(lambda m: m.proto_no)
+        self.on_actor_control = KeyRoute(lambda m: m.id)
+        self.on_action_effect = BroadcastHook()
 
         self.on_zone_server_message[enums.ZoneServer.ActorControl].append(self._on_actor_control)
         self.on_zone_server_message[enums.ZoneServer.ActorControlSelf].append(self._on_actor_control_self)
         self.on_zone_server_message[enums.ZoneServer.ActorControlTarget].append(self._on_actor_control_target)
-        self.on_actor_control = KeyRoute(lambda m: m.id)
+        self.on_zone_server_message[enums.ZoneServer.Effect].append(self.on_action_effect)
+        self.on_zone_server_message[enums.ZoneServer.AoeEffect8].append(self.on_action_effect)
+        self.on_zone_server_message[enums.ZoneServer.AoeEffect16].append(self.on_action_effect)
+        self.on_zone_server_message[enums.ZoneServer.AoeEffect24].append(self.on_action_effect)
+        self.on_zone_server_message[enums.ZoneServer.AoeEffect32].append(self.on_action_effect)
 
         self.pipe, child_pipe = multiprocessing.Pipe()
         self.sniff_process = multiprocessing.Process(target=sniffer.start_sniff, args=(child_pipe,), daemon=True)
 
         self.config = self.main.config.setdefault('sniffer', {})
         self.print_packets = self.config.setdefault('print_packets', False)
-        self.print_actor_control = self.config.setdefault('print_actor_control', True)
+        self.print_actor_control = self.config.setdefault('print_actor_control', False)
         self.packet_fix = self.main.mem.packet_fix
 
         main.gui.timer.add_mission(self.update_tcp_target, 1, -1)
@@ -119,7 +125,7 @@ class Sniffer:
         try:
             evt = message.NetworkMessage(proto_no=pno, raw_message=msg, header=msg.el_header, message=data)
             if self.print_packets:
-                source_name = getattr(self.main.mem.actor_table.get_actor_by_id(evt.header.source_id),'name',None)
+                source_name = getattr(self.main.mem.actor_table.get_actor_by_id(evt.header.source_id), 'name', None)
                 self.logger.debug(f'{"Zone" if is_server else "Chat"}{"Client" if is_up else "Server"}[{pno}] {source_name}#{evt.header.source_id:x} {serialize_data(data)}')
             call(evt)
         except Exception as e:
