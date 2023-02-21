@@ -7,6 +7,7 @@ import time
 
 from nylib.utils import Counter
 from .hit_check import hit_check
+from . import effector
 
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
@@ -35,6 +36,7 @@ class BaseOmen:
     label_color = (0, 0, 0)
     label_scale = 1
     label_at = 1
+    effectors: list[effector.Effector]
 
     def __init__(
             self,
@@ -55,6 +57,8 @@ class BaseOmen:
             label_at=1,
 
             duration=0,
+            in_effector=effector.ScaleInEffector,
+            out_effector=effector.FadeOutEffector,
             alpha=None,
     ):
         self.oid = omen_counter.get()
@@ -81,7 +85,12 @@ class BaseOmen:
         self._alpha = alpha or 1
         self.current_alpha = 1
         self.main.omens[self.oid] = self
-        self.logger.debug(f'create omen {self.oid}')
+        # self.logger.debug(f'create omen {self.oid}')
+
+        self.effectors = []
+        self._out_effect_playing = False
+        self._out_effector = out_effector
+        if in_effector: self.apply_effect(in_effector)
 
     def get_maybe_callable(self, f):
         return f(self) if callable(f) else f
@@ -89,11 +98,22 @@ class BaseOmen:
     def get_color(self, c):
         if c:
             r, g, b, *a = c
-            return glm.vec4(r, g, b, (self.current_alpha * a[0]) if a else self.current_alpha)
+            _c = glm.vec4(r, g, b, (self.current_alpha * a[0]) if a else self.current_alpha)
+            for eff in self.effectors:
+                _c = eff.color(_c)
+            return _c
+
+    def apply_effect(self, eff: typing.Type[effector.Effector]):
+        if (e := eff.create(self)) and e.update():
+            self.effectors.append(e)
+
+    def timeout(self):
+        self.duration = -1
 
     def destroy(self):
         self.working = False
         self.main.omens.pop(self.oid, None)
+        return False
 
     @property
     def remaining_time(self):
@@ -107,8 +127,15 @@ class BaseOmen:
         return hit_check(self.shape, self.scale, self.pos, self.facing, dst)
 
     def draw(self):
-        if not self.working or self.duration and time.time() - self.start_at > self.duration:
-            self.destroy()
+        if not self.working: return self.destroy()
+        self.effectors = [eff for eff in self.effectors if eff.update()]
+        if not self.working: return self.destroy()
+        if self.duration and time.time() - self.start_at > self.duration:
+            if self._out_effector:
+                if not self._out_effect_playing:
+                    self.apply_effect(self._out_effector)
+            else:
+                return self.destroy()
         if self._shape_scale is None:
             self.shape = self.get_maybe_callable(self._shape)
             self.scale = self.get_maybe_callable(self._scale)
@@ -116,10 +143,14 @@ class BaseOmen:
             self.shape, self.scale = self.get_maybe_callable(self._shape_scale) or (None, None)
         if isinstance(self.scale, (tuple, list)):
             self.scale = glm.vec3(*self.scale)
-        if not self.working: self.destroy()
+        for eff in self.effectors:
+            self.scale = eff.scale(self.scale)
+        if not self.working: return self.destroy()
         self.pos = None
         if self.shape:
             self.pos = self.get_maybe_callable(self._pos)
+            for eff in self.effectors:
+                self.pos = eff.pos(self.pos)
             if isinstance(self.pos, (tuple, list)):
                 self.pos = glm.vec3(*self.pos)
             self.facing = self.get_maybe_callable(self._facing) or 0
@@ -131,7 +162,7 @@ class BaseOmen:
                 self.line_color = self.get_color(self.preset_colors.get(line_color)[1] if line_color in self.preset_colors else line_color)
             else:
                 slc = self.get_maybe_callable(self._surface_line_color)
-                self.surface_color, self.line_color = self.preset_colors.get(slc) if isinstance(slc, str) else (slc, None)
+                self.surface_color, self.line_color = map(self.get_color, self.preset_colors.get(slc) if isinstance(slc, str) else (slc, None))
             self.line_width = self.get_maybe_callable(self._line_width)
             self.render()
             if self.shape == 0x20002:  # 0x20000|2 *cross
@@ -166,7 +197,7 @@ def on_get_line_shape(omen: 'Line'):
     dis = glm.distance(src, dst)
     omen._scale = glm.vec3(dis, 1, dis)
     omen._facing = glm.polar(dst - src).y
-    omen.long = math.atan2(src.y-dst.y, glm.distance(src.xz, dst.xz))
+    omen.long = math.atan2(src.y - dst.y, glm.distance(src.xz, dst.xz))
     return 0x80000
 
 

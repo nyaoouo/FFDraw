@@ -66,7 +66,7 @@ def make_value(parser: 'FuncParser', value, res: ResMap, args: dict[str, typing.
         case 'progress':
             return "(omen.progress)"
         case 'destroy_omen':
-            return "(setattr(omen,'working',False))"
+            return "(omen.timeout())"
         case 'eval':
             code_key = res.add_eval_code(value.get("code"))
             value_args = "{'omen':omen,'glm':glm," + ','.join(f'{repr(k)}:{make_value(parser, v, res, args)}' for k, v in value.get('args', {}).items()) + '}'
@@ -218,7 +218,7 @@ class FuncParser:
             case 'foreach':
                 return [self.parse_func(command.get('func'), args | {command.get('name', 'v'): v}) for v in self.parse_value(command.get('values'), args)]
             case 'add_line':
-                width = self.parse_value_lambda(command.get('width',3), args)
+                width = self.parse_value_lambda(command.get('width', 3), args)
                 color = self.parse_value_lambda(command.get('color'), args)
                 src = self.parse_value_lambda(command.get('src'), args)
                 dst = self.parse_value_lambda(command.get('dst'), args)
@@ -270,11 +270,11 @@ class FuncParser:
                     cnt = 0
                     while omens:
                         if _omen := omens.pop(next(iter(omens.keys()), None)):
-                            _omen.destroy()
+                            _omen.timeout()
                             cnt += 1
                     return cnt
                 elif _omen := self.main.omens.get(oid):
-                    _omen.destroy()
+                    _omen.timeout()
                     return 1
                 return 0
             case unk:

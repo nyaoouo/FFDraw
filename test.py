@@ -264,4 +264,4 @@ demo_10 = {
     },
     'duration': 10,
 }
-print(post(f'http://127.0.0.1:8001/rpc', json=demo_10).text)
+print(post(f'http://127.0.0.1:8001/rpc', json=demo_8).text)
