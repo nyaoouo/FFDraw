@@ -22,13 +22,7 @@ class SimpleCast(FFDrawPlugin):
         self.show_friend = self.data.setdefault('show_friend', True)
         self.show_imgui_window = True
 
-        # TODO: 等统一接口
-        self.main.sniffer.on_zone_server_message[ZoneServer.Effect].append(lambda m: self.remove_actor_omen(m.header.source_id))
-        self.main.sniffer.on_zone_server_message[ZoneServer.AoeEffect8].append(lambda m: self.remove_actor_omen(m.header.source_id))
-        self.main.sniffer.on_zone_server_message[ZoneServer.AoeEffect16].append(lambda m: self.remove_actor_omen(m.header.source_id))
-        self.main.sniffer.on_zone_server_message[ZoneServer.AoeEffect24].append(lambda m: self.remove_actor_omen(m.header.source_id))
-        self.main.sniffer.on_zone_server_message[ZoneServer.AoeEffect32].append(lambda m: self.remove_actor_omen(m.header.source_id))
-
+        self.main.sniffer.on_action_effect.append(lambda m: self.remove_actor_omen(m.header.source_id))
         self.main.sniffer.on_actor_control[ActorControlId.CancelCast].append(lambda m: self.remove_actor_omen(m.source_id))
 
         self.actor_omens = {}
