@@ -26,4 +26,9 @@ with zipfile.ZipFile(p / 'ffd_cn_release.zip', 'w') as zf_cn, zipfile.ZipFile(p 
     for f in subprocess.check_output("git ls-files", shell=True).decode('utf-8').splitlines():
         zf.write(f, 'FFDraw/' + f, compresslevel=9, compress_type=zipfile.ZIP_DEFLATED)
         zf_cn.write(f, 'FFDraw/' + f, compresslevel=9, compress_type=zipfile.ZIP_DEFLATED)
-subprocess.Popen(f'explorer "{p}"')
+
+import tkinter as tk
+import tkinter.messagebox as msg_box
+tk.Tk().withdraw()
+if msg_box.askyesno(None,'open directory?'):
+    subprocess.Popen(f'explorer "{p}"')

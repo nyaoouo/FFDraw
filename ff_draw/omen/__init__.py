@@ -142,7 +142,7 @@ class BaseOmen:
             view = self.main.gui.get_view()
             label_pos, is_in_screen = view.world_to_screen(*self.pos)
             if is_in_screen:
-                self.main.gui.text_mgr.render_text(
+                self.main.gui.render_text(
                     self.label,
                     (label_pos * glm.vec2(1, -1) + 1) * view.screen_size / 2,
                     self.get_maybe_callable(self._label_scale),

@@ -4,7 +4,6 @@ scapy~=2.4.5
 pyglm
 pywin32
 numpy
-freetype-py
 requests
 pynput
 imgui

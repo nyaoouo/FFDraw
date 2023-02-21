@@ -41,7 +41,7 @@ class Radar(FFDrawPlugin):
             if self.print_name:
                 text_pos, valid = view.world_to_screen(*pos)
                 if not valid: continue
-                self.main.gui.text_mgr.render_text(
+                self.main.gui.render_text(
                     actor.name,
                     (text_pos * glm.vec2(1, -1) + 1) * view.screen_size / 2,
                     color=(1, 0, 1),

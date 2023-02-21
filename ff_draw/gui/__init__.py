@@ -82,7 +82,6 @@ class DrawTimeMgr:
 
 class Drawing:
     logger = logging.getLogger('Gui/Drawing')
-    text_mgr: text.TextManager = None
     imgui_renderer: 'ffd_imgui.OpenglPynputRenderer' = None
 
     def __init__(self, main: "FFDraw"):
@@ -98,29 +97,35 @@ class Drawing:
         self.always_draw = False
         self.hwnd = main.mem.hwnd
         self.timer = DrawTimeMgr()
-        self.font_path = self.main.config.setdefault('gui', {}).setdefault('font_path', './res/kaiu.ttf')
+        self.cfg = self.main.config.setdefault('gui', {})
+        self.font_path = self.cfg.setdefault('font_path', r'C:\Windows\Fonts\msyh.ttc')
+        self.font_size = self.cfg.setdefault('font_size', 18)
+        self._label_counter = 0
 
     def _init_everything_in_work_process(self):
         self.work_thread = threading.get_ident()
         self.window = window.init_window(self.hwnd)
         self.program = common_shader.get_common_shader()
         self.models = models.Models()
-        self.text_mgr = text.TextManager(self.font_path)
         if use_imgui:
             self.logger.debug('imgui is enabled')
             imgui.create_context()
             from . import ffd_imgui
             self.imgui_renderer = ffd_imgui.OpenglPynputRenderer(self.window)
+            fonts = imgui.get_io().fonts
+            self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size,fonts.get_glyph_ranges_chinese_full())
+            self.imgui_renderer.refresh_font_texture()
 
     def _process_single_frame(self):
+        self._label_counter = 0
         glfw.poll_events()
         self._view = view.View()
         self._view.projection_view, self._view.screen_size = self.main.mem.load_screen()
-        self.text_mgr.set_projection(glm.ortho(0, *self._view.screen_size, 0))
         process_draw = self.always_draw or GetForegroundWindow() == self.hwnd
         if use_imgui:
             self.imgui_renderer.process_inputs(process_draw)
             imgui.new_frame()
+            imgui.push_font(self.font)
 
         gl.glClearColor(0, 0, 0, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
@@ -154,6 +159,7 @@ class Drawing:
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
         if use_imgui:
+            imgui.pop_font()
             imgui.render()
             self.imgui_renderer.render(imgui.get_draw_data())
         glfw.swap_buffers(self.window)
@@ -224,3 +230,24 @@ class Drawing:
             point=point_color,
             point_size=point_size
         )
+
+    def render_text(self, string, text_pos: glm.vec2, scale=1, color=(1, 1, 1), at=text.TextPosition.left_bottom):
+        if not use_imgui: return
+        width, height = imgui.calc_text_size(string)
+        text_size = glm.vec2(width + 18, height+16)
+        imgui.set_next_window_position(*text.adjust(at, text_pos, text_size))
+        imgui.set_next_window_size(*text_size)
+        imgui.set_next_window_bg_alpha(.4)
+        imgui.push_style_color(imgui.COLOR_BORDER, *color)
+        imgui.begin(
+            f"_label_{self._label_counter:#x}",
+            flags=imgui.WINDOW_NO_TITLE_BAR |
+                  imgui.WINDOW_NO_RESIZE |
+                  imgui.WINDOW_NO_MOVE |
+                  imgui.WINDOW_NO_INPUTS |
+                  imgui.WINDOW_NO_BRING_TO_FRONT_ON_FOCUS
+        )
+        self._label_counter += 1
+        imgui.text_colored(string, *color)
+        imgui.end()
+        imgui.pop_style_color()

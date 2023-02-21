@@ -15,7 +15,7 @@ class Fps(FFDrawPlugin):
 
     def update(self, main):
         view = self.main.gui.get_view()
-        self.main.gui.text_mgr.render_text(
+        self.main.gui.render_text(
             self.fps_text,
             glm.vec2(0, view.screen_size.y),
             color=(1, 1, 0),
