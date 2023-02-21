@@ -31,7 +31,7 @@ class SimpleCast(FFDrawPlugin):
 
     def remove_actor_omen(self, actor_id):
         if omen := self.actor_omens.pop(actor_id, None):
-            omen.destroy()
+            omen.timeout()
 
     def get_battalion_key(self, actor: Actor, mode: int):
         # e8 * * * * 33 ? 48 ? ? 8b ? e8 ? ? ? ? 8b
