@@ -20,6 +20,7 @@
 
 ### 注
 
+* 如果遇到报错 `failed to set hardware filter to promiscuous mode` 之类，请修改 `config.json` 中的 `sniffer/sniff_promisc` 为 `false` 并重启程序
 * 如果遇到报错 `Npcap/Winpcap is not installed` 之类，请下载 [npcap](https://npcap.com/dist/npcap-1.72.exe) 安装后重启
 * 如果遇到编码问题 `utf8 cant decode` 之类，请修改 `config.json` 中的 `path_encoding` 为 `gbk` 并重启程序
 * 关于跨域：设置 `web_server/enable_cors`，另外如果你不打算给链接设置ssl， chrome 请在 [chrome://flags/](chrome://flags/) 中设置 `Block insecure private network requests`
