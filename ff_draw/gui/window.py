@@ -15,22 +15,21 @@ def set_window_cover(window, hwnd):
     gl.glViewport(0, 0, x_size, y_size)
 
 
-def init_window(hwnd):
-    if not glfw.init():
-        raise Exception("glfw can not be initialized")
-
+def init_window(title: str, past_through=False, parent=None,game_hwnd = None):
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_COMPAT_PROFILE)
     glfw.window_hint(glfw.TRANSPARENT_FRAMEBUFFER, glfw.TRUE)
-    glfw.window_hint(glfw.FLOATING, glfw.TRUE)
     glfw.window_hint(glfw.DECORATED, glfw.FALSE)
-    glfw.window_hint(glfw.MOUSE_PASSTHROUGH, glfw.TRUE)
+    if past_through:
+        glfw.window_hint(glfw.FLOATING, glfw.TRUE)
+        glfw.window_hint(glfw.MOUSE_PASSTHROUGH, glfw.TRUE)
 
-    window = glfw.create_window(1024, 980, "ff_draw", None, None)
+    window = glfw.create_window(1024, 980, title, None, parent)
     glfw.make_context_current(window)
     if not window:
         glfw.terminate()
         raise Exception("glfw can not create window")
-    set_window_cover(window, hwnd)
+    if game_hwnd:
+        set_window_cover(window, game_hwnd)
     return window

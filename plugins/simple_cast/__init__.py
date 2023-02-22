@@ -18,16 +18,22 @@ class SimpleCast(FFDrawPlugin):
 
     def __init__(self, main):
         super().__init__(main)
-        self.main.sniffer.on_zone_server_message[ZoneServer.ActorCast].append(self.on_cast)
         self.show_friend = self.data.setdefault('show_friend', True)
-        self.show_imgui_window = True
 
-        self.main.sniffer.on_action_effect.append(lambda m: self.remove_actor_omen(m.header.source_id))
-        self.main.sniffer.on_actor_control[ActorControlId.CancelCast].append(lambda m: self.remove_actor_omen(m.source_id))
+        self.main.sniffer.on_zone_server_message[ZoneServer.ActorCast].append(self.on_cast)
+        self.msg_remove_omen = lambda m: self.remove_actor_omen(m.header.source_id)
+        self.main.sniffer.on_action_effect.append(self.msg_remove_omen)
+        self.main.sniffer.on_actor_control[ActorControlId.CancelCast].append(self.msg_remove_omen)
 
         self.actor_omens = {}
         self.bnpc_battalion_offset = self.main.mem.scanner.find_val('44 ? ? ? * * * * 4c 89 68 ? 4c 89 70')[0]
         self.logger.debug(f'bnpc b offset {self.bnpc_battalion_offset:x}')
+
+    def on_unload(self):
+        self.main.sniffer.on_zone_server_message[ZoneServer.ActorCast].remove(self.on_cast)
+        self.main.sniffer.on_action_effect.remove(self.msg_remove_omen)
+        self.main.sniffer.on_actor_control[ActorControlId.CancelCast].remove(self.msg_remove_omen)
+
 
     def remove_actor_omen(self, actor_id):
         if omen := self.actor_omens.pop(actor_id, None):
@@ -91,17 +97,8 @@ class SimpleCast(FFDrawPlugin):
             duration=data.cast_time + .3,
         )
 
-    def update(self, main):
-        if self.show_imgui_window:
-            expanded, self.show_imgui_window = imgui.begin('simple_cast', self.show_imgui_window)
-            if expanded:
-                clicked, self.show_friend = imgui.checkbox("show_friend", self.show_friend)
-                if clicked:
-                    self.data['show_friend'] = self.show_friend
-                    self.storage.save()
-            # if (me := main.mem.actor_table.me) and (tg := main.mem.actor_table.get_actor_by_id(me.target_id)):
-            #     battalion_mode = self.main.sq_pack.sheets.territory_type_sheet[self.main.mem.territory_type].battalion_mode
-            #     me_key = self.get_battalion_key(me, battalion_mode)
-            #     tg_key = self.get_battalion_key(tg, battalion_mode)
-            #     imgui.text(f'[{battalion_mode}]{me.name}({me_key}) => {tg.name}({tg_key}) {self.is_enemy(me, tg)}')
-            imgui.end()
+    def draw_panel(self):
+        clicked, self.show_friend = imgui.checkbox("show_friend", self.show_friend)
+        if clicked:
+            self.data['show_friend'] = self.show_friend
+            self.storage.save()

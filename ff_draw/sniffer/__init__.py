@@ -61,7 +61,7 @@ class Sniffer:
         self.packet_fix = self.main.mem.packet_fix
 
         main.gui.timer.add_mission(self.update_tcp_target, 1, -1)
-        main.gui.interfaces.add(self.update)
+        main.gui.draw_update_call.add(self.update)
         self.oodles = {}
         self.buffers = {}
 

@@ -1,9 +1,7 @@
-import importlib
 import json
 import logging
 import os
 import pathlib
-import pkgutil
 import sys
 import threading
 
@@ -26,9 +24,10 @@ default_cn = bool(os.environ.get('DefaultCn'))
 class FFDraw:
     omens: dict[int, omen.BaseOmen]
     logger = logging.getLogger('FFDraw')
+    plugins: 'dict[str,plugins.FFDrawPlugin]'
 
     def __init__(self, pid: int):
-        self.app_data_path = pathlib.Path(os.environ['ExcPath'])/'AppData'
+        self.app_data_path = pathlib.Path(os.environ['ExcPath']) / 'AppData'
         self.cfg_path = self.app_data_path / 'config.json'
         self.config = json.loads(self.cfg_path.read_text('utf-8')) if self.cfg_path.exists() else {}
         self.rpc_password = self.config.setdefault('rpc_password', '')
@@ -52,7 +51,7 @@ class FFDraw:
 
         self.gui = gui.Drawing(self)
         self.gui.always_draw = self.config.setdefault('gui', {}).setdefault('always_draw', False)
-        self.gui.interfaces.add(self.update)
+        self.gui.draw_update_call.add(self.update)
         self.gui_thread = None
 
         self.sniffer = sniffer.Sniffer(self)
@@ -67,36 +66,27 @@ class FFDraw:
             self.logger.debug(f'load color {k}: surface={surface_color} line={line_color}')
             self.preset_omen_colors[k] = surface_color, line_color
 
-        self.plugins = []
-        self.load_plugins()
+        self.plugins = {}
+        self.enable_plugins = self.config.setdefault('enable_plugins', {})
+        self.load_init_plugins()
         self.save_config()
 
     def save_config(self):
-        self.cfg_path.parent.mkdir(exist_ok=True,parents=True)
+        self.cfg_path.parent.mkdir(exist_ok=True, parents=True)
         self.cfg_path.write_text(json.dumps(self.config, ensure_ascii=False, indent=4), encoding='utf-8')
 
-    def load_plugins(self):
-        plugin_path = os.path.join(os.environ['ExcPath'], 'plugins')
-        sys.path.append(plugin_path)
-        self.config.pop('disable_plugins', None)
-        enable_plugins = self.config.setdefault('enable_plugins', {})
-        if isinstance(enable_plugins, list):
-            self.config['enable_plugins'] = enable_plugins = {k: True for k in enable_plugins}
+    def reload_plugin(self, name):
+        if plugin := self.plugins.pop(name, None): plugin.unload()
+        plugins.reload_plugin_lists()[name](self)
 
-        for i, mod in enumerate(pkgutil.iter_modules([plugin_path])):
-            if enable_plugins.setdefault(mod.name, False):
-                self.logger.debug(f'load plugin {mod.name}')
-                importlib.import_module(mod.name)
+    def load_init_plugins(self):
+        plugins.reload_plugin_lists()
+        for k, p in plugins.plugins.items():
+            if self.enable_plugins.setdefault(k, False):
+                self.logger.debug(f'load plugin {k}')
+                p(self)
             else:
-                self.logger.debug(f'disable plugin {mod.name}')
-
-        self.plugins = []
-        for p in plugins.plugins:
-            if p != plugins.FFDrawPlugin:
-                self.plugins.append(plugin := p(self))
-                plugin.storage.save()
-                if p.update != plugins.FFDrawPlugin.update:
-                    self.gui.interfaces.add(plugin.update)
+                self.logger.debug(f'disable plugin {k}')
 
     def start_gui_thread(self):
         assert not self.gui_thread

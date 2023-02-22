@@ -8,10 +8,13 @@ class Fps(FFDrawPlugin):
         super().__init__(main)
         self.print_fps_cfg = self.main.config.setdefault('fps', {})
         self.fps_text = f'fps: 0'
-        self.main.gui.timer.add_mission(
+        self.mission = self.main.gui.timer.add_mission(
             (lambda: setattr(self, 'fps_text', f'fps: {self.main.gui.timer.fps}')),
             self.print_fps_cfg.setdefault('interval', 1), 0
         )
+
+    def on_unload(self):
+        self.main.gui.timer.remove_mission(self.mission)
 
     def update(self, main):
         view = self.main.gui.get_view()

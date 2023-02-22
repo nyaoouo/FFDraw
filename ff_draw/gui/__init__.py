@@ -5,7 +5,7 @@ import time
 import typing
 import os
 
-from nylib.utils import Counter
+from nylib.utils import Counter, ResEvent
 
 os.environ['PYGLFW_LIBRARY'] = os.path.join(res_path := os.path.join(os.environ['ExcPath'], 'res'), 'glfw3.dll')
 os.environ['PYGLFW_PREVIEW'] = 'True'
@@ -13,18 +13,12 @@ os.environ["PATH"] += os.pathsep + res_path
 
 import glm
 import glfw
+import imgui
 import OpenGL.GL as gl
 from win32gui import GetForegroundWindow
 
-from . import window, view, text
+from . import window, view, text, panel as m_panel
 from .utils import common_shader, models
-
-try:
-    import imgui
-except ImportError:
-    use_imgui = False
-else:
-    use_imgui = True
 
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
@@ -82,50 +76,79 @@ class DrawTimeMgr:
 
 class Drawing:
     logger = logging.getLogger('Gui/Drawing')
-    imgui_renderer: 'ffd_imgui.OpenglPynputRenderer' = None
+    window_draw = None
+    window_panel = None
+    panel: m_panel.FFDPanel = None
+    imgui_draw_renderer: 'ffd_imgui.OpenglPynputRenderer' = None
+    imgui_panel_renderer: 'ffd_imgui.OpenglPynputRenderer' = None
 
     def __init__(self, main: "FFDraw"):
         self.main = main
         self.program = None
         self.models: models.Models | None = None
-        self.window = None
-        self.err_cnt = 0
+
         self.work_thread = None
         self._view = None
-        self.work_queue = queue.Queue()
-        self.interfaces = set()
-        self.always_draw = False
-        self.hwnd = main.mem.hwnd
+
         self.timer = DrawTimeMgr()
         self.cfg = self.main.config.setdefault('gui', {})
+        self.always_draw = self.cfg.setdefault('always_draw', False)
         self.font_path = self.cfg.setdefault('font_path', r'C:\Windows\Fonts\msyh.ttc')
         self.font_size = self.cfg.setdefault('font_size', 18)
         self._label_counter = 0
 
+        self.draw_work_queue = queue.Queue()
+        self.draw_update_call = set()
+
+        self.game_hwnd = main.mem.hwnd
+
     def _init_everything_in_work_process(self):
+        if not glfw.init():
+            raise Exception("glfw can not be initialized")
         self.work_thread = threading.get_ident()
-        self.window = window.init_window(self.hwnd)
+
+        self.logger.debug('imgui is enabled')
+        from . import ffd_imgui
+        self.window_panel = window.init_window('panel_window', False, None, None)
+        self.imgui_panel_renderer = ffd_imgui.OpenglPynputRenderer(self.window_panel)
+        fonts = imgui.get_io().fonts
+        self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size, fonts.get_glyph_ranges_chinese_full())
+        self.imgui_panel_renderer.refresh_font_texture()
+        self.panel = m_panel.FFDPanel(self)
+        self.window_draw = window.init_window('draw_window', True, self.window_panel, self.game_hwnd)
+        self.imgui_draw_renderer = ffd_imgui.OpenglPynputRenderer(self.window_draw, fonts)
         self.program = common_shader.get_common_shader()
         self.models = models.Models()
-        if use_imgui:
-            self.logger.debug('imgui is enabled')
-            imgui.create_context()
-            from . import ffd_imgui
-            self.imgui_renderer = ffd_imgui.OpenglPynputRenderer(self.window)
-            fonts = imgui.get_io().fonts
-            self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size,fonts.get_glyph_ranges_chinese_full())
-            self.imgui_renderer.refresh_font_texture()
+
+    def async_call(self, func, *args, _in_draw=True, **kwargs):
+        self.draw_work_queue.put((func, args, kwargs, cb := ResEvent()))
+        return cb
 
     def _process_single_frame(self):
         self._label_counter = 0
         glfw.poll_events()
+
+        self.imgui_panel_renderer.process_inputs(glfw.get_window_attrib(self.window_panel, glfw.FOCUSED))
+        imgui.new_frame()
+        imgui.push_font(self.font)
+        self.panel.draw()
+        imgui.pop_font()
+        imgui.end_frame()
+        imgui.render()
+
+        gl.glClearColor(0, 0, 0, 0)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
+        self.imgui_panel_renderer.render(imgui.get_draw_data())
+
+
+        process_draw = self.always_draw or GetForegroundWindow() == self.game_hwnd
+        self.imgui_draw_renderer.process_inputs(process_draw)
         self._view = view.View()
         self._view.projection_view, self._view.screen_size = self.main.mem.load_screen()
-        process_draw = self.always_draw or GetForegroundWindow() == self.hwnd
-        if use_imgui:
-            self.imgui_renderer.process_inputs(process_draw)
-            imgui.new_frame()
-            imgui.push_font(self.font)
+
+        imgui.new_frame()
+        imgui.push_font(self.font)
 
         gl.glClearColor(0, 0, 0, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
@@ -133,57 +156,56 @@ class Drawing:
 
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
         gl.glEnable(gl.GL_BLEND)
-        # gl.glEnable(gl.GL_DEPTH_TEST)
         self.timer.update()
 
-        while not self.work_queue.empty():
+        while not self.draw_work_queue.empty():
             try:
-                f, a = self.work_queue.get(block=False)
+                f, a, k, cb = self.draw_work_queue.get(False)
             except queue.Empty:
                 break
             try:
-                f(*a)
+                cb.set(f(*a, **k))
             except Exception as e:
-                self.logger.error(f"work queue error:", exc_info=e)
+                self.logger.error('error in frame call', exc_info=e)
+
         if process_draw:
-            window.set_window_cover(self.window, self.hwnd)
-            for draw_func in self.interfaces.copy():
+            window.set_window_cover(self.window_draw, self.game_hwnd)
+            for draw_func in self.draw_update_call.copy():
                 try:
                     draw_func(self.main)
                 except Exception as e:
                     self.logger.error(f"draw_func error, func will be remove:", exc_info=e)
-                    self.interfaces.remove(draw_func)
+                    self.draw_update_call.remove(draw_func)
                     raise
         else:
             gl.glClearColor(0, 0, 0, 0)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-        if use_imgui:
-            imgui.pop_font()
-            imgui.render()
-            self.imgui_renderer.render(imgui.get_draw_data())
-        glfw.swap_buffers(self.window)
+        imgui.pop_font()
+        imgui.end_frame()
+        imgui.render()
+        self.imgui_draw_renderer.render(imgui.get_draw_data())
 
     def process_single_frame(self):
         try:
             self._process_single_frame()
         except Exception as e:
-            self.logger.error(f"process_single_frame error {self.err_cnt}:\t", exc_info=e)
-            self.err_cnt += 1
-            if self.err_cnt > 10:
-                glfw.set_window_should_close(self.window, True)
-        else:
-            self.err_cnt = 0
+            self.logger.critical('error in frame rendering', exc_info=e)
+            glfw.set_window_should_close(self.window_panel, True)
+            glfw.set_window_should_close(self.window_draw, True)
 
     def start(self):
         try:
             self._init_everything_in_work_process()
             glfw.swap_interval(1)
-            while not glfw.window_should_close(self.window):
+            while not (
+                    glfw.window_should_close(self.window_panel) or
+                    glfw.window_should_close(self.window_draw)
+            ):
                 self.process_single_frame()
             self.work_thread = None
-            if use_imgui:
-                self.imgui_renderer.shutdown()
+            self.imgui_draw_renderer.shutdown()
+            self.imgui_panel_renderer.shutdown()
             glfw.terminate()
         except Exception as e:
             self.logger.error('error in main thread', exc_info=e)
@@ -232,9 +254,8 @@ class Drawing:
         )
 
     def render_text(self, string, text_pos: glm.vec2, scale=1, color=(1, 1, 1), at=text.TextPosition.left_bottom):
-        if not use_imgui: return
         width, height = imgui.calc_text_size(string)
-        text_size = glm.vec2(width + 18, height+16)
+        text_size = glm.vec2(width + 18, height + 16)
         imgui.set_next_window_position(*text.adjust(at, text_pos, text_size))
         imgui.set_next_window_size(*text_size)
         imgui.set_next_window_bg_alpha(.4)

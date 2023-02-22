@@ -1,19 +1,16 @@
 import glm
-from ff_draw.gui import use_imgui
 from ff_draw.gui.text import TextPosition
 from ff_draw.plugins import FFDrawPlugin
-
-if use_imgui:
-    import imgui
+import imgui
 
 
 class Radar(FFDrawPlugin):
     def __init__(self, main):
         super().__init__(main)
         self.print_name = self.data.setdefault('print_name', True)
-        self.show_imgui_window = use_imgui
+        self.show_imgui_window = True
 
-    def render_imgui_window(self):
+    def draw_panel(self):
         if not self.show_imgui_window: return
         # if imgui.button("show name" if self.print_name else "not show name"):
         #     self.print_name = not self.print_name
@@ -25,11 +22,6 @@ class Radar(FFDrawPlugin):
             self.storage.save()
 
     def update(self, main):
-        if self.show_imgui_window:
-            expanded, self.show_imgui_window = imgui.begin('Radar', self.show_imgui_window)
-            if expanded:
-                self.render_imgui_window()
-            imgui.end()
         view = main.gui.get_view()
         for actor in main.mem.actor_table:
             pos = actor.pos
