@@ -30,6 +30,11 @@ class Sniffer:
     def __init__(self, main: 'FFDraw'):
         self.main = main
 
+        self.config = self.main.config.setdefault('sniffer', {})
+        self.print_packets = self.config.setdefault('print_packets', False)
+        self.print_actor_control = self.config.setdefault('print_actor_control', False)
+        self.sniff_promisc = self.config.setdefault('sniff_promisc', True)
+
         pno_dir = pathlib.Path(os.environ['ExcPath']) / 'res' / 'proto_no'
         self._chat_server_pno_map = simple.load_pno_map(pno_dir / 'ChatServerIpc.csv', self.main.mem.game_build_date, enums.ChatServer)
         self._chat_client_pno_map = simple.load_pno_map(pno_dir / 'ChatClientIpc.csv', self.main.mem.game_build_date, enums.ChatClient)
@@ -53,11 +58,8 @@ class Sniffer:
         self.on_zone_server_message[enums.ZoneServer.AoeEffect32].append(self.on_action_effect)
 
         self.pipe, child_pipe = multiprocessing.Pipe()
-        self.sniff_process = multiprocessing.Process(target=sniffer.start_sniff, args=(child_pipe,), daemon=True)
+        self.sniff_process = multiprocessing.Process(target=sniffer.start_sniff, args=(child_pipe, self.sniff_promisc), daemon=True)
 
-        self.config = self.main.config.setdefault('sniffer', {})
-        self.print_packets = self.config.setdefault('print_packets', False)
-        self.print_actor_control = self.config.setdefault('print_actor_control', False)
         self.packet_fix = self.main.mem.packet_fix
 
         main.gui.timer.add_mission(self.update_tcp_target, 1, -1)
