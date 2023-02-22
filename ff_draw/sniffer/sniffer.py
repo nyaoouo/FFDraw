@@ -124,9 +124,11 @@ class SniffRunner:
                     self.on_target_change(args[0])
 
 
-def start_sniff(pipe: multiprocessing.connection.Connection):
+def start_sniff(pipe: multiprocessing.connection.Connection, sniff_promisc=True):
     install()
     try:
+        from scapy.all import conf
+        conf.sniff_promisc = sniff_promisc
         SniffRunner(pipe).start()
     except Exception as e:
         logging.error('error in sniff runner', exc_info=e)
