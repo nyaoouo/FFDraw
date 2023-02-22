@@ -1,3 +1,5 @@
+import queue
+
 import glfw
 
 import imgui
@@ -56,11 +58,20 @@ nput_mouse_to_idx = {
 
 
 class OpenglPynputRenderer(ProgrammablePipelineRenderer):
-    def __init__(self, window):
+    def __init__(self, window, shared_font_atlas=None):
+        self.ctx = imgui.create_context(shared_font_atlas)
         super(OpenglPynputRenderer, self).__init__()
         self.window = window
-        self.mouse_thread = mouse.Listener(on_move=self._on_mouse_move, on_click=self.on_mouse_click, on_scroll=self.on_mouse_scroll)
-        self.key_thread = keyboard.Listener(on_press=lambda k: self.on_key_change(k, True), on_release=lambda k: self.on_key_change(k, False))
+        self.call_queue = queue.Queue()
+        self.mouse_thread = mouse.Listener(
+            on_move=lambda *args: self.call_queue.put((self._on_mouse_move, args)),
+            on_click=lambda *args: self.call_queue.put((self.on_mouse_click, args)),
+            on_scroll=lambda *args: self.call_queue.put((self.on_mouse_scroll, args))
+        )
+        self.key_thread = keyboard.Listener(
+            on_press=lambda k: self.call_queue.put((self.on_key_change, (k, True))),
+            on_release=lambda k: self.call_queue.put((self.on_key_change, (k, False)))
+        )
 
         glfw.set_window_size_callback(self.window, self.resize_callback)
 
@@ -97,7 +108,7 @@ class OpenglPynputRenderer(ProgrammablePipelineRenderer):
         io.mouse_wheel = dy
 
     def on_key_change(self, key: str | keyboard.Key | keyboard.KeyCode, is_press):
-        if not key:return
+        if not key: return
         io = self.io
         if isinstance(key, keyboard.Key):
             key = key.value
@@ -121,6 +132,7 @@ class OpenglPynputRenderer(ProgrammablePipelineRenderer):
     def _map_keys(self):
         key_map = self.io.key_map
 
+        key_map[imgui.KEY_SPACE] = nput_space
         key_map[imgui.KEY_TAB] = nput_tab
         key_map[imgui.KEY_LEFT_ARROW] = nput_left
         key_map[imgui.KEY_RIGHT_ARROW] = nput_right
@@ -139,7 +151,17 @@ class OpenglPynputRenderer(ProgrammablePipelineRenderer):
         self.io.display_size = width, height
 
     def process_inputs(self, is_drawing=True):
-        io = imgui.get_io()
+        glfw.make_context_current(self.window)
+        imgui.set_current_context(self.ctx)
+        self.io = io = imgui.get_io()
+
+        while not self.call_queue.empty():
+            try:
+                call, args = self.call_queue.get(False)
+            except queue.Empty:
+                break
+            else:
+                call(*args)
 
         window_size = glfw.get_window_size(self.window)
         fb_size = glfw.get_framebuffer_size(self.window)
@@ -161,3 +183,7 @@ class OpenglPynputRenderer(ProgrammablePipelineRenderer):
             self.io.delta_time = 1. / 60.
 
         self._gui_time = current_time
+
+    def render(self, draw_data):
+        super(OpenglPynputRenderer, self).render(draw_data)
+        glfw.swap_buffers(self.window)
