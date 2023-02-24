@@ -21,9 +21,10 @@ class SimpleCast(FFDrawPlugin):
         self.show_friend = self.data.setdefault('show_friend', True)
 
         self.main.sniffer.on_zone_server_message[ZoneServer.ActorCast].append(self.on_cast)
-        self.msg_remove_omen = lambda m: self.remove_actor_omen(m.header.source_id)
-        self.main.sniffer.on_action_effect.append(self.msg_remove_omen)
-        self.main.sniffer.on_actor_control[ActorControlId.CancelCast].append(self.msg_remove_omen)
+        self.on_action_effect = lambda m: self.remove_actor_omen(m.header.source_id)
+        self.main.sniffer.on_action_effect.append(self.on_action_effect)
+        self.on_cancel_cast = lambda m: self.remove_actor_omen(m.source_id)
+        self.main.sniffer.on_actor_control[ActorControlId.CancelCast].append(self.on_cancel_cast)
 
         self.actor_omens = {}
         self.bnpc_battalion_offset = self.main.mem.scanner.find_val('44 ? ? ? * * * * 4c 89 68 ? 4c 89 70')[0]
@@ -31,8 +32,8 @@ class SimpleCast(FFDrawPlugin):
 
     def on_unload(self):
         self.main.sniffer.on_zone_server_message[ZoneServer.ActorCast].remove(self.on_cast)
-        self.main.sniffer.on_action_effect.remove(self.msg_remove_omen)
-        self.main.sniffer.on_actor_control[ActorControlId.CancelCast].remove(self.msg_remove_omen)
+        self.main.sniffer.on_action_effect.remove(self.on_action_effect)
+        self.main.sniffer.on_actor_control[ActorControlId.CancelCast].remove(self.on_cancel_cast)
 
 
     def remove_actor_omen(self, actor_id):
