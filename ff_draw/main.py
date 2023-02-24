@@ -25,8 +25,10 @@ class FFDraw:
     omens: dict[int, omen.BaseOmen]
     logger = logging.getLogger('FFDraw')
     plugins: 'dict[str,plugins.FFDrawPlugin]'
+    instance: 'FFDraw' = None
 
     def __init__(self, pid: int):
+        FFDraw.instance = self
         self.app_data_path = pathlib.Path(os.environ['ExcPath']) / 'AppData'
         self.cfg_path = self.app_data_path / 'config.json'
         self.config = json.loads(self.cfg_path.read_text('utf-8')) if self.cfg_path.exists() else {}

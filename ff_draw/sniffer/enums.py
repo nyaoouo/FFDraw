@@ -27,6 +27,9 @@ class ZoneServer(enum.Enum):
     ContentFinderNotifyPop = enum.auto()
     Effect = enum.auto()
     EffectResult = enum.auto()
+    EffectResult4 = enum.auto()
+    EffectResult8 = enum.auto()
+    EffectResult16 = enum.auto()
     EventActionResultN = enum.auto()
     EventFinish = enum.auto()
     EventPlayN = enum.auto()
@@ -60,6 +63,7 @@ class ZoneServer(enum.Enum):
     Playtime = enum.auto()
     PrepareZoning = enum.auto()
     RetainerInformation = enum.auto()
+    RsvString = enum.auto()
     StartActionTimelineMulti = enum.auto()
     StatusEffectList = enum.auto()
     StatusEffectList2 = enum.auto()
@@ -69,7 +73,7 @@ class ZoneServer(enum.Enum):
     SubmarineStatusList = enum.auto()
     SystemLogMessage = enum.auto()
     UpdateClassInfo = enum.auto()
-    UpdateHpMpTp = enum.auto()
+    UpdateHpMpGp = enum.auto()
     UpdateInventorySlot = enum.auto()
     UpdateSearchInfo = enum.auto()
     WardLandInfo = enum.auto()
@@ -110,6 +114,7 @@ class ActorControlId(enum.Enum):
     ChangeClassJob = 0x5
     Death = 0x6
     CancelCast = 0XF
+    SetRecastGroupDuration = 0X11
     SetRecastGroupMax = 0X11
     AddStatus = 0X14
     RemoveStatus = 0X15
@@ -118,13 +123,14 @@ class ActorControlId(enum.Enum):
     SetLockOn = 0X22
     SetChanneling = 0X23
     RemoveChanneling = 0X2F
-    SetObjectVariant = 0X31
+    SetModelAttr = 0X31
     SetTargetable = 0X36
     EventDirector = 0X6D
     SetLimitBreak = 0X1F9
     PlayActionTimeLine = 0X197
     SetActorTimeLine = 0X19D
     RejectSendAction = 0X2BC
+    InterruptCast = 0X5F1
     FateInit = 0X931
     FateProgress = 0X934
     FateStart = 0X935
