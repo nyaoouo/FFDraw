@@ -27,6 +27,7 @@ class ExdManager:
         self.pack = pack
         self.logger.debug('init exd with language %s', self.default_language.name)
         self._build(res_path)
+        self.rsv_string = {}
 
     def get_exd_data(self, name_or_hash: str | int):
         return self.exd_pack.get_file(name_or_hash).data_buffer

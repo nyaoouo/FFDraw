@@ -40,7 +40,9 @@ def string_reader(buffer: bytearray, row: 'DataRow', col: 'Column'):
     start = end_of_fixed + unpack_from(">l", buffer, row.row_base.row_offset + col.offset)[0]
     if start < 0: return None
     # return buffer[BEGIN:buffer.find(b'\0', BEGIN)]
-    return SeString.from_buffer(buffer[start:buffer.find(b'\0', start)])
+    if (buf := buffer[start:buffer.find(b'\0', start)]).startswith(b'_rsv_'):
+        return row.row_base.sheet.mgr.rsv_string.get(s := buf.decode('utf-8', errors='ignore'), s)
+    return SeString.from_buffer(buf)
 
 
 DATA_READERS: 'Dict[int,Callable[[bytearray,DataRow,Column],Any]]' = {
