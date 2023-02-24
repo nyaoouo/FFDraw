@@ -1,6 +1,6 @@
 import enum
 
-from ..enums import ZoneClient, ZoneServer, ChatServer, ChatClient
+from ..enums import ZoneClient, ZoneServer, ChatServer, ChatClient, ActorControlId
 
 
 class TypeMap:

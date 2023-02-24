@@ -63,26 +63,22 @@ class NetworkMessage(Generic[T]):
 
 
 @dataclasses.dataclass
-class ActorControlMessage:
+class ActorControlMessage(Generic[T]):
     raw_msg: NetworkMessage
     id: int
+    args: list[int]
+    param: T = None
     source_id: int = 0xe0000000
     target_id: int = 0xe0000000
-    arg0: int = 0
-    arg1: int = 0
-    arg2: int = 0
-    arg3: int = 0
-    arg4: int = 0
-    arg5: int = 0
 
     def __str__(self):
-        return f'ActorControl {self.id}\t{self.source_id:#x}=>{self.target_id:#x} ' \
-               f'{self.arg0}/{self.arg1}/{self.arg2}/{self.arg3}/{self.arg4}/{self.arg5}/'
+        return f'ActorControl {self.id}\t{self.source_id:#x}=>{self.target_id:#x} ' + (
+            str(self.param) if self.param else '/'.join(map(str, self.args))
+        )
 
-    def __iter__(self):
-        yield self.arg0
-        yield self.arg1
-        yield self.arg2
-        yield self.arg3
-        yield self.arg4
-        yield self.arg5
+
+@dataclasses.dataclass
+class PlayActionTimelineMessage(Generic[T]):
+    raw_msg: NetworkMessage|ActorControlMessage
+    id: int
+    timeline_id: int

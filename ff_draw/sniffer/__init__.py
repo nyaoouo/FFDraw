@@ -5,7 +5,7 @@ import pathlib
 import typing
 from nylib.utils import serialize_data, KeyRoute, BroadcastHook
 from nylib.utils.win32.network import find_process_tcp_connections
-from . import enums, sniffer
+from . import enums, sniffer, extra
 from .message_structs import zone_server, zone_client, chat_server, chat_client
 from .utils import message, structs, simple, bundle, oodle
 
@@ -47,15 +47,7 @@ class Sniffer:
         self.on_zone_client_message = KeyRoute(lambda m: m.proto_no)
         self.on_actor_control = KeyRoute(lambda m: m.id)
         self.on_action_effect = BroadcastHook()
-
-        self.on_zone_server_message[enums.ZoneServer.ActorControl].append(self._on_actor_control)
-        self.on_zone_server_message[enums.ZoneServer.ActorControlSelf].append(self._on_actor_control_self)
-        self.on_zone_server_message[enums.ZoneServer.ActorControlTarget].append(self._on_actor_control_target)
-        self.on_zone_server_message[enums.ZoneServer.Effect].append(self.on_action_effect)
-        self.on_zone_server_message[enums.ZoneServer.AoeEffect8].append(self.on_action_effect)
-        self.on_zone_server_message[enums.ZoneServer.AoeEffect16].append(self.on_action_effect)
-        self.on_zone_server_message[enums.ZoneServer.AoeEffect24].append(self.on_action_effect)
-        self.on_zone_server_message[enums.ZoneServer.AoeEffect32].append(self.on_action_effect)
+        self.on_play_action_timeline = BroadcastHook()
 
         self.pipe, child_pipe = multiprocessing.Pipe()
         self.sniff_process = multiprocessing.Process(target=sniffer.start_sniff, args=(child_pipe, self.sniff_promisc), daemon=True)
@@ -66,6 +58,7 @@ class Sniffer:
         main.gui.draw_update_call.add(self.update)
         self.oodles = {}
         self.buffers = {}
+        self.extra = extra.SnifferExtra(self)
 
     def update(self, main):
         while self.pipe.poll(0):
@@ -135,36 +128,3 @@ class Sniffer:
 
     def start(self):
         self.sniff_process.start()
-
-    def _on_all_actor_control(self, msg: message.ActorControlMessage):
-        try:
-            msg.id = enums.ActorControlId(msg.id)
-        except ValueError:
-            pass
-        if msg.id == enums.ActorControlId.SetLockOn:
-            msg.arg0 += self.packet_fix.value
-        if self.print_actor_control:
-            self.logger.debug(str(msg))
-        self.on_actor_control(msg)
-
-    def _on_actor_control(self, msg: message.NetworkMessage[zone_server.ActorControl]):
-        data = msg.message
-        self._on_all_actor_control(message.ActorControlMessage(
-            raw_msg=msg, source_id=msg.header.source_id, id=data.id,
-            arg0=data.arg0, arg1=data.arg1, arg2=data.arg2, arg3=data.arg3
-        ))
-
-    def _on_actor_control_self(self, msg: message.NetworkMessage[zone_server.ActorControlSelf]):
-        data = msg.message
-        self._on_all_actor_control(message.ActorControlMessage(
-            raw_msg=msg, source_id=msg.header.source_id, id=data.id,
-            arg0=data.arg0, arg1=data.arg1, arg2=data.arg2, arg3=data.arg3,
-            arg4=data.arg4, arg5=data.arg5,
-        ))
-
-    def _on_actor_control_target(self, msg: message.NetworkMessage[zone_server.ActorControlTarget]):
-        data = msg.message
-        self._on_all_actor_control(message.ActorControlMessage(
-            raw_msg=msg, source_id=msg.header.source_id, target_id=data.target_id, id=data.id,
-            arg0=data.arg0, arg1=data.arg1, arg2=data.arg2, arg3=data.arg3,
-        ))
