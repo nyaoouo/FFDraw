@@ -35,7 +35,7 @@ class ActionEffectBase(Structure):
 
 
 @set_fields_from_annotations
-class ActionEffect(Structure):
+class _ActionEffect(Structure):
     _size_ = 0X8
     type: 'fctypes.c_uint8' = eval('0X0')
     arg0: 'fctypes.c_uint8' = eval('0X1')
@@ -46,7 +46,7 @@ class ActionEffect(Structure):
     value: 'fctypes.c_int16' = eval('0X6')
 
 
-ActionEffects = fctypes.array(ActionEffect, 8)
+ActionEffects = fctypes.array(_ActionEffect, 8)
 
 
 @type_map.set(ZoneServer.Effect)
@@ -54,7 +54,7 @@ ActionEffects = fctypes.array(ActionEffect, 8)
 class ActionEffect(ActionEffectBase):
     _size_ = 0X78
     effects: 'fctypes.array(ActionEffects, 1)' = eval('0X2A')
-    target_ids: 'fctypes.array(fctyes.c_uint64, 1)' = eval('0X70')
+    target_ids: 'fctypes.array(fctypes.c_uint64, 1)' = eval('0X70')
     pos = glm.vec3(0, 0, 0)
 
 
@@ -63,7 +63,7 @@ class ActionEffect(ActionEffectBase):
 class ActionEffect8(ActionEffectBase):
     _size_ = 0X278
     effects: 'fctypes.array(ActionEffects, 8)' = eval('0X2A')
-    target_ids: 'fctypes.array(fctyes.c_uint64, 8)' = eval('0X230')
+    target_ids: 'fctypes.array(fctypes.c_uint64, 8)' = eval('0X230')
     _pos: 'fctypes.array(fctypes.c_uint16, 3)' = eval('0X270')
 
     @property
@@ -76,7 +76,7 @@ class ActionEffect8(ActionEffectBase):
 class ActionEffect16(ActionEffectBase):
     _size_ = 0X4B8
     effects: 'fctypes.array(ActionEffects, 16)' = eval('0X2A')
-    target_ids: 'fctypes.array(fctyes.c_uint64, 16)' = eval('0X430')
+    target_ids: 'fctypes.array(fctypes.c_uint64, 16)' = eval('0X430')
     _pos: 'fctypes.array(fctypes.c_uint16, 3)' = eval('0X4B0')
 
     @property
@@ -89,7 +89,7 @@ class ActionEffect16(ActionEffectBase):
 class ActionEffect24(ActionEffectBase):
     _size_ = 0X6F8
     effects: 'fctypes.array(ActionEffects, 24)' = eval('0X2A')
-    target_ids: 'fctypes.array(fctyes.c_uint64, 24)' = eval('0X630')
+    target_ids: 'fctypes.array(fctypes.c_uint64, 24)' = eval('0X630')
     _pos: 'fctypes.array(fctypes.c_uint16, 3)' = eval('0X6F0')
 
     @property
@@ -102,7 +102,7 @@ class ActionEffect24(ActionEffectBase):
 class ActionEffect32(ActionEffectBase):
     _size_ = 0X6F8
     effects: 'fctypes.array(ActionEffects, 32)' = eval('0X2A')
-    target_ids: 'fctypes.array(fctyes.c_uint64, 32)' = eval('0X830')
+    target_ids: 'fctypes.array(fctypes.c_uint64, 32)' = eval('0X830')
     _pos: 'fctypes.array(fctypes.c_uint16, 3)' = eval('0X930')
 
     @property
@@ -230,7 +230,7 @@ class _EffectResult(Structure):
     max_hp: 'fctypes.c_uint32' = eval('0XC')
     current_mp: 'fctypes.c_uint16' = eval('0X10')
     class_job: 'fctypes.c_uint8' = eval('0X13')
-    damage_shield: 'fctypes.c_uint8' = eval('0X14')
+    shield: 'fctypes.c_uint8' = eval('0X14')
     status_count: 'fctypes.c_uint8' = eval('0X15')
     status: 'fctypes.array(EffectResultStatus, 4)' = eval('0X18')
 
