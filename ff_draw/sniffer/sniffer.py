@@ -2,10 +2,12 @@ import bisect
 import ipaddress
 import logging
 import multiprocessing.connection
+import threading
 import typing
 
 import numpy as np  # use to avoid warning in subprocess
 from nylib.logging import install
+from nylib.utils import wait_until
 
 if typing.TYPE_CHECKING:
     from scapy.all import AsyncSniffer
@@ -60,6 +62,15 @@ class TcpBuffer:
         return f'(buffer({len(self.buffer)}) _buffer({len(self._buffer)}) end={self.end_seq} to_put={[seq for seq, is_push, data in self.to_put]})'
 
 
+def _sniffer_stop(sniff: 'AsyncSniffer'):
+    try:
+        wait_until(hasattr, 10, .1, sniff, 'stop_cb')
+    except TimeoutError:
+        SniffRunner.logger.warning('sniffer cant stop: no stop_cb found, a thread may be hangup')
+    else:
+        sniff.stop()
+
+
 class SniffRunner:
     target: tuple[str, int] = None
     logger = logging.getLogger('SniffRunner')
@@ -72,7 +83,10 @@ class SniffRunner:
     def on_target_change(self, t: tuple[str, int] | None):
         from scapy.all import AsyncSniffer
         if self.sniff:
-            self.sniff.stop()
+            if hasattr(self.sniff, 'stop_cb'):
+                self.sniff.stop()
+            else:
+                threading.Thread(target=_sniffer_stop, args=(self.sniff,), daemon=True).start()
         self.sniff = None
         self.buffers.clear()
         if t:
