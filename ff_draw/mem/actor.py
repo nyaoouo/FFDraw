@@ -1,7 +1,9 @@
+import ctypes
 import struct
 import typing
 import glm
 from nylib.utils.win32 import memory as ny_mem
+from .utils import direct_mem_property
 
 if typing.TYPE_CHECKING:
     from . import XivMem
@@ -14,10 +16,13 @@ def is_invalid_id(i):
 
 
 class StatusManager:
-    def __init__(self, actor: 'Actor', address):
-        self.actor = actor
-        self.handle = actor.handle
+    def __init__(self, handle, address):
+        self.handle = handle
         self.address = address
+
+    @property
+    def actor(self):
+        return Actor(self.handle, ny_mem.read_address(self.handle, self.address))
 
     def __iter__(self):
         """id,param,remain,source_id"""
@@ -57,65 +62,77 @@ class ActorOffsets:
     actor_type = 0x8c
     status_flag = 0x94
     pos = 0xA0
+    facing = 0xB0
+    radius = 0xC0
     draw_object = 0xF0
     hide_flag = 0x104
+    current_hp = 0x1C4
+    max_hp = 0x1C8
+    current_mp = 0x1CC
+    max_mp = 0x1D0
+    current_gp = 0x1D4
+    max_gp = 0x1D6
+    current_cp = 0x1D8
+    max_cp = 0x1DA
+    class_job = 0x1E0
+    level = 0x1E1
+    model_attr = 0x1E4
     pc_target_id = 0xC60
     b_npc_target_id = 0x1A68
+    shield = 0x1AEb
     status = 0x1b40
 
 
 class ActorOffsets630(ActorOffsets):
     status_flag = 0x95
     pos = 0xB0
+    facing = 0xC0
+    radius = 0xD0
     draw_object = 0x100
     hide_flag = 0x114
     pc_target_id = 0xC80
     b_npc_target_id = 0x1A88
+    shield = 0x1B17
     status = 0x1B60
 
 
 class Actor:
-    def __init__(self, mgr: 'ActorTable', offsets, address):
-        self.mgr = mgr
-        self.offsets = offsets
-        self.handle = self.mgr.handle
+    offsets = ActorOffsets
+
+    def __init__(self, handle, address):
+        self.handle = handle
         self.address = address
 
     @property
     def name(self):
         return ny_mem.read_string(self.handle, self.address + self.offsets.name, 68)
 
-    @property
-    def id(self):
-        return ny_mem.read_uint(self.handle, self.address + self.offsets.id)
-
-    @property
-    def base_id(self):
-        return ny_mem.read_uint(self.handle, self.address + self.offsets.base_id)
+    id = direct_mem_property(ctypes.c_uint)
+    base_id = direct_mem_property(ctypes.c_uint)
 
     @property
     def pos(self):
         return glm.vec3.from_bytes(bytes(ny_mem.read_bytes(self.handle, self.address + self.offsets.pos, 0xc)))
 
-    @property
-    def facing(self):
-        return ny_mem.read_float(self.handle, self.address + self.offsets.pos + 0x10)
-
-    @property
-    def actor_type(self):
-        return ny_mem.read_byte(self.handle, self.address + self.offsets.actor_type)
-
-    @property
-    def pc_target_id(self):
-        return ny_mem.read_uint(self.handle, self.address + self.offsets.pc_target_id)
-
-    @property
-    def b_npc_target_id(self):
-        return ny_mem.read_uint(self.handle, self.address + self.offsets.b_npc_target_id)
+    facing = direct_mem_property(ctypes.c_float)
+    radius = direct_mem_property(ctypes.c_float)
+    actor_type = direct_mem_property(ctypes.c_byte)
+    current_hp = direct_mem_property(ctypes.c_uint)
+    max_hp = direct_mem_property(ctypes.c_uint)
+    current_mp = direct_mem_property(ctypes.c_uint)
+    max_mp = direct_mem_property(ctypes.c_uint)
+    current_gp = direct_mem_property(ctypes.c_uint)
+    max_gp = direct_mem_property(ctypes.c_uint)
+    current_cp = direct_mem_property(ctypes.c_uint)
+    max_cp = direct_mem_property(ctypes.c_uint)
+    class_job = direct_mem_property(ctypes.c_byte)
+    level = direct_mem_property(ctypes.c_byte)
+    model_attr = direct_mem_property(ctypes.c_byte)
+    shield = direct_mem_property(ctypes.c_ubyte)
 
     @property
     def target_id(self):
-        return self.pc_target_id if self.actor_type == 1 else self.b_npc_target_id
+        return ny_mem.read_uint(self.handle, self.address + (self.offsets.pc_target_id if self.actor_type == 1 else self.offsets.b_npc_target_id))
 
     @property
     def can_select(self):
@@ -129,7 +146,7 @@ class Actor:
 
     @property
     def status(self):
-        return StatusManager(self, self.address + self.offsets.status)
+        return StatusManager(self.handle, self.address + self.offsets.status)
 
 
 class ActorTable:
@@ -143,9 +160,9 @@ class ActorTable:
         self.sorted_count_address = self.base_address + main.scanner.find_val('44 ? ? * * * * 45 ? ? 41 ? ? ? 48 ? ? 78')[0]
         self.me_ptr = main.scanner.find_point('48 ? ? * * * * 49 39 87')[0]
         if main.game_version >= (6, 3, 0):
-            self.actor_offset = ActorOffsets630
+            Actor.offsets = ActorOffsets630
         else:
-            self.actor_offset = ActorOffsets
+            Actor.offsets = ActorOffsets
 
     def __getitem__(self, item):  # by sorted idx
         if item < self.sorted_length:
@@ -161,11 +178,11 @@ class ActorTable:
 
     def get_actor_by_sorted_idx(self, idx):
         if a_ptr := ny_mem.read_uint64(self.handle, self.sorted_table_address + 8 * idx):
-            return Actor(self, self.actor_offset, a_ptr)
+            return Actor(self.handle, a_ptr)
 
     def get_actor_by_idx(self, idx):
         if a_ptr := ny_mem.read_uint64(self.handle, self.base_address + 8 * idx):
-            return Actor(self, self.actor_offset, a_ptr)
+            return Actor(self.handle, a_ptr)
 
     def iter_actor_by_type(self, actor_type: int):
         for actor in self:
@@ -201,4 +218,4 @@ class ActorTable:
     @property
     def me(self):
         if a_ptr := ny_mem.read_uint64(self.handle, self.me_ptr):
-            return Actor(self, self.actor_offset, a_ptr)
+            return Actor(self.handle, a_ptr)

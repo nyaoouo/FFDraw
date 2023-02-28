@@ -1,5 +1,20 @@
 import ctypes.wintypes
 import re
+from nylib.utils.win32 import memory as ny_mem
+
+
+class direct_mem_property:
+    def __init__(self, _type, offset_key=None):
+        self.type = _type
+        self.offset_key = offset_key
+
+    def __set_name__(self, owner, name):
+        if not self.offset_key:
+            self.offset_key = name
+
+    def __get__(self, instance, owner) -> 'float | int | direct_mem_property':
+        if instance is None: return self
+        return ny_mem.read_memory(instance.handle, self.type, instance.address + getattr(instance.offsets, self.offset_key)).value
 
 
 def get_hwnd(pid):

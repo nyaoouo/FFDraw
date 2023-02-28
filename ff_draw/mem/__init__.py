@@ -5,7 +5,7 @@ import glm
 from nylib.utils.win32 import memory as ny_mem, process as ny_proc
 from nylib.pefile import PE
 from nylib.pattern import StaticPatternSearcher
-from . import utils, actor, party, network_target, packet_fix
+from . import utils, actor, party, network_target, packet_fix, marking
 
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
@@ -28,6 +28,7 @@ class XivMem:
         self.party = party.PartyManager(self)
         self.network_target = network_target.NetworkInfo(self)
         self.packet_fix = packet_fix.PacketFix(self)
+        self.marking = marking.MarkingController(self)
 
     def load_screen(self):
         buf = ny_mem.read_bytes(self.handle, self.screen_address, 0x48)
