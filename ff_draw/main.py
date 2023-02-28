@@ -1,7 +1,9 @@
+import importlib
 import json
 import logging
 import os
 import pathlib
+import pkgutil
 import sys
 import threading
 
@@ -70,6 +72,7 @@ class FFDraw:
 
         self.plugins = {}
         self.enable_plugins = self.config.setdefault('enable_plugins', {})
+        self.plugin_path = [os.path.join(os.environ['ExcPath'], 'plugins'), *(p for p in self.config.setdefault('plugin_paths', []))]
         self.load_init_plugins()
         self.save_config()
 
@@ -77,18 +80,30 @@ class FFDraw:
         self.cfg_path.parent.mkdir(exist_ok=True, parents=True)
         self.cfg_path.write_text(json.dumps(self.config, ensure_ascii=False, indent=4), encoding='utf-8')
 
+    def reload_plugin_lists(self):
+        plugins.plugins.clear()
+        for p in self.plugin_path:
+            if p not in sys.path:
+                sys.path.insert(0, p)
+        for i, mod in enumerate(pkgutil.iter_modules(self.plugin_path)):
+            importlib.import_module(mod.name)
+        return plugins.plugins
+
     def reload_plugin(self, name):
         if plugin := self.plugins.pop(name, None): plugin.unload()
-        plugins.reload_plugin_lists()[name](self)
+        self.reload_plugin_lists()[name](self)
 
     def load_init_plugins(self):
-        plugins.reload_plugin_lists()
+        self.reload_plugin_lists()
         for k, p in plugins.plugins.items():
             if self.enable_plugins.setdefault(k, False):
                 self.logger.debug(f'load plugin {k}')
                 p(self)
             else:
                 self.logger.debug(f'disable plugin {k}')
+        for k in list(self.enable_plugins.keys()):
+            if k not in plugins.plugins:
+                self.enable_plugins.pop(k, None)
 
     def start_gui_thread(self):
         assert not self.gui_thread
