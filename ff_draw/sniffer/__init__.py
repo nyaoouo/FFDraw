@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import pathlib
+import threading
 import typing
 from nylib.utils import serialize_data, KeyRoute, BroadcastHook
 from nylib.utils.win32.network import find_process_tcp_connections
@@ -29,6 +30,7 @@ class Sniffer:
 
     def __init__(self, main: 'FFDraw'):
         self.main = main
+        self.ipc_lock = threading.Lock()
 
         self.config = self.main.config.setdefault('sniffer', {})
         self.print_packets = self.config.setdefault('print_packets', False)
@@ -69,7 +71,10 @@ class Sniffer:
                 case 'tcp_data':
                     key, is_up, data = args
                     if (_k := (key, is_up)) not in self.buffers:
-                        self.buffers[_k] = buffer = GameMessageBuffer(oodle.OodleUdp)
+                        self.buffers[_k] = buffer = GameMessageBuffer(
+                            oodle.OodleUdp
+                            # oodle.OodleUdp
+                        )
                     else:
                         buffer = self.buffers[_k]
                     for msg in buffer.feed(data):
@@ -88,43 +93,48 @@ class Sniffer:
             self.pipe.send(('set_target', t))
 
     def _on_message(self, is_up, msg: message.BaseMessage):
-        if msg.el_header.type != 3: return
-        msg = msg.to_el(structs.IpcHeader)
-        if (is_server := msg.element.timestamp_s != 10):  # is server
-            if is_up:
-                pno_map = self._zone_client_pno_map
-                call = self.on_zone_client_message
-                type_map = zone_client.type_map
-            else:
-                pno_map = self._zone_server_pno_map
-                call = self.on_zone_server_message
-                type_map = zone_server.type_map
-        else:
-            if is_up:
-                pno_map = self._chat_client_pno_map
-                call = self.on_chat_client_message
-                type_map = chat_client.type_map
-            else:
-                pno_map = self._chat_server_pno_map
-                call = self.on_chat_server_message
-                type_map = chat_server.type_map
+        if msg.el_header.type == 3:
+            msg = msg.to_el(structs.IpcHeader)
+            self._on_ipc_message(msg.element.timestamp_s != 10, is_up, msg)
 
-        data = msg.raw_data
-        if (pno := msg.element.proto_no) in pno_map:
-            pno = pno_map[pno]
-            if t := type_map.get(pno):
-                msg = msg.to_ipc(t)
-                data = msg.message
-                if hasattr(t, '_pkt_fix'):
-                    data._pkt_fix(self.packet_fix.value)
-        try:
-            evt = message.NetworkMessage(proto_no=pno, raw_message=msg, header=msg.el_header, message=data)
-            if self.print_packets:
-                source_name = getattr(self.main.mem.actor_table.get_actor_by_id(evt.header.source_id), 'name', None)
-                self.logger.debug(f'{"Zone" if is_server else "Chat"}{"Client" if is_up else "Server"}[{pno}] {source_name}#{evt.header.source_id:x} {serialize_data(data)}')
-            call(evt)
-        except Exception as e:
-            self.logger.error('error in processing network message', exc_info=e)
+    def _on_ipc_message(self, is_zone, is_up, msg: message.ElementMessage[structs.IpcHeader]):
+        with self.ipc_lock:
+            if is_zone:
+                if is_up:
+                    pno_map = self._zone_client_pno_map
+                    call = self.on_zone_client_message
+                    type_map = zone_client.type_map
+                else:
+                    pno_map = self._zone_server_pno_map
+                    call = self.on_zone_server_message
+                    type_map = zone_server.type_map
+            else:
+                if is_up:
+                    pno_map = self._chat_client_pno_map
+                    call = self.on_chat_client_message
+                    type_map = chat_client.type_map
+                else:
+                    pno_map = self._chat_server_pno_map
+                    call = self.on_chat_server_message
+                    type_map = chat_server.type_map
+
+            data = msg.raw_data
+            if (pno := msg.element.proto_no) in pno_map:
+                pno = pno_map[pno]
+                if t := type_map.get(pno):
+                    msg = msg.to_ipc(t)
+                    data = msg.message
+                    if hasattr(t, '_pkt_fix'):
+                        data._pkt_fix(self.packet_fix.value)
+            try:
+                evt = message.NetworkMessage(proto_no=pno, raw_message=msg, header=msg.el_header, message=data)
+                if self.print_packets:
+                    source_name = getattr(self.main.mem.actor_table.get_actor_by_id(evt.header.source_id), 'name', None)
+                    self.logger.debug(f'{"Zone" if is_zone else "Chat"}{"Client" if is_up else "Server"}[{pno}] {source_name}#{evt.header.source_id:x} {serialize_data(data)}')
+                # self.logger.debug(f'{is_zone} {is_up} {evt.proto_no} {call.route.get(evt.proto_no)}')
+                call(evt)
+            except Exception as e:
+                self.logger.error(f'error in processing network message {pno}', exc_info=e)
 
     def start(self):
         self.sniff_process.start()
