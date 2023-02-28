@@ -256,6 +256,7 @@ class FuncParser:
                     facing=self.parse_value_lambda(command.get('facing'), args),
                     surface_color=surface_color,
                     line_color=line_color,
+                    line_width=self.parse_value_lambda(command.get('line_width', 3), args),
                     surface_line_color=surface_line,
                     label=self.parse_value_lambda(command.get('label', ''), args),
                     label_color=self.parse_value_lambda(command.get('label_color', [0, 0, 0]), args),
