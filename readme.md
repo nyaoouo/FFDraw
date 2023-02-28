@@ -17,9 +17,11 @@
 * 双击 `FFDraw.exe` 运行
 * 注：exe版本未必属于最新版本，也未必适应你的运行环境，请尽量使用python版本或从其他人获取最新版本的build (安装 `pyinstaller` 并运行 `pack.py`)
 * 注2：cn版本与正常版本差异为默认值适配国内网络、国服默认路径编码，无需手动设置，两个版本均能适用与国服与国际服
+* 注3：如果报毒，可以使用`python版本`或者`关掉防毒`或者`添加c盘信任`或者`不用`
 
 ### 注
 
+* 如果在非独显直连的机器上遇到图层黑色无法穿透之类，请尝试游戏级本程序均使用核显并重启程序
 * 如果遇到报错 `failed to set hardware filter to promiscuous mode` 之类，请修改 `config.json` 中的 `sniffer/sniff_promisc` 为 `false` 并重启程序
 * 如果遇到报错 `Npcap/Winpcap is not installed` 之类，请下载 [npcap](https://npcap.com/dist/npcap-1.72.exe) 安装后重启
 * 如果遇到编码问题 `utf8 cant decode` 之类，请修改 `config.json` 中的 `path_encoding` 为 `gbk` 并重启程序
@@ -63,6 +65,7 @@
 | `shape_scale` |      `(number, number[3])`       |          一般用于使用特殊值（后详），为形状、比例的二元组，当存在时忽略 `shape` 和 `scale` 参数           |
 |   `surface`   |     `number[3]`/`number[4]`      |                      填充颜色的rgba值，如果输入长度为3，默认alpha为1                      |
 |    `line`     |     `number[3]`/`number[4]`      |                      线条颜色的rgba值，如果输入长度为3，默认alpha为1                      |
+| `line_width`  |             `number`             |                                线条宽度，默认为3                                |
 |    `color`    | `string`/`number[3]`/`number[4]` | 输入为 `string` 时会套用预设配色（后详），否则等同于`surface`参数，当存在时忽略 `surface` 和 `line` 参数 |
 |     `pos`     |           `number[3]`            |                  图像在游戏3d空间里面的位置，对应 `[东西刻度，上下刻度，南北刻度]`                   |
 |   `facing`    |             `number`             |                           图像沿着y轴的旋转量，以rad为单位                            |
