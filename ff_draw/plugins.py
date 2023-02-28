@@ -6,13 +6,15 @@ import os
 import pathlib
 import pkgutil
 import sys
+import threading
 import typing
+
+from nylib.utils import Counter, ResEvent
+
+from nylib.utils.threading import terminate_thread
 
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
-
-plugin_path = os.path.join(os.environ['ExcPath'], 'plugins')
-sys.path.append(plugin_path)
 
 
 class PluginStorage:
@@ -33,7 +35,7 @@ class PluginStorage:
     def save(self):
         self._json_file.parent.mkdir(parents=True, exist_ok=True)
         with self._json_file.open('w', encoding='utf-8') as f:
-            json.dump(self.data, f)
+            json.dump(self.data, f, indent=4, ensure_ascii=False)
 
 
 class FFDrawPlugin:
@@ -49,11 +51,39 @@ class FFDrawPlugin:
         if old_plugin := self.main.plugins.pop(self.plugin_name, None):
             old_plugin.unload()
         self.main.plugins[self.plugin_name] = self
+        self._missions = {}
+        self._mission_id_counter = Counter()
 
     def unload(self):
         self.on_unload()
+        self._mission_id_counter = None
+        while self._missions:
+            try:
+                k = next(iter(self._missions.keys()))
+            except StopIteration:
+                break
+            if t := self._missions.pop(k, None):
+                terminate_thread(t)
         if self.__is_update_override: self.main.gui.draw_update_call.remove(self.update)
         self.main.plugins.pop(self.plugin_name, None)
+
+    def create_mission(self, func, *args, _log_exception=False, **kwargs):
+        mid = self._mission_id_counter.get()
+        res = ResEvent()
+
+        def _run_mission():
+            try:
+                res.set(func(*args, **kwargs))
+            except Exception as e:
+                if _log_exception:
+                    self.logger.error('error in mission', exc_info=e)
+                res.set_exception(e)
+            finally:
+                self._missions.pop(mid, None)
+
+        self._missions[mid] = t = threading.Thread(target=_run_mission, daemon=True)
+        t.start()
+        return res
 
     def on_unload(self):
         pass
@@ -80,16 +110,6 @@ class FFDrawPlugin:
 
     def process_command(self, data: dict) -> bool:
         return False
-
-
-def reload_plugin_lists():
-    plugins.clear()
-    for i, mod in enumerate(pkgutil.iter_modules([plugin_path])):
-        for m in list(sys.modules.keys()):
-            if m.startswith(mod.name):
-                del sys.modules[m]
-        importlib.import_module(mod.name)
-    return plugins
 
 
 plugins: dict[str, typing.Type[FFDrawPlugin]] = {}
