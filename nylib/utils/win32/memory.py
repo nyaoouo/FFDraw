@@ -214,3 +214,78 @@ wm = write_memory
 r_st = read_string
 w_st = write_string
 r_sts = read_string_safe
+
+
+class RemoteMemory:
+    def __init__(self, handle, size):
+        self.handle = handle
+        self.size = size
+        self.address = None
+
+    def alloc(self, init_data: bytes = None):
+        if self.address is None:
+            self.address = alloc(self.handle, self.size, structure.MEMORY_STATE.MEM_COMMIT | structure.MEMORY_STATE.MEM_RESERVE)
+        if init_data is not None:
+            self.value = init_data
+        return self
+
+    def free(self):
+        if self.address is not None:
+            kernel32.VirtualFreeEx(self.handle, self.address, self.size, structure.MEMORY_STATE.MEM_DECOMMIT | structure.MEMORY_STATE.MEM_RELEASE)
+        return self
+
+    def __enter__(self):
+        return self.alloc()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self.free()
+
+    @property
+    def value(self):
+        return read_bytes(self.handle, self.address, self.size)
+
+    @value.setter
+    def value(self, v: bytes):
+        write_bytes(self.handle, self.address, v[:self.size])
+
+
+aligned4 = lambda v: (v + 0x3) & (~0x3)
+aligned16 = lambda v: (v + 0xf) & (~0xf)
+
+
+class Namespace:
+    chunk_size = 0x10000
+
+    def __init__(self, handle):
+        self.handle = handle
+        self.res = []
+        self.ptr = 0
+        self.remain = 0
+
+    def store(self, data: bytes):
+        write_bytes(self.handle, (p_buf := self.take(len(data))), data)
+        return p_buf
+
+    def take(self, size):
+        size = aligned16(size)
+        if self.remain < size:
+            alloc_size = max(self.chunk_size, size)
+            self.res.append(new_mem := RemoteMemory(self.handle, alloc_size).alloc())
+            self.remain = alloc_size - size
+            self.ptr = new_mem.address + size
+            return new_mem.address
+        else:
+            self.remain -= size
+            res = self.ptr
+            self.ptr += size
+            return res
+
+    def free(self):
+        for chunk in self.res:
+            chunk.free()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.free()

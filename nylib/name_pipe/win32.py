@@ -10,6 +10,7 @@ import win32file
 import win32pipe
 import winerror
 
+active_pipe_handler = {}
 
 class PipeHandlerBase:
     buf_size = 64 * 1024
@@ -27,12 +28,18 @@ class PipeHandlerBase:
         win32file.WriteFile(self.handle, s.encode('utf-8') if isinstance(s, str) else s, win32file.OVERLAPPED())
 
     def _serve(self):
-        self.is_connected.set()
-        self.work = True
-        while self.work:
-            err, buf = win32file.ReadFile(self.handle, self.buf_size, self.read_overlapped)
-            num_read = win32file.GetOverlappedResult(self.handle, self.read_overlapped, True)
-            self.on_data_received(buf[:num_read])
+        tid = threading.get_ident()
+        active_pipe_handler[tid] = self
+        try:
+            self.is_connected.set()
+            self.work = True
+            while self.work:
+                err, buf = win32file.ReadFile(self.handle, self.buf_size, self.read_overlapped)
+                num_read = win32file.GetOverlappedResult(self.handle, self.read_overlapped, True)
+                self.on_data_received(buf[:num_read])
+        finally:
+            if active_pipe_handler[tid] is self:
+                active_pipe_handler.pop(tid,None)
 
     def serve(self):
         try:

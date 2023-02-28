@@ -1,3 +1,4 @@
+import logging
 import pickle
 import threading
 import traceback
@@ -123,6 +124,7 @@ async def async_empty_iterator():
 
 class RpcClient(PipeClient):
     reply_map: typing.Dict[int, ResEventList | AsyncEvtList]
+    logger = logging.getLogger('RpcClient')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -159,7 +161,11 @@ class RpcClient(PipeClient):
             key, data = args
             s = self.subscribe_map.get(key, set())
             if s:
-                for c in s: c(key, data)
+                for c in s:
+                    try:
+                        c(key, data)
+                    except Exception as e:
+                        self.logger.error(f'error in rpc client [{self.name}] event',exc_info=e)
             else:
                 self.send(pickle.dumps((CLIENT_UNSUBSCRIBE, key)))
 
