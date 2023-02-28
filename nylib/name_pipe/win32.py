@@ -3,12 +3,15 @@ import threading
 import time
 import typing
 
-import pywintypes
 import win32api
 import win32event
 import win32file
 import win32pipe
 import winerror
+
+if typing.TYPE_CHECKING:
+    import pywintypes
+    import pythoncom
 
 active_pipe_handler = {}
 
@@ -52,7 +55,7 @@ class PipeHandlerBase:
         finally:
             try:
                 win32file.CloseHandle(self.handle)
-            except pywintypes.error:
+            except Exception:
                 pass
 
     def close(self, block=True):
@@ -151,7 +154,7 @@ class PipeClient(PipeHandlerBase):
                     win32file.FILE_FLAG_OVERLAPPED,
                     None
                 )
-            except pywintypes.error as e:
+            except Exception as e:
                 if e.winerror == winerror.ERROR_PIPE_BUSY:
                     time.sleep(1)
                     continue

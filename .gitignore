@@ -3,6 +3,7 @@ imgui.ini
 release/
 FFDraw.exe
 AppData/
+venv*/
 
 ### Python template
 # Byte-compiled / optimized / DLL files

@@ -15,20 +15,13 @@ def pyfunc_offset(name):
     return kernel32.GetProcAddress(local_python_dll_handle, name) - python_dll_info.lpBaseOfDll
 
 
-func_offsets = {
-    'Py_InitializeEx': kernel32.GetProcAddress(local_python_dll_handle, b'Py_InitializeEx') - python_dll_info.lpBaseOfDll,
-    'PyRun_SimpleString': kernel32.GetProcAddress(local_python_dll_handle, b'PyRun_SimpleString') - python_dll_info.lpBaseOfDll,
-    'Py_FinalizeEx': kernel32.GetProcAddress(local_python_dll_handle, b'Py_FinalizeEx') - python_dll_info.lpBaseOfDll,
-}
-
-
 def get_python_base_address(handle, auto_inject=False):
     try:
         return process.get_module_by_name(handle, python_dll_name).lpBaseOfDll
     except KeyError:
         if not auto_inject: raise
         base = process.inject_dll(handle, python_dll_info.filename)
-        process.remote_call(handle, base + pyfunc_offset(b'Py_InitializeEx'), 1)
+        process.remote_call(handle, base + pyfunc_offset(b'Py_InitializeEx'), 1, push_stack_depth=0x58)
         return base
 
 

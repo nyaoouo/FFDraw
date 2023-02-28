@@ -1,6 +1,7 @@
 import logging
 import os
 import pathlib
+import shutil
 import sys
 import threading
 import time
@@ -33,8 +34,8 @@ class Handle:
 
     def start_server(self):
         assert not self.is_active()
+        pywin32_dll_place()
         self.is_starting_server = True
-        start_at = time.time()
         exc_file = (self.exc_dir / f'err_{self.pid}_{time.time()}.log').absolute()
         shell_code = f'''
 def run_rpc_server_main(lock_name, pipe_name):
@@ -50,6 +51,8 @@ def run_rpc_server_main(lock_name, pipe_name):
     server = RpcServer(pipe_name, {{"run": run_call}})
     with Mutex(lock_name):
         server.serve()
+import traceback
+import ctypes
 try:
     import sys
     for _p in {repr(sys.path)}:
@@ -57,18 +60,14 @@ try:
             sys.path.append(_p)
     run_rpc_server_main({repr(str(self.lock_file.name))}, {repr(self.pipe_name)})
 except Exception:
-    import traceback
-    with open({repr(str(exc_file))}, 'w', encoding='utf-8') as f:
-        f.write(traceback.format_exc())
+    ctypes.windll.user32.MessageBoxW(0, 'error:\\n'+traceback.format_exc() ,'error' , 0x40010)
 '''
         # compile(shell_code, 's', 'exec')
-        injection.exec_shell_code(self.process_handle, shell_code.encode('utf-8'), True)
+        res = injection.exec_shell_code(self.process_handle, shell_code.encode('utf-8'), True)
         if exc_file.exists():
             self.logger.error('error occurred in injection:\n' + exc_file.read_text('utf-8'))
-        elif (rt := time.time() - start_at) < 5:
-            self.logger.warning(f'server end in {rt:.2f}s, maybe error?')
-        else:
-            self.logger.debug(f'server end in {rt:.2f}s')
+        elif res != 0:
+            self.logger.warning(f'server fail, res:{res:x}')
         self.is_starting_server = False
 
     def wait_inject(self):
@@ -92,6 +91,22 @@ except Exception:
     def run(self, code, res_key='res'):
         self.wait_inject()
         return self.client.rpc.run(code, res_key)
+
+
+def pywin32_dll_place():
+    dll_suffix = f"{sys.version_info.major}{sys.version_info.minor}.dll"
+    target_dir = pathlib.Path(os.environ['SystemDrive']) / 'Windows' / 'System32'
+    for prefix in ('pythoncom', 'pywintypes'):
+        dll_name = prefix + dll_suffix
+        target_path = target_dir / dll_name
+        if target_path.exists(): continue
+        for p in sys.path:
+            if (source_path := pathlib.Path(p) / dll_name).exists():
+                break
+        else:
+            raise Exception(f'Cant find dll {dll_name}')
+        shutil.copy(source_path, target_path)
+        logging.debug(f'place {source_path} => {target_path}')
 
 
 def clean_locks(p: pathlib.Path):
