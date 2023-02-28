@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import typing
 
@@ -56,7 +57,11 @@ class SnifferExtra:
         if msg.id == enums.ActorControlId.SetLockOn:
             msg.args[0] += self.sniffer.packet_fix.value
         if t := actor_control.type_map.get(msg.id):
-            msg.param = t._make(msg.args[:len(t._fields)])
+            if not hasattr(t, '__field_count'):
+                setattr(t, '__field_count', cnt := len(dataclasses.fields(t)))
+            else:
+                cnt = getattr(t, '__field_count')
+            msg.param = t(*msg.args[:cnt])
         if self.sniffer.print_actor_control:
             self.sniffer.logger.debug(str(msg))
         self.sniffer.on_actor_control(msg)

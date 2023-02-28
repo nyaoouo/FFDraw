@@ -22,7 +22,7 @@ def load_pno_map(path: pathlib.Path, game_version, t: typing.Type[enum.Enum]) ->
     return data
 
 
-c = 3.0518043 * 0.0099999998
+c = 200000 / 65535 * 0.01
 c_r = math.pi / 0xffff * 2
 
 
