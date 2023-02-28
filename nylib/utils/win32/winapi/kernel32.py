@@ -184,6 +184,7 @@ SuspendThread.restype = ctypes.c_ulong
 #: https://msdn.microsoft.com/en-us/library/windows/desktop/ms685086%28v=vs.85%29.aspx
 ResumeThread = dll.ResumeThread
 ResumeThread.restype = ctypes.c_ulong
+ResumeThread.argtypes = [ctypes.c_void_p]
 
 #: Retrieves the context of the specified thread.
 #:
@@ -238,12 +239,12 @@ CreateRemoteThread = dll.CreateRemoteThread
 CreateRemoteThread.restype = ctypes.c_void_p
 CreateRemoteThread.argtypes = (
     ctypes.c_void_p,
-    structure.LPSECURITY_ATTRIBUTES,
+    ctypes.c_void_p,
     ctypes.c_size_t,
     ctypes.c_void_p,
     ctypes.c_void_p,
     ctypes.c_ulong,
-    ctypes.POINTER(ctypes.c_ulong)
+    ctypes.c_void_p
 )
 
 GetFullPathNameA = dll.GetFullPathNameA

@@ -13,10 +13,10 @@ if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
 
 preset_colors = {
-    'enemy': (glm.vec4(1.0, 0.6, 0.6, 0.1), glm.vec4(1.0, 0.2, 0.2, .7)),
-    'g_enemy': (glm.vec4(1.0, 0.6, 0.2, 0.1), glm.vec4(1.0, 0.8, 0.5, .7)),
-    'friend': (glm.vec4(0.6, 1.0, 0.6, 0.1), glm.vec4(0.2, 1.0, 0.2, .7)),
-    'g_friend': (glm.vec4(0.6, 0.8, 1.0, 0.1), glm.vec4(0.7, 0.9, 1.0, .7)),
+    'enemy': (glm.vec4(1.0, 0.6, 0.6, 0.2), glm.vec4(1.0, 0.2, 0.2, .7)),
+    'g_enemy': (glm.vec4(1.0, 0.6, 0.2, 0.2), glm.vec4(1.0, 0.8, 0.5, .7)),
+    'friend': (glm.vec4(0.6, 1.0, 0.6, 0.2), glm.vec4(0.2, 1.0, 0.2, .7)),
+    'g_friend': (glm.vec4(0.6, 0.8, 1.0, 0.2), glm.vec4(0.7, 0.9, 1.0, .7)),
 }
 
 omen_counter = Counter()
@@ -149,6 +149,7 @@ class BaseOmen:
         self.pos = None
         if self.shape:
             self.pos = self.get_maybe_callable(self._pos)
+            if self.pos is None:return
             for eff in self.effectors:
                 self.pos = eff.pos(self.pos)
             if isinstance(self.pos, (tuple, list)):
@@ -169,7 +170,9 @@ class BaseOmen:
                 self.render(True)
         self.label = self.get_maybe_callable(self._label)
         if self.label:
-            if self.pos is None: self.pos = self.get_maybe_callable(self._pos)
+            if self.pos is None:
+                self.pos = self.get_maybe_callable(self._pos)
+                if self.pos is None: return
             view = self.main.gui.get_view()
             label_pos, is_in_screen = view.world_to_screen(*self.pos)
             if is_in_screen:

@@ -1,4 +1,5 @@
 import logging
+import math
 import typing
 
 import glfw
@@ -26,6 +27,8 @@ class FFDPanel:
         self.cached_tid = -1
         self.territory = ''
 
+        self.cached = ''
+
     def ffd_page(self):
         mem = self.main.mem
         imgui.text(f'pid: {mem.pid}')
@@ -39,14 +42,15 @@ class FFDPanel:
                     self.territory = 'N/A'
                 else:
                     self.territory = f'{territory.region.text_sgl}-{territory.sub_region.text_sgl}-{territory.area.text_sgl}'
-            imgui.text(f'territory: {self.territory}')
+            imgui.text(f'territory: {self.territory}#{tid}')
+            imgui.text(f'pos: {me.pos}#{me.facing/math.pi:.2f}pi')
         else:
             imgui.text(f'me: N/A')
 
         imgui.text('plugins')
 
         for k, v in self.main.enable_plugins.items():
-            clicked, v = imgui.checkbox(k.replace('/','-'), v)
+            clicked, v = imgui.checkbox(k.replace('/', '-'), v)
             if clicked:
                 if v:
                     self.main.reload_plugin(k)
