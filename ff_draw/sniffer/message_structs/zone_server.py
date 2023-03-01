@@ -334,7 +334,7 @@ class CommonSpawn(Structure):
 
     @property
     def fc_tag(self) -> str:
-        return self._fc_tag.decode('utf-8', 'ignore')
+        return self.__fc_tag.decode('utf-8', 'ignore')
 
 
 @type_map.set(ZoneServer.NpcSpawn)

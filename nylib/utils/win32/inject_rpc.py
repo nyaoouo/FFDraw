@@ -100,7 +100,7 @@ if {p} not in sys.path:
 
 def pywin32_dll_place():
     dll_suffix = f"{sys.version_info.major}{sys.version_info.minor}.dll"
-    target_dir = pathlib.Path(os.environ['SystemDrive']) / 'Windows' / 'System32'
+    target_dir = pathlib.Path(os.environ['SystemDrive'] + os.sep) / 'Windows' / 'System32'
     for prefix in ('pythoncom', 'pywintypes'):
         dll_name = prefix + dll_suffix
         target_path = target_dir / dll_name
