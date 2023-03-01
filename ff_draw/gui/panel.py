@@ -58,8 +58,8 @@ class FFDPanel:
                     p.unload()
                 self.main.enable_plugins[k] = v
                 self.main.save_config()
-        if imgui.button('reload'):
-            plugins.reload_plugin_lists()
+        # if imgui.button('reload'):
+        #     plugins.reload_plugin_lists()
 
         imgui.text('gui')
         gui = self.main.gui
