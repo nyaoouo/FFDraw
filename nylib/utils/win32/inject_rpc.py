@@ -25,6 +25,7 @@ class Handle:
         self.client = RpcClient(self.pipe_name)
         self.is_starting_server = False
         self.res_events = {}
+        self.paths = []
 
     def is_active(self):
         return self.lock_file.is_lock()
@@ -55,7 +56,7 @@ import traceback
 import ctypes
 try:
     import sys
-    for _p in {repr(sys.path)}:
+    for _p in {repr(sys.path + self.paths)}:
         if _p not in sys.path:
             sys.path.append(_p)
     run_rpc_server_main({repr(str(self.lock_file.name))}, {repr(self.pipe_name)})
@@ -87,6 +88,18 @@ except Exception:
                 res.set(data)
             else:
                 res.set_exception(data)
+
+    def add_path(self, path):
+        if self.is_active():
+            p = repr(str(path))
+            self.run(f'''
+import sys
+if {p} not in sys.path:
+    sys.path.append({p})
+''')
+        else:
+            self.paths.append(str(path))
+        return self
 
     def run(self, code, res_key='res'):
         self.wait_inject()
