@@ -7,13 +7,13 @@ import zipfile
 
 os.chdir('pack_assets')
 os.system(
-    r'..\venv\Scripts\pyinstaller --onefile --uac-admin ' +
+    r'..\venv310\Scripts\pyinstaller --onefile --uac-admin ' +
     '--collect-all=nylib ' +
     '--icon=sage.ico ' +
     '..\main.py'
 )
 os.system(
-    r'..\venv\Scripts\pyinstaller --onefile --uac-admin ' +
+    r'..\venv310\Scripts\pyinstaller --onefile --uac-admin ' +
     '--collect-all=nylib ' +
     '--icon=sage.ico ' +
     '..\main_cn.py'
