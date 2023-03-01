@@ -81,7 +81,6 @@ class FFDraw:
         self.cfg_path.write_text(json.dumps(self.config, ensure_ascii=False, indent=4), encoding='utf-8')
 
     def reload_plugin_lists(self):
-        plugins.plugins.clear()
         for p in self.plugin_path:
             if p not in sys.path:
                 sys.path.insert(0, p)
