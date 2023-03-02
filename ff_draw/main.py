@@ -18,7 +18,8 @@ except ImportError:
 else:
     use_aiohttp_cors = True
 
-from . import gui, omen, mem, func_parser, plugins, update, sniffer
+from . import gui, omen, mem, func_parser, plugins, update
+from .sniffer import sniffer_main as sniffer
 
 default_cn = bool(os.environ.get('DefaultCn'))
 
