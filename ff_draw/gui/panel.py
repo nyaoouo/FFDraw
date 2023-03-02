@@ -5,7 +5,6 @@ import typing
 import glfw
 import glm
 import imgui
-from ff_draw import plugins
 
 if typing.TYPE_CHECKING:
     from . import Drawing
@@ -43,7 +42,7 @@ class FFDPanel:
                 else:
                     self.territory = f'{territory.region.text_sgl}-{territory.sub_region.text_sgl}-{territory.area.text_sgl}'
             imgui.text(f'territory: {self.territory}#{tid}')
-            imgui.text(f'pos: {me.pos}#{me.facing/math.pi:.2f}pi')
+            imgui.text(f'pos: {me.pos}#{me.facing / math.pi:.2f}pi')
         else:
             imgui.text(f'me: N/A')
 
@@ -78,6 +77,23 @@ class FFDPanel:
         if clicked:
             sniffer.config['print_packets'] = sniffer.print_packets
             self.main.save_config()
+        clicked, sniffer.dump_pkt = imgui.checkbox("dump_pkt", sniffer.dump_pkt)
+        if clicked:
+            sniffer.config['dump_pkt'] = sniffer.dump_pkt
+            sniffer.update_dump()
+            self.main.save_config()
+        if sniffer.dump_pkt:
+            clicked, sniffer.dump_zone_down_only = imgui.checkbox("dump_zone_down_only", sniffer.dump_zone_down_only)
+            if clicked:
+                sniffer.config['dump_zone_down_only'] = sniffer.dump_zone_down_only
+                self.main.save_config()
+
+        imgui.text('func_parser')
+        parser = self.main.parser
+        clicked, parser.print_compile = imgui.checkbox("print_compile", parser.print_compile)
+        if clicked:
+            parser.compile_config.setdefault('print_debug', {})['enable'] = parser.print_compile
+            self.main.save_config()
 
     def draw(self):
         if not self.is_show:
@@ -87,9 +103,8 @@ class FFDPanel:
         if glfw.get_window_attrib(self.window, glfw.ICONIFIED):
             return
         window_flag = 0
-        if not self.is_expand:
-            window_flag |= imgui.WINDOW_NO_MOVE
-        self.is_expand, self.is_show = imgui.begin('FFDPanel', True, flags=window_flag)
+        if not self.is_expand: window_flag |= imgui.WINDOW_NO_MOVE
+        self.is_expand, self.is_show = imgui.begin('FFDPanel', True, window_flag)
         glfw.set_window_size(self.window, *map(int, imgui.get_window_size()))
         if not self.is_expand: return imgui.end()
         win_pos = glm.vec2(*imgui.get_window_position())
