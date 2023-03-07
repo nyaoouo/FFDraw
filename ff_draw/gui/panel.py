@@ -1,5 +1,6 @@
 import logging
 import math
+import os
 import typing
 
 import glfw
@@ -20,6 +21,7 @@ class FFDPanel:
         self.window = gui.window_panel
         self.is_expand = True
         self.is_show = True
+        self.show_exit_process = False
 
         self.current_page = ''
 
@@ -30,7 +32,17 @@ class FFDPanel:
 
     def ffd_page(self):
         mem = self.main.mem
+
         imgui.text(f'pid: {mem.pid}')
+        imgui.same_line()
+        if self.show_exit_process:
+            if imgui.button(f'kill process!'):
+                from nylib.utils.win32.winapi.kernel32 import TerminateProcess
+                TerminateProcess(mem.handle, 0)
+                os._exit(0)
+        else:
+            self.show_exit_process = imgui.button(f'kill process?')
+
         if me := mem.actor_table.me:
             imgui.text(f'me: {me.name}#{me.id:#x}')
             if (tid := mem.territory_type) != self.cached_tid:
@@ -69,6 +81,7 @@ class FFDPanel:
 
         imgui.text('sniffer')
         sniffer = self.main.sniffer
+        imgui.text(f'fix:{sniffer.packet_fix.value}')
         clicked, sniffer.print_packets = imgui.checkbox("print_packets", sniffer.print_packets)
         if clicked:
             sniffer.config['print_packets'] = sniffer.print_packets

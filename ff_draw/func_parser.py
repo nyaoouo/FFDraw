@@ -182,9 +182,9 @@ class FuncParser:
             'glm': glm, 'main': self.main, 'safe_lazy': safe_lazy,
             'actor_distance': actor_distance_func, 'action_shape_scale': self.action_shape_scale, 'math': math
         }
-        compile_config = self.main.config.setdefault('compile', {})
-        self.print_compile = compile_config.setdefault('print_debug', {}).setdefault('enable', False)
-        self.enable_eval = compile_config.setdefault('enable_eval', False)
+        self.compile_config = self.main.config.setdefault('compile', {})
+        self.print_compile = self.compile_config.setdefault('print_debug', {}).setdefault('enable', False)
+        self.enable_eval = self.compile_config.setdefault('enable_eval', False)
         if self.enable_eval and not self.main.rpc_password:
             self.logger.warning(r'enable_eval is set as true but there is no rpc password, please set a rpc password to enable eval function')
             self.enable_eval = False
