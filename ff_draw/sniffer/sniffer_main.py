@@ -7,7 +7,7 @@ import time
 import typing
 from nylib.utils import serialize_data, KeyRoute, BroadcastHook
 from nylib.utils.win32.network import find_process_tcp_connections
-from . import enums, sniffer, extra, message_dump
+from . import enums, extra, message_dump, hook_sniff
 from .message_structs import zone_server, zone_client, chat_server, chat_client
 from .utils import message, structs, simple, bundle, oodle
 
@@ -55,13 +55,8 @@ class Sniffer:
         self.on_action_effect = BroadcastHook()
         self.on_play_action_timeline = BroadcastHook()
 
-        self.pipe, child_pipe = multiprocessing.Pipe()
-        self.sniff_process = multiprocessing.Process(target=sniffer.start_sniff, args=(child_pipe, self.sniff_promisc), daemon=True)
-
         self.packet_fix = self.main.mem.packet_fix
 
-        main.gui.timer.add_mission(self.update_tcp_target, 1, -1)
-        main.gui.draw_update_call.add(self.update)
         self.oodles = {}
         self.buffers = {}
         self.extra = extra.SnifferExtra(self)
@@ -77,39 +72,6 @@ class Sniffer:
             self.dump = message_dump.MessageDumper(file_name, self.main.mem.game_build_date)
             self.logger.info(f'dump packets at {file_name}')
 
-    def update(self, main):
-        while self.pipe.poll(0):
-            cmd, *args = self.pipe.recv()
-            match cmd:
-                case 'ask_target':
-                    self.pipe.send(('set_target', self.target))
-                case 'tcp_data':
-                    key, is_up, data = args
-                    if (_k := (key, is_up)) not in self.buffers:
-                        self.buffers[_k] = buffer = GameMessageBuffer(
-                            oodle.OodleUdp
-                        )
-                    else:
-                        buffer = self.buffers[_k]
-                    for msg in buffer.feed(data):
-                        self._on_message(is_up, msg)
-
-    def update_tcp_target(self):
-        cnt = set()
-        t = None
-        for local_host, local_port, remote_host, remote_port in find_process_tcp_connections(self.main.mem.pid):
-            if (t := (str(remote_host), remote_port)) in cnt: break
-            cnt.add(t)
-            t = None
-        if t != self.target:
-            self.buffers.clear()
-            self.target = t
-            self.pipe.send(('set_target', t))
-
-    def _on_message(self, is_up, msg: message.BaseMessage):
-        if msg.el_header.type == 3:
-            msg = msg.to_el(structs.IpcHeader)
-            self._on_ipc_message(msg.element.timestamp_s != 10, is_up, msg)
 
     def _on_ipc_message(self, is_zone, is_up, msg: message.ElementMessage[structs.IpcHeader]):
         fix_value = None
@@ -154,4 +116,4 @@ class Sniffer:
                 self.logger.error(f'error in processing network message {pno}', exc_info=e)
 
     def start(self):
-        self.sniff_process.start()
+        hook_sniff.install()
