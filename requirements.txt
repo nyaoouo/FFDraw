@@ -9,4 +9,3 @@ pynput
 imgui
 aiohttp
 aiohttp_cors
-scapy
