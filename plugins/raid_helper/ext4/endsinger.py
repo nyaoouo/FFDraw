@@ -95,7 +95,7 @@ def on_call_save_cast(evt: ActorControlMessage[actor_control.AddStatus]):
 
 @map_ex.on_add_status(2397)
 def on_call_save_cast(evt: ActorControlMessage[actor_control.AddStatus]):
-    print(icon_stack)
+    # print(icon_stack)
     icon_stack[evt.source_id][379 - evt.param.param]()
 
 
