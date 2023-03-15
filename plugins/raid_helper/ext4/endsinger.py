@@ -52,13 +52,14 @@ def on_store_save_cast(evt: NetworkMessage[zone_server.ActorCast]):
     # 28682: 疾病激流 donut(15, 5)
     if cast_timer.get() > 10:
         cast_stack.clear()
+    actor = raid_utils.NActor.by_id(evt.header.source_id)
     match evt.message.action_id:
         case 28668 | 28678:
-            cb = lambda: raid_utils.draw_fan(degree=180, radius=20, pos=raid_utils.NActor.by_id(evt.header.source_id), duration=20)
+            cb = lambda: raid_utils.draw_fan(degree=180, radius=20, pos=actor,facing=evt.message.facing, duration=20)
         case 28681:
-            cb = lambda: raid_utils.draw_circle(radius=15, pos=raid_utils.NActor.by_id(evt.header.source_id), duration=20)
+            cb = lambda: raid_utils.draw_circle(radius=15, pos=actor, duration=20)
         case 28682:
-            cb = lambda: raid_utils.draw_circle(inner_radius=5, radius=15, pos=raid_utils.NActor.by_id(evt.header.source_id), duration=20)
+            cb = lambda: raid_utils.draw_circle(inner_radius=5, radius=15, pos=actor, duration=20)
         case _:
             return
     cast_stack.setdefault(evt.header.source_id, []).append(cb)
@@ -72,15 +73,16 @@ def on_store_save_icon(evt: ActorControlMessage[actor_control.SetLockOn]):
     # 327: 28693: 扩散 circle(40/15)
     if icon_timer.get() > 30:
         icon_stack.clear()
+    actor = raid_utils.NActor.by_id(evt.source_id)
     match evt.param.lockon_id:
-        case 28692:
-            cb = lambda: raid_utils.draw_circle(radius=10, pos=raid_utils.NActor.by_id(evt.source_id), duration=13)
-        case 28694:
-            cb = lambda: raid_utils.draw_share(radius=6, pos=raid_utils.NActor.by_id(evt.source_id), duration=13)
-        case 28691:
-            cb = lambda: raid_utils.draw_circle(inner_radius=5, radius=15, pos=raid_utils.NActor.by_id(evt.source_id), duration=13)
-        case 28693:
-            cb = lambda: raid_utils.draw_decay(radius=40, pos=raid_utils.NActor.by_id(evt.source_id), duration=13)
+        case 328:
+            cb = lambda: raid_utils.draw_circle(radius=10, pos=actor, duration=13)
+        case 318:
+            cb = lambda: raid_utils.draw_share(radius=6, pos=actor, duration=13)
+        case 322:
+            cb = lambda: raid_utils.draw_circle(inner_radius=5, radius=15, pos=actor, duration=13)
+        case 327:
+            cb = lambda: raid_utils.draw_decay(radius=40, pos=actor, duration=13)
         case _:
             return
     icon_stack.setdefault(evt.source_id, []).append(cb)
