@@ -117,7 +117,11 @@ class BaseOmen:
 
     @property
     def remaining_time(self):
-        return self.duration - (time.time() - self.start_at)
+        return self.duration - self.play_time
+
+    @property
+    def play_time(self):
+        return time.time() - self.start_at
 
     @property
     def progress(self):
@@ -149,7 +153,7 @@ class BaseOmen:
         self.pos = None
         if self.shape:
             self.pos = self.get_maybe_callable(self._pos)
-            if self.pos is None:return
+            if self.pos is None: return
             for eff in self.effectors:
                 self.pos = eff.pos(self.pos)
             if isinstance(self.pos, (tuple, list)):

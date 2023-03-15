@@ -1,11 +1,16 @@
 from ff_draw.omen import BaseOmen, Line
-from nylib.utils import safe_lazy
+from nylib.utils import safe_lazy, safe
 from nylib.utils.win32.exception import WinAPIError
 from .trigger import new_thread
 from .typing import *
 from .logic import *
 
 main = FFDraw.instance
+
+circle_shape = 0x10000
+rect_shape = 0x20000
+fan_shape = lambda degree: 0x50000 | degree
+donut_shape = lambda inner, outer: 0x10000 | int(inner / outer * 0xffff)
 
 
 def default_color(is_enemy=True):
@@ -23,6 +28,166 @@ def pos_tracker(actor: Actor):
 def facing_tracker(actor: Actor):
     if not isinstance(actor, NActor): actor = NActor(actor)
     return lambda o: safe_lazy(lambda: actor.update().facing, _default=o.timeout)
+
+
+class OmenGroup:
+    def __init__(self, *omens: BaseOmen):
+        self.omens = list(omens)
+
+    def append(self, omen: BaseOmen):
+        self.omens.append(omen)
+
+    def __iter__(self):
+        return iter(self.omens)
+
+    def timeout(self):
+        for o in self.omens:
+            o.timeout()
+
+    def destroy(self):
+        for o in self.omens:
+            o.destroy()
+
+    def __setattr__(self, key, value):
+        if key in ('omens',):
+            return super().__setattr__(key, value)
+        for o in self.omens:
+            setattr(o, key, value)
+
+
+def draw_knock_predict_circle(
+        radius: typing.Callable[[], int] | int,
+        pos: typing.Callable[[], glm.vec3] | glm.vec3 | Actor,
+        color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
+        surface_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
+        line_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
+        duration: float = 0,
+        alpha: typing.Callable[[BaseOmen], float] | float = None,
+        actor: Actor = None,
+        knock_distance: int = True,
+):
+    def _pos_tracker(actor: Actor):
+        if not isinstance(actor, NActor): actor = NActor(actor)
+        return lambda: safe(lambda: actor.update().pos, _default=None)
+
+    def _maybe_callable(v):
+        return v() if callable(v) else v
+
+    if isinstance(pos, Actor): pos = _pos_tracker(pos)
+    if actor is None: actor = get_me()
+    a_pos = _pos_tracker(actor)
+
+    def check_hit():
+        _apos = a_pos()
+        _pos = _maybe_callable(pos)
+        if _apos is None or _pos is None: return None
+        if glm.distance(_apos, _pos) < _maybe_callable(radius):
+            return glm.polar(_pos - _apos).y
+
+    def play(dis):
+        def get_shape(o: BaseOmen):
+            if (knock_direction := check_hit()) is None: return 0
+            o._pos = a_pos() + glm.vec3(-math.sin(knock_direction) * dis, 0, -math.cos(knock_direction) * dis)
+            o._facing = knock_direction + math.pi
+            return 0x1010000
+
+        return create_game_omen(
+            pos=glm.vec3(),
+            shape=get_shape,
+            facing=0,
+            scale=glm.vec3(.5, 1, .5),
+            surface_color=surface_color, line_color=line_color, color=color,
+            duration=duration,
+            alpha=alpha,
+        )
+
+    def play_end(dis):
+        def get_shape(o: BaseOmen):
+            if (knock_direction := check_hit()) is None: return 0
+            o._pos = a_pos() + glm.vec3(-math.sin(knock_direction) * dis, 0, -math.cos(knock_direction) * dis)
+            return 0x10000
+
+        return create_game_omen(
+            pos=glm.vec3(),
+            shape=get_shape,
+            facing=0,
+            scale=glm.vec3(.5, 1, .5),
+            surface_color=surface_color, line_color=line_color, color=color,
+            duration=duration,
+            alpha=alpha,
+        )
+
+    knock_distance = _maybe_callable(knock_distance)
+    return OmenGroup(
+        play_end(knock_distance),
+        *(play(dis) for dis in range(knock_distance))
+    )
+
+
+def draw_decay(
+        radius: typing.Callable[[BaseOmen], int] | int,
+        pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
+        color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
+        surface_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
+        line_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
+        label: typing.Callable[[BaseOmen], str] | str = '',
+        label_color: typing.Callable[[BaseOmen], tuple[float, float, float,]] | tuple[float, float, float,] = None,
+        duration: float = 0,
+        alpha: typing.Callable[[BaseOmen], float] | float = None,
+        min_radius: typing.Callable[[BaseOmen], int] | int = None,
+        draw_icon: typing.Callable[[BaseOmen], int] | int = True,
+):
+    if isinstance(pos, Actor):
+        pos = pos_tracker(pos)
+
+    def play(f):
+        def get_shape(o: BaseOmen):
+            dis = (o.play_time % 1) * 1 + 4
+            o._pos = o.get_maybe_callable(pos) + glm.vec3(-math.sin(f) * dis, 2, -math.cos(f) * dis)
+            o._facing = f + math.pi
+            return 0x1010000
+
+        return create_game_omen(
+            pos=pos,
+            shape=get_shape,
+            facing=0,
+            scale=glm.vec3(3, 1, 2),
+            surface_color=surface_color, line_color=line_color, color=color,
+            duration=duration,
+            alpha=alpha,
+        )
+
+    omens = [
+        draw_circle(  # 扩散圈
+            radius=lambda o: (o.play_time % 1) * (o.get_maybe_callable(radius) - 1) + 1, pos=pos,
+            color=color,
+            line_color=color or line_color or default_color(True),
+            label=label, label_color=label_color,
+            duration=duration, alpha=alpha
+        ),
+    ]
+    if min_radius is not None:
+        omens.append(draw_circle(  # 最小圈
+            radius=min_radius, pos=pos,
+            color=color,
+            surface_color=surface_color,
+            line_color=line_color,
+            label=label, label_color=label_color,
+            duration=duration, alpha=alpha
+        ))
+    if draw_icon:
+        omens.append(
+            draw_circle(  # 内圈
+                radius=1, pos=lambda o: o.get_maybe_callable(pos) + glm.vec3(0, 2, 0),
+                color=color,
+                surface_color=surface_color,
+                line_color=line_color,
+                label=label, label_color=label_color,
+                duration=duration, alpha=alpha
+            ))
+        for i in range(3):
+            omens.append(play(i * math.pi * 2 / 3))
+    return OmenGroup(*omens)
 
 
 def draw_share(
@@ -62,7 +227,7 @@ def draw_share(
             alpha=alpha,
         )
 
-    return [
+    return OmenGroup(
         draw_circle(
             radius=radius, pos=lambda o: o.get_maybe_callable(pos) + glm.vec3(0, 2, 0),
             line_color=color or line_color or default_color(True),
@@ -70,7 +235,7 @@ def draw_share(
             duration=duration, alpha=alpha
         ),
         *(play(i * math.pi / 2) for i in range(4))
-    ]
+    )
 
 
 def draw_circle(
@@ -288,4 +453,3 @@ def timeout_when_channeling_change(omen: BaseOmen, source_id, target_id, idx=0):
 
     install()
     return omen
-
