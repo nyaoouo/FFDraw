@@ -1,9 +1,6 @@
-import time
-
 from ff_draw.func_parser import action_type_to_shape_default
 from ff_draw.plugins import FFDrawPlugin
 from ff_draw.sniffer.message_structs.zone_server import ActorCast
-from nylib.utils import serialize_data
 from nylib.utils.win32 import memory as ny_mem
 from .data import special_actions
 from .utils import *
@@ -101,6 +98,7 @@ class RaidHelper(FFDrawPlugin):
         self.main.sniffer.on_actor_control[ActorControlId.CancelCast].remove(self.on_cancel_cast)
 
     def draw_panel(self):
+        imgui.text(f'has tts: {"tts/TTS" in self.main.plugins}')
         if imgui.tree_node('simple cast'):
             clicked, self.show_friend = imgui.checkbox("show_friend", self.show_friend)
             if clicked:
