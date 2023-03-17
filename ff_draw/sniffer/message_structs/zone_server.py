@@ -454,3 +454,14 @@ class RsvString(Structure):
     @property
     def value(self):
         return SeString.from_buffer(bytearray(self.__value[:self.value_length]))
+
+
+@type_map.set(ZoneServer.NpcYell)
+@set_fields_from_annotations
+class NpcYell(Structure):
+    _size_ = 0X20
+
+    actor_id: 'fctypes.c_uint64' = eval('0X0')
+    name_id: 'fctypes.c_uint32' = eval('0X8')
+    npc_yell_id: 'fctypes.c_uint16' = eval('0XC')  # NpcYell sheet
+    args: 'fctypes.array(fctypes.c_int32, 4)' = eval('0X10')

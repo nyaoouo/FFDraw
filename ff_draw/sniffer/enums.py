@@ -53,6 +53,7 @@ class ZoneServer(enum.Enum):
     MarketBoardSearchResult = enum.auto()
     NpcSpawn = enum.auto()
     NpcSpawn2 = enum.auto()
+    NpcYell = enum.auto()
     ObjectSpawn = enum.auto()
     PartyUpdate = enum.auto()
     PlaceFieldMarker = enum.auto()

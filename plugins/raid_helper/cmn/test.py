@@ -19,10 +19,11 @@ def on_any_effect(msg: NetworkMessage[zone_server.ActionEffect]):
         if test_exception.value:
             raise Exception('Test')
         if actor := raid_utils.main.mem.actor_table.get_actor_by_id(msg.header.source_id):
-            raid_utils.draw_knock_circle(radius=40, pos=actor.pos, duration=5,knock_distance=10)
+            raid_utils.draw_knock_predict_circle(radius=40, pos=actor.pos, duration=5, knock_distance=10)
             # raid_utils.draw_share(radius=3, pos=actor, duration=5)
             name = actor.name
         else:
             name = f'actor#{msg.header.source_id:X}'
-        logger.info(f'{name} use {raid_utils.main.sq_pack.sheets.action_sheet[msg.message.action_id].text} test value:{test_value_1.value} target_mode:{test_target.value}')
-
+        action_name = str(raid_utils.main.sq_pack.sheets.action_sheet[msg.message.action_id].text)
+        logger.info(f'{name} use {action_name} test value:{test_value_1.value} target_mode:{test_target.value}')
+        raid_utils.tts(action_name)

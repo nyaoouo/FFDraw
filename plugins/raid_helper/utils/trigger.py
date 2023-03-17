@@ -138,6 +138,7 @@ class TriggerGroup:
         self._on_set_channel = {}
         self._on_cancel_channel = {}
         self._on_npc_spawn = {}
+        self._on_npc_yell = {}
         self._on_object_spawn = {}
         self._on_actor_delete = []
         self._on_actor_play_action_timeline = {}
@@ -242,6 +243,16 @@ class TriggerGroup:
         return func
 
     # endregion
+    # region on_actor_delete
+    def _recv_on_npc_yell(self, msg: NetworkMessage[zone_server.NpcYell]):
+        for c in self._on_npc_yell.get(msg.message.npc_yell_id, ()): call_safe(c, msg)
+        for c in self._on_npc_yell.get(None, ()):  call_safe(c, msg)  # pair all
+
+    def on_npc_yell(self, *npc_yell_id):
+        self.hook_map.set(main.sniffer.on_zone_server_message[ZoneServer.NpcYell], self._recv_on_npc_yell)
+        return _add_set(self._on_npc_yell, npc_yell_id or pair_all)
+
+    # endregion
     # region on_set_channel
     def _recv_on_set_channel(self, msg: ActorControlMessage[actor_control.SetChanneling]):
         for c in self._on_set_channel.get(msg.param.channel_id, ()): call_safe(c, msg)
@@ -324,3 +335,8 @@ def new_thread(f):
         return raid_helper.create_mission(f, *args, **kwargs)
 
     return func
+
+
+def tts(msg):
+    if tts_plugin := main.plugins.get("tts/TTS"):
+        tts_plugin.speak(msg)
