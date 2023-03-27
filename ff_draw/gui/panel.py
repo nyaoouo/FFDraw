@@ -45,7 +45,9 @@ class FFDPanel:
 
         if me := mem.actor_table.me:
             imgui.text(f'me: {me.name}#{me.id:#x}')
-            if (tid := mem.territory_type) != self.cached_tid:
+            tinfo = mem.territory_info
+            tid = tinfo.territory_id
+            if tid != self.cached_tid:
                 self.cached_tid = tid
                 try:
                     territory = self.main.sq_pack.sheets.territory_type_sheet[tid]
@@ -53,7 +55,7 @@ class FFDPanel:
                     self.territory = 'N/A'
                 else:
                     self.territory = f'{territory.region.text_sgl}-{territory.sub_region.text_sgl}-{territory.area.text_sgl}'
-            imgui.text(f'territory: {self.territory}#{tid}')
+            imgui.text(f'territory: {self.territory} [Layer: {tinfo.layer_id}][Weather: {tinfo.weather_id}/{tinfo.weather_is_content}]#{tid}')
             imgui.text(f'pos: {me.pos}#{me.facing / math.pi:.2f}pi')
         else:
             imgui.text(f'me: N/A')

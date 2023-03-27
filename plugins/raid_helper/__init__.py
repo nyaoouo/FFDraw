@@ -30,7 +30,7 @@ class HookCall:
 
     def play(self, msg):
         for c in self.common: c(msg)
-        for c in self.by_map.get(FFDraw.instance.mem.territory_type, ()): c(msg)
+        for c in self.by_map.get(FFDraw.instance.mem.territory_info.territory_id, ()): c(msg)
 
 
 class HookMap2:
@@ -115,7 +115,7 @@ class RaidHelper(FFDrawPlugin):
 
     def current_triggers(self) -> typing.Iterable[TriggerGroup]:
         yield common_trigger
-        if t := MapTrigger.triggers.get(self.main.mem.territory_type):
+        if t := MapTrigger.triggers.get(self.main.mem.territory_info.territory_id):
             yield t
 
     def remove_actor_omen(self, actor_id):
@@ -132,7 +132,7 @@ class RaidHelper(FFDrawPlugin):
         if not (a1 and a2): return True
         if a1.actor_type > 2 or a2.actor_type > 2: return False
         try:
-            battalion_mode = self.main.sq_pack.sheets.territory_type_sheet[self.main.mem.territory_type].battalion_mode
+            battalion_mode = self.main.sq_pack.sheets.territory_type_sheet[self.main.mem.territory_info.territory_id].battalion_mode
         except KeyError:
             return False
         if battalion_mode == 0: return False
