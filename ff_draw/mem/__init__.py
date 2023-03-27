@@ -5,7 +5,7 @@ import glm
 from nylib.utils.win32 import memory as ny_mem, process as ny_proc
 from nylib.pefile import PE
 from nylib.pattern import StaticPatternSearcher
-from . import utils, actor, party, network_target, packet_fix, marking
+from . import utils, actor, party, network_target, packet_fix, marking, territory_info
 
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
@@ -23,12 +23,12 @@ class XivMem:
         self.game_version, self.game_build_date = utils.get_game_version_info(file_name)
         self.screen_address = self.scanner.find_point('48 ? ? * * * * e8 ? ? ? ? 42 ? ? ? 39 05')[0] + 0x1b4
         self.replay_flag_address = self.scanner.find_point('84 1d * * * * 74 ? 80 3d')[0]
-        self.territory_type_address = self.scanner.find_point('0f b7 ? * * * * 48 8d ? ? ? f3 0f ? ? 33 d2')[0]
         self.actor_table = actor.ActorTable(self)
         self.party = party.PartyManager(self)
         self.network_target = network_target.NetworkInfo(self)
         self.packet_fix = packet_fix.PacketFix(self)
         self.marking = marking.MarkingController(self)
+        self.territory_info = territory_info.TerritoryInfo(self)
 
     def load_screen(self):
         buf = ny_mem.read_bytes(self.handle, self.screen_address, 0x48)
@@ -37,7 +37,3 @@ class XivMem:
     @property
     def is_in_replay(self):
         return (ny_mem.read_ubyte(self.handle, self.replay_flag_address) & 0b100) > 0
-
-    @property
-    def territory_type(self):
-        return ny_mem.read_int(self.handle, self.territory_type_address)

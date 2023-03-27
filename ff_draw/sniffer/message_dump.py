@@ -32,7 +32,7 @@ class MessageDumper:
         }
 
     def write(self, timestamp_ms: int, is_zone: bool, is_up: bool, proto_no: int, source_id: int, data: bytes, fix_value=0):
-        to_write = struct.pack(b'BBHIQI',((int(is_zone) << 1) | int(is_up)) , fix_value, proto_no, source_id, timestamp_ms, len(data)) + data
+        to_write = struct.pack(b'BHiIIQ', ((int(is_zone) << 1) | int(is_up)), proto_no, fix_value, source_id, len(data), timestamp_ms) + data
         with self.write_lock: self.handle.write(to_write)
 
     def close(self):
@@ -57,7 +57,7 @@ class MessageDumper:
             while True:
                 if not (header_bytes := buf.read(20)): break
 
-                scope, fix_value, proto_no, source_id, timestamp_ms, size = struct.unpack(b'BBHIQI', header_bytes)
+                scope, proto_no, fix_value, source_id, size, timestamp_ms = struct.unpack(b'BHiIIQ', header_bytes)
                 data = buf.read(size)
 
                 is_zone = scope & 0b10 > 0
