@@ -3,15 +3,12 @@ import struct
 import typing
 from nylib.utils.win32 import memory as ny_mem
 from nylib.pattern import sig_to_pattern
+from .utils import read_utf8_string
 
 if typing.TYPE_CHECKING:
     from . import XivMem
 
 get_network_skeleton, _ = sig_to_pattern("80 b9 ? ? ? ? ? 74 08 48 8b 81 * * * * ?")
-
-
-def read_utf8_string(handle, d: int, encoding='utf-8'):
-    return ny_mem.read_string(handle, ny_mem.read_address(handle, d), ny_mem.read_ulonglong(handle, d + 0x10), encoding)
 
 
 class NetworkInfo:
