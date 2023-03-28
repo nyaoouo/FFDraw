@@ -61,6 +61,29 @@ class FFDPanel:
         else:
             imgui.text(f'me: N/A')
 
+        if imgui.tree_node('EventModule'):
+            if imgui.tree_node('ContentInfo'):
+                try:
+                    cinfo = mem.event_module.content_info
+                    imgui.text(f'handler_id: {cinfo.handler_id:#X}')
+                    imgui.text(f'content_id: {cinfo.content_id:#X}')
+                    imgui.text(f'title: {cinfo.title}')
+                    imgui.text(f'text1: {cinfo.text1}')
+                    imgui.text(f'text2: {cinfo.text2}')
+                    imgui.text('todo_list')
+                    if imgui.tree_node('Todo List'):
+                        try:
+                            for todo in cinfo.todo_list:
+                                if not todo.is_valid: break
+                                imgui.text(f'[{todo.is_finished}]{todo.desc}')
+                        except Exception as e:
+                            imgui.text('N/A - ' + str(e))
+                        imgui.tree_pop()
+                except Exception as e:
+                    imgui.text('N/A - ' + str(e))
+                imgui.tree_pop()
+            imgui.tree_pop()
+
         imgui.text('plugins')
 
         for k, v in self.main.enable_plugins.items():
