@@ -93,7 +93,7 @@ class EventModule:
     def __init__(self, main: 'XivMem'):
         self.main = main
         self.handle = main.handle
-        self._a_p_event = main.scanner.find_point('48 ? ? * * * * 4c 39 b0')[0]
+        self._a_p_event = main.scanner.find_point('48 39 1d * * * * 48 89 b4 24')[0]
 
         self.content_info = ContentInfo(self)
 
