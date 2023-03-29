@@ -9,12 +9,14 @@ os.chdir('pack_assets')
 os.system(
     r'..\venv310\Scripts\pyinstaller --onefile --uac-admin ' +
     '--collect-all=nylib ' +
+    '--collect-all=win32com ' +
     '--icon=sage.ico ' +
     '..\main.py'
 )
 os.system(
     r'..\venv310\Scripts\pyinstaller --onefile --uac-admin ' +
     '--collect-all=nylib ' +
+    '--collect-all=win32com ' +
     '--icon=sage.ico ' +
     '..\main_cn.py'
 )
