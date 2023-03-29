@@ -30,9 +30,11 @@ class ResMap:
         return self.add_res(compile(code, '<precompile>', 'eval', dont_inherit=True, optimize=2))
 
 
-def actor_distance_func(actor):
-    src_pos = actor.pos
-    return lambda a: glm.distance(src_pos, a.pos)
+def player_by_distance_idx(main: 'FFDraw', src, idx):
+    main_pos = main.mem.actor_table.get_actor_by_id(src).pos
+    s_actor = sorted((a for a in main.mem.actor_table.iter_actor_by_type(1) if a.id != src), key=lambda a: glm.distance2(main_pos, a.pos))
+    assert s_actor, 'no player'
+    return s_actor[idx % len(s_actor)].id
 
 
 # TODO: to jump map
@@ -95,7 +97,7 @@ def make_value(parser: 'FuncParser', value, res: ResMap, args: dict[str, typing.
                    f'main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("a2", 0), res, args)}).pos' \
                    f')'
         case 'player_by_distance_idx':  # 慎用
-            return f'(sorted((a for a in main.mem.actor_table.iter_actor_by_type(1)), key=actor_distance(main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("src", 0), res, args)})))[{make_value(parser, value.get("idx", 0), res, args)}])'
+            return f'(player_by_distance_idx(main,({make_value(parser, value.get("src", 0), res, args)}),({make_value(parser, value.get("idx", 0), res, args)})))'
         case 'actor_relative_facing':
             return f'glm.polar(' \
                    f'main.mem.actor_table.get_actor_by_id({make_value(parser, value.get("dst", 0), res, args)}).pos-' \
@@ -180,7 +182,7 @@ class FuncParser:
         self.action_sheet = main.sq_pack.sheets.action_sheet
         self.parse_name_space = {
             'glm': glm, 'main': self.main, 'safe_lazy': safe_lazy,
-            'actor_distance': actor_distance_func, 'action_shape_scale': self.action_shape_scale, 'math': math
+            'player_by_distance_idx': player_by_distance_idx, 'action_shape_scale': self.action_shape_scale, 'math': math
         }
         self.compile_config = self.main.config.setdefault('compile', {})
         self.print_compile = self.compile_config.setdefault('print_debug', {}).setdefault('enable', False)

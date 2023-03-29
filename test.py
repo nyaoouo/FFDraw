@@ -264,4 +264,23 @@ demo_10 = {
     },
     'duration': 10,
 }
-print(post(f'http://127.0.0.1:8001/rpc', json=demo_8).text)
+
+# 画一条和最近玩家的连线
+demo_11 = {
+    'cmd': 'add_line',
+    'color': 'enemy',
+    'src': {
+        'key': 'actor_pos',
+        'id': {'key': 'me'},
+    },
+    'dst': {
+        'key': 'actor_pos',
+        'id': {
+            'key': 'player_by_distance_idx',
+            'src': {'key': 'me'},
+            'idx': 0,
+        },
+    },
+    'duration': 10,
+}
+print(post(f'http://127.0.0.1:8001/rpc', json=demo_11).text)
