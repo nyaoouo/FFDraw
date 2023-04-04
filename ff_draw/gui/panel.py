@@ -83,6 +83,20 @@ class FFDPanel:
                     imgui.text('N/A - ' + str(e))
                 imgui.tree_pop()
             imgui.tree_pop()
+        if imgui.tree_node(f'QuestInfo'):
+            quest_sheet = self.main.sq_pack.sheets.quest_sheet
+            try:
+                for quest in mem.quest_info.quests():
+                    try:
+                        quest_data = quest_sheet[quest.id | 0x10000]
+                    except KeyError:
+                        imgui.text(f'N/A#{quest.id}[{quest.seq}]')
+                    else:
+                        imgui.text(f'{quest_data.text}#{quest.id}[{quest.seq}]')
+            except Exception as e:
+                imgui.text('N/A - ' + str(e))
+
+            imgui.tree_pop()
 
         imgui.text('plugins')
 
