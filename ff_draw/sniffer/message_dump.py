@@ -55,7 +55,7 @@ class MessageDumper:
             zone_client_pno_map = simple.load_pno_map(pno_dir / 'ZoneClientIpc.csv', game_build_date, enums.ZoneClient)
 
             while True:
-                if not (header_bytes := buf.read(20)): break
+                if not (header_bytes := buf.read(24)): break
 
                 scope, proto_no, fix_value, source_id, size, timestamp_ms = struct.unpack(b'BHiIIQ', header_bytes)
                 data = buf.read(size)

@@ -3,7 +3,7 @@ import struct
 import typing
 import glm
 from nylib.utils.win32 import memory as ny_mem
-from .utils import direct_mem_property
+from .utils import direct_mem_property, WinAPIError
 
 if typing.TYPE_CHECKING:
     from . import XivMem
@@ -26,8 +26,13 @@ class StatusManager:
 
     def __iter__(self):
         """id,param,remain,source_id"""
-        for i in range(30):
-            yield status_struct.unpack(ny_mem.read_bytes(self.handle, self.address + 8 + (i * status_struct.size), status_struct.size))
+        try:
+            for i in range(30):
+                yield status_struct.unpack(
+                    ny_mem.read_bytes(self.handle, self.address + 8 + (i * status_struct.size), status_struct.size)
+                )
+        except WinAPIError:
+            pass
 
     def _iter_filter(self, status_id: int, source_id=0):
         for status_id_, param, remain, source_id_ in self:
@@ -105,7 +110,10 @@ class Actor:
 
     @property
     def name(self):
-        return ny_mem.read_string(self.handle, self.address + self.offsets.name, 68)
+        try:
+            return ny_mem.read_string(self.handle, self.address + self.offsets.name, 68)
+        except WinAPIError:
+            return ''
 
     id = direct_mem_property(ctypes.c_uint)
     base_id = direct_mem_property(ctypes.c_uint)
@@ -132,17 +140,28 @@ class Actor:
 
     @property
     def target_id(self):
-        return ny_mem.read_uint(self.handle, self.address + (self.offsets.pc_target_id if self.actor_type == 1 else self.offsets.b_npc_target_id))
+        try:
+            return ny_mem.read_uint(self.handle, self.address + (
+                self.offsets.pc_target_id if self.actor_type == 1 else self.offsets.b_npc_target_id
+            ))
+        except WinAPIError:
+            return 0
 
     @property
     def can_select(self):
-        if ny_mem.read_byte(self.handle, self.address + self.offsets.status_flag) & 0b110 != 0b110: return False
-        return ny_mem.read_uint(self.handle, self.address + self.offsets.hide_flag) >> 11 == 0
+        try:
+            if ny_mem.read_byte(self.handle, self.address + self.offsets.status_flag) & 0b110 != 0b110: return False
+            return ny_mem.read_uint(self.handle, self.address + self.offsets.hide_flag) >> 11 == 0
+        except WinAPIError:
+            return False
 
     @property
     def is_visible(self):
-        p_draw_object = ny_mem.read_address(self.handle, self.address + self.offsets.draw_object)
-        return ny_mem.read_byte(self.handle, p_draw_object + 0x88) & 1
+        try:
+            p_draw_object = ny_mem.read_address(self.handle, self.address + self.offsets.draw_object)
+            return ny_mem.read_byte(self.handle, p_draw_object + 0x88) & 1 > 0
+        except WinAPIError:
+            return False
 
     @property
     def status(self):
@@ -157,7 +176,8 @@ class ActorTable:
         self.handle = main.handle
         self.base_address = main.scanner.find_point('4c ? ? * * * * 89 ac cb')[0]
         self.sorted_table_address = self.base_address + main.scanner.find_val('4e ? ? ? * * * * 41 ? ? ? 3b ? 73')[0]
-        self.sorted_count_address = self.base_address + main.scanner.find_val('44 ? ? * * * * 45 ? ? 41 ? ? ? 48 ? ? 78')[0]
+        self.sorted_count_address = self.base_address + \
+                                    main.scanner.find_val('44 ? ? * * * * 45 ? ? 41 ? ? ? 48 ? ? 78')[0]
         self.me_ptr = main.scanner.find_point('48 ? ? * * * * 49 39 87')[0]
         if main.game_version >= (6, 3, 0):
             Actor.offsets = ActorOffsets630
@@ -204,7 +224,9 @@ class ActorTable:
                 # error occurred, maybe just game update
                 return
             aid = a.id
-            if aid < actor_id:
+            if not aid:
+                continue
+            elif aid < actor_id:
                 left = idx + 1
             elif aid > actor_id:
                 right = idx - 1
