@@ -199,15 +199,6 @@ class UpdateHpMpGp(Structure):
     gp: 'fctypes.c_uint16' = eval('0X6')
 
 
-@type_map.set(ZoneServer.ContainerItemInfo)
-@set_fields_from_annotations
-class UpdateHpMpGp(Structure):
-    _size_ = 0X8
-
-    hp: 'fctypes.c_uint32' = eval('0X0')
-    mp: 'fctypes.c_uint16' = eval('0X4')
-    gp: 'fctypes.c_uint16' = eval('0X6')
-
 
 @set_fields_from_annotations
 class EffectResultStatus(Structure):
