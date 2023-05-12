@@ -1,6 +1,4 @@
 import logging
-import math
-import os
 import typing
 
 import glfw
@@ -21,82 +19,11 @@ class FFDPanel:
         self.window = gui.window_panel
         self.is_expand = True
         self.is_show = True
-        self.show_exit_process = False
 
         self.current_page = ''
 
-        self.cached_tid = -1
-        self.territory = ''
-
-        self.cached = ''
-
     def ffd_page(self):
-        mem = self.main.mem
-
-        imgui.text(f'pid: {mem.pid}')
-        imgui.same_line()
-        if self.show_exit_process:
-            if imgui.button(f'kill process!'):
-                from nylib.utils.win32.winapi.kernel32 import TerminateProcess
-                TerminateProcess(mem.handle, 0)
-                os._exit(0)
-        else:
-            self.show_exit_process = imgui.button(f'kill process?')
-
-        if me := mem.actor_table.me:
-            imgui.text(f'me: {me.name}#{me.id:#x}')
-            tinfo = mem.territory_info
-            tid = tinfo.territory_id
-            if tid != self.cached_tid:
-                self.cached_tid = tid
-                try:
-                    territory = self.main.sq_pack.sheets.territory_type_sheet[tid]
-                except KeyError:
-                    self.territory = 'N/A'
-                else:
-                    self.territory = f'{territory.region.text_sgl}-{territory.sub_region.text_sgl}-{territory.area.text_sgl}'
-            imgui.text(f'territory: {self.territory}')
-            imgui.text(f'[Tid: {tid}][Layer: {tinfo.layer_id}][Weather: {tinfo.weather_id}/{tinfo.weather_is_content}]')
-            imgui.text(f'pos: {me.pos}#{me.facing / math.pi:.2f}pi')
-        else:
-            imgui.text(f'me: N/A')
-
-        if imgui.tree_node('EventModule'):
-            if imgui.tree_node('ContentInfo'):
-                try:
-                    cinfo = mem.event_module.content_info
-                    imgui.text(f'handler_id: {cinfo.handler_id:#X}')
-                    imgui.text(f'content_id: {cinfo.content_id:#X}')
-                    imgui.text(f'title: {cinfo.title}')
-                    imgui.text(f'text1: {cinfo.text1}')
-                    imgui.text(f'text2: {cinfo.text2}')
-                    imgui.text('todo_list')
-                    if imgui.tree_node('Todo List'):
-                        try:
-                            for todo in cinfo.todo_list:
-                                if not todo.is_valid: break
-                                imgui.text(f'[{todo.is_finished}]{todo.desc}')
-                        except Exception as e:
-                            imgui.text('N/A - ' + str(e))
-                        imgui.tree_pop()
-                except Exception as e:
-                    imgui.text('N/A - ' + str(e))
-                imgui.tree_pop()
-            imgui.tree_pop()
-        if imgui.tree_node(f'QuestInfo'):
-            quest_sheet = self.main.sq_pack.sheets.quest_sheet
-            try:
-                for quest in mem.quest_info.quests():
-                    try:
-                        quest_data = quest_sheet[quest.id | 0x10000]
-                    except KeyError:
-                        imgui.text(f'N/A#{quest.id}[{quest.seq}]')
-                    else:
-                        imgui.text(f'{quest_data.text}#{quest.id}[{quest.seq}]')
-            except Exception as e:
-                imgui.text('N/A - ' + str(e))
-
-            imgui.tree_pop()
+        self.main.mem.panel.render()
 
         imgui.text('plugins')
 
@@ -120,26 +47,7 @@ class FFDPanel:
             self.main.save_config()
 
         imgui.text('sniffer')
-        sniffer = self.main.sniffer
-        imgui.text(f'fix:{sniffer.packet_fix.value}')
-        clicked, sniffer.print_packets = imgui.checkbox("print_packets", sniffer.print_packets)
-        if clicked:
-            sniffer.config['print_packets'] = sniffer.print_packets
-            self.main.save_config()
-        clicked, sniffer.print_actor_control = imgui.checkbox("print_actor_control", sniffer.print_actor_control)
-        if clicked:
-            sniffer.config['print_packets'] = sniffer.print_packets
-            self.main.save_config()
-        clicked, sniffer.dump_pkt = imgui.checkbox("dump_pkt", sniffer.dump_pkt)
-        if clicked:
-            sniffer.config['dump_pkt'] = sniffer.dump_pkt
-            sniffer.update_dump()
-            self.main.save_config()
-        if sniffer.dump_pkt:
-            clicked, sniffer.dump_zone_down_only = imgui.checkbox("dump_zone_down_only", sniffer.dump_zone_down_only)
-            if clicked:
-                sniffer.config['dump_zone_down_only'] = sniffer.dump_zone_down_only
-                self.main.save_config()
+        self.main.sniffer.render_panel()
 
         imgui.text('func_parser')
         parser = self.main.parser
