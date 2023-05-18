@@ -677,3 +677,4 @@
 * p5s https://github.com/qingqingthe/FFD_trigger/blob/main/p5s_ffd.xml
 * p8s 门神 https://github.com/qingqingthe/FFD_trigger/blob/main/p8s_%E9%97%A8%E7%A5%9E_ffd.xml
 * p8s 本体 https://github.com/qingqingthe/FFD_trigger/blob/main/p8s_%E6%9C%AC%E4%BD%93_ffd.xml
+* PVP插件 https://github.com/extrant/FFDraw-PVPPlugins
