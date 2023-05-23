@@ -9,6 +9,24 @@ from ff_draw.mem.actor import Actor
 main = FFDraw.instance
 
 
+def is_class_job_in_category(class_job_category: int):
+    class_job_map = main.sq_pack.sheets.class_job_category_sheet[class_job_category].class_job
+
+    def func(class_job_id: int) -> bool:
+        return class_job_map[class_job_id]
+
+    func.__name__ = f'is_class_job_in_category_{class_job_category}'
+    return func
+
+
+is_class_job_dps = is_class_job_in_category(131)
+is_class_job_tank = is_class_job_in_category(156)
+is_class_job_healer = is_class_job_in_category(157)
+is_class_job_range = is_class_job_in_category(87)
+is_class_job_physic_dps = is_class_job_in_category(158)
+is_class_job_magic_dps = is_class_job_in_category(159)
+
+
 def get_me():
     return main.mem.actor_table.me
 
@@ -29,7 +47,7 @@ def find_actor_by_base_id(*base_id) -> 'typing.Iterator[NActor]':
 def iter_main_party(alive=True, exclude_id=None):
     if (p_list := main.mem.party.party_list).party_size:
         for member in p_list:
-            if member.id != exclude_id and (not alive or member.current_hp) and (actor := member.actor):
+            if member.id != exclude_id and (not alive or member.current_hp) and (actor := main.mem.actor_table.get_actor_by_id(member.id)):
                 yield NActor(actor)
     elif me := get_me():
         if exclude_id != me.id and (not alive or me.current_hp):
@@ -125,4 +143,5 @@ class NActor(Actor):
 
     @classmethod
     def by_id(cls, aid):
-        return cls(main.mem.actor_table.get_actor_by_id(aid))
+        if a:=main.mem.actor_table.get_actor_by_id(aid):
+            return cls(a)

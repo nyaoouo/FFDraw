@@ -4,6 +4,7 @@ from raid_helper import utils as raid_utils
 from raid_helper.utils.typing import *
 
 enable_test = raid_utils.common_trigger.add_value(raid_utils.BoolCheckBox('test/enable', False))
+draw_test = raid_utils.common_trigger.add_value(raid_utils.BoolCheckBox('test/draw_test', False))
 test_value_1 = raid_utils.common_trigger.add_value(raid_utils.IntSlider('test/value1', -5, 5, 0))
 test_target = raid_utils.common_trigger.add_value(raid_utils.Select('test/target', [
     ('Me', 0),
@@ -27,3 +28,15 @@ def on_any_effect(msg: NetworkMessage[zone_server.ActionEffect]):
         action_name = str(raid_utils.main.sq_pack.sheets.action_sheet[msg.message.action_id].text)
         logger.info(f'{name} use {action_name} test value:{test_value_1.value} target_mode:{test_target.value}')
         raid_utils.tts(action_name)
+
+
+@raid_utils.common_trigger.on_effect()
+def on_any_effect_draw_test(msg: NetworkMessage[zone_server.ActionEffect]):
+    if not (draw_test.value and raid_utils.is_me_id(msg.header.source_id)): return
+    logger.info('draw_test')
+    # for a in raid_utils.iter_main_party(False):
+    #     raid_utils.draw_circle(radius=3, pos=a, duration=5)
+
+    if (me := raid_utils.main.mem.actor_table.me) is None: return
+    if (target := raid_utils.main.mem.actor_table.get_actor_by_id(me.target_id)) is None: return
+    raid_utils.draw_distance_line(me, target, duration=20, min_distance=10, max_distance=15)

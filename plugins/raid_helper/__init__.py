@@ -2,7 +2,7 @@ from ff_draw.func_parser import action_type_to_shape_default
 from ff_draw.plugins import FFDrawPlugin
 from ff_draw.sniffer.message_structs.zone_server import ActorCast
 from nylib.utils.win32 import memory as ny_mem
-from .data import special_actions
+from .data import special_actions, delay_until, omen_color
 from .utils import *
 
 
@@ -31,6 +31,12 @@ class HookCall:
     def play(self, msg):
         for c in self.common: c(msg)
         for c in self.by_map.get(FFDraw.instance.mem.territory_info.territory_id, ()): c(msg)
+
+
+def delay_until_dec(action_id, shape):
+    if (delay_until_ := delay_until.get(action_id)) and delay_until_ > 0:
+        return lambda o: 0 if o.remaining_time > delay_until_ else shape
+    return shape
 
 
 class HookMap2:
@@ -150,7 +156,15 @@ class RaidHelper(FFDrawPlugin):
         target = self.main.mem.actor_table.get_actor_by_id(data.target_id) if data.target_id != source_id else None
         effect_width = action.effect_width
         effect_range = action.effect_range
-        if self.is_enemy(self.main.mem.actor_table.me, source):
+        color = surface_color = line_color = None
+        if _color := omen_color.get(action_id):
+            _line_color = None
+            if isinstance(_color, tuple):
+                surface_color, *_line_color = _color
+            else:
+                surface_color = _color
+            line_color = _line_color[0] if _line_color else surface_color + glm.vec4(0, 0, 0, .5)
+        elif self.is_enemy(self.main.mem.actor_table.me, source):
             color = 'enemy'
         elif self.show_friend:
             color = 'friend'
@@ -158,7 +172,7 @@ class RaidHelper(FFDrawPlugin):
             return
         if data.display_delay:
             delay = data.display_delay / 10
-            alpha = lambda o: 1 if time.time() - o.start_at > delay else .3
+            alpha = lambda o: 1 if time.time() - o.start_at > delay else .7
         else:
             alpha = 1
         if effect_type == 8:  # rect to target
@@ -168,9 +182,11 @@ class RaidHelper(FFDrawPlugin):
             self.actor_omens[source_id] = BaseOmen(
                 main=self.main,
                 pos=lambda _: source.pos,
-                shape=0x20000,
+                shape=delay_until_dec(action_id, 0x20000),
                 scale=lambda _: glm.vec3(effect_width, 1, glm.distance(source.pos, target.pos)),
                 facing=lambda _: glm.polar(target.pos - source.pos).y,
+                surface_color=surface_color,
+                line_color=line_color,
                 surface_line_color=color,
                 duration=data.cast_time + .5,
                 alpha=alpha,
@@ -186,15 +202,18 @@ class RaidHelper(FFDrawPlugin):
             self.logger.debug(
                 f'#simple_cast {source.name} cast {action.text}#{action_id} '
                 f'shape:{maybe_callable(shape):#X} time:{data.cast_time:.2f} '
-                f'pos:{maybe_callable(pos)} facing:{maybe_callable(facing)} scale:{scale}'
+                f'pos:{maybe_callable(pos)} facing:{maybe_callable(facing)} scale:{scale} '
+                f'color:{color} line_color:{line_color} surface_color:{surface_color}'
             )
         self.actor_omens[source_id] = BaseOmen(
             main=self.main,
             pos=pos,
-            shape=shape,
+            shape=delay_until_dec(action_id, shape),
             scale=scale,
             facing=facing,
             surface_line_color=color,
+            surface_color=surface_color,
+            line_color=line_color,
             duration=data.cast_time + .3,
             alpha=alpha,
         )
