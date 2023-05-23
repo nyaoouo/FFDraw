@@ -2,6 +2,7 @@ import ctypes
 import struct
 import typing
 import glm
+from fpt4.utils.se_string import SeString
 from nylib.utils.win32 import memory as ny_mem
 from .utils import direct_mem_property, WinAPIError
 
@@ -110,10 +111,14 @@ class Actor:
 
     @property
     def name(self):
+        data = ny_mem.read_bytes(self.handle, self.address + self.offsets.name, 68)
         try:
-            return ny_mem.read_string(self.handle, self.address + self.offsets.name, 68)
-        except WinAPIError:
-            return ''
+            data = data[:data.index(0)]
+        except ValueError:
+            pass
+        if 2 in data:
+            return str(SeString.from_buffer(bytearray(data)))
+        return data.decode('utf-8', 'ignore')
 
     id = direct_mem_property(ctypes.c_uint)
     base_id = direct_mem_property(ctypes.c_uint)
@@ -137,6 +142,12 @@ class Actor:
     level = direct_mem_property(ctypes.c_byte)
     model_attr = direct_mem_property(ctypes.c_byte)
     shield = direct_mem_property(ctypes.c_ubyte)
+
+    def target_radian(self, target: 'Actor'):
+        return glm.polar(target.pos - self.pos).y
+
+    def target_distance(self, target: 'Actor'):
+        return glm.distance(self.pos, target.pos)
 
     @property
     def target_id(self):
@@ -184,6 +195,9 @@ class ActorTable:
         else:
             Actor.offsets = ActorOffsets
 
+        self.table_size = main.scanner.find_val('81 bf ? ? ? ? * * * * 72 ? 44 89 b7')[0]
+        self.use_brute_search = False
+
     def __getitem__(self, item):  # by sorted idx
         if item < self.sorted_length:
             return self.get_actor_by_sorted_idx(item)
@@ -214,7 +228,12 @@ class ActorTable:
             else:
                 break
 
-    def get_actor_by_id(self, actor_id):
+    def _get_actor_by_id_brute(self, actor_id):
+        for i in range(self.table_size):
+            if (a := self.get_actor_by_idx(i)) and a.id == actor_id:
+                return a
+
+    def _get_actor_by_id_bisect(self, actor_id):
         if is_invalid_id(actor_id):
             return None
         left = 0
@@ -232,6 +251,9 @@ class ActorTable:
                 right = idx - 1
             else:
                 return a
+
+    def get_actor_by_id(self, actor_id) -> Actor | None:
+        return (self._get_actor_by_id_brute if self.use_brute_search else self._get_actor_by_id_bisect)(actor_id)
 
     @property
     def sorted_length(self):
