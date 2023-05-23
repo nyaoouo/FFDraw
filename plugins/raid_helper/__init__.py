@@ -1,3 +1,5 @@
+import itertools
+
 from ff_draw.func_parser import action_type_to_shape_default
 from ff_draw.plugins import FFDrawPlugin
 from ff_draw.sniffer.message_structs.zone_server import ActorCast
@@ -87,6 +89,8 @@ class RaidHelper(FFDrawPlugin):
         self.bnpc_battalion_offset = self.main.mem.scanner.find_val('44 ? ? ? * * * * 4c 89 68 ? 4c 89 70')[0]
         self.logger.debug(f'bnpc b offset {self.bnpc_battalion_offset:x}')
 
+        self._panel_filter_string = ''
+
     def _init_hook_map(self):
         load_triggers()
         for hook, calls in common_trigger.hook_map.iter():
@@ -115,9 +119,18 @@ class RaidHelper(FFDrawPlugin):
                 self.simple_cast_cfg['print_history'] = self.print_history
                 self.storage.save()
             imgui.tree_pop()
-        common_trigger.render()
-        for tid, mt in sorted(MapTrigger.triggers.items()):
-            mt.render()
+        if self._panel_filter_string:
+            if imgui.button(' x '):
+                self._panel_filter_string = ''
+            imgui.same_line()
+        _, self._panel_filter_string = imgui.input_text('filter', self._panel_filter_string, 256)
+
+        for idx, tg in sorted(((tg.get_index(), tg) for tg in itertools.chain(MapTrigger.triggers.values(), [common_trigger]) if self._panel_filter_string in tg.label), reverse=True):
+            if idx > 0:
+                highlight = (.3, 1, .3, 1)
+            else:
+                highlight = None
+            tg.render(highlight)
 
     def current_triggers(self) -> typing.Iterable[TriggerGroup]:
         yield common_trigger

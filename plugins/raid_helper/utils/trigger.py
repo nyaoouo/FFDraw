@@ -164,11 +164,20 @@ class TriggerGroup:
                 self._render_directory(p + (sub_directory,), _vt, ind + 1)
                 imgui.tree_pop()
 
-    def render(self):
+    def get_index(self):
+        return 0
+
+    def render(self, highlight=None):
         if not self.values: return
+        if highlight:
+            imgui.push_style_color(imgui.COLOR_TEXT, *highlight)
         if imgui.tree_node(self.label):
+            if highlight:
+                imgui.pop_style_color()
             self._render_directory((), self.value_tree)
             imgui.tree_pop()
+        elif highlight:
+            imgui.pop_style_color()
 
     # region on_lockon
     def _recv_on_lockon(self, msg: ActorControlMessage[actor_control.SetLockOn]):
@@ -318,8 +327,14 @@ class MapTrigger(TriggerGroup):
         except KeyError:
             label = f'unk_territory_{territory_id}'
         else:
-            label = str(territory.area.text_sgl)
+            label = f'{territory.area.text_sgl} [{territory_id}]'
         super().__init__(f'@territory_{territory_id}', label)
+
+    def get_index(self):
+        if main.mem.territory_info.territory_id == self.territory_id:
+            return 1
+        else:
+            return -self.territory_id
 
     @classmethod
     def get(cls, territory_id: int):

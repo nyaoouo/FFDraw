@@ -516,7 +516,12 @@ def timeout_when_cancel(omen: BaseOmen, actor: Actor | int):
     return omen
 
 
-def timeout_when_channeling_change(omen: BaseOmen, source_id, target_id, idx=0):
+def timeout_when_channeling_change(omen: BaseOmen, source_id, target_id=None, idx=0):
+    if isinstance(source_id, ActorControlMessage):
+        source_id, target_id, idx = source_id.source_id, source_id.param.target_id, source_id.param.idx
+    else:
+        assert target_id is not None, 'target_id must be specified if source_id is not ActorControlMessage'
+
     def on_channeling(msg: ActorControlMessage[actor_control.SetChanneling | actor_control.RemoveChanneling]):
         if msg.source_id == source_id and msg.param.idx == idx: remove()
 
