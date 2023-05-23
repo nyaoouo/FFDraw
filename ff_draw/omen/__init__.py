@@ -88,9 +88,9 @@ class BaseOmen:
         # self.logger.debug(f'create omen {self.oid}')
 
         self.effectors = []
+        self._in_effector = in_effector
         self._out_effect_playing = False
         self._out_effector = out_effector
-        if in_effector: self.apply_effect(in_effector)
 
     def get_maybe_callable(self, f):
         return f(self) if callable(f) else f
@@ -103,8 +103,8 @@ class BaseOmen:
                 _c = eff.color(_c)
             return _c
 
-    def apply_effect(self, eff: typing.Type[effector.Effector]):
-        if (e := eff.create(self)) and e.update():
+    def apply_effect(self, eff: typing.Type[effector.Effector], *args, **kwargs):
+        if (e := eff(self, *args, **kwargs)) and e.update():
             self.effectors.append(e)
 
     def timeout(self):
@@ -133,6 +133,8 @@ class BaseOmen:
     def draw(self):
         if not self.working: return self.destroy()
         self.effectors = [eff for eff in self.effectors if eff.update()]
+        for eff in self.effectors:
+            if not eff.display(): return
         if not self.working: return self.destroy()
         if self.duration and time.time() - self.start_at > self.duration:
             if self._out_effector:
@@ -140,6 +142,7 @@ class BaseOmen:
                     self.apply_effect(self._out_effector)
             else:
                 return self.destroy()
+        _old_shape = self.shape
         if self._shape_scale is None:
             self.shape = self.get_maybe_callable(self._shape)
             self.scale = self.get_maybe_callable(self._scale)
@@ -152,6 +155,9 @@ class BaseOmen:
         if not self.working: return self.destroy()
         self.pos = None
         if self.shape:
+            if not _old_shape and self._in_effector:
+                self.apply_effect(self._in_effector)
+
             self.pos = self.get_maybe_callable(self._pos)
             if self.pos is None: return
             for eff in self.effectors:
