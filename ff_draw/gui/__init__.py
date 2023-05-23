@@ -141,7 +141,6 @@ class Drawing:
         gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
         self.imgui_panel_renderer.render(imgui.get_draw_data())
 
-
         process_draw = self.always_draw or GetForegroundWindow() == self.game_hwnd
         self.imgui_draw_renderer.process_inputs(process_draw)
         self._view = view.View()
@@ -209,6 +208,8 @@ class Drawing:
             glfw.terminate()
         except Exception as e:
             self.logger.error('error in main thread', exc_info=e)
+        finally:
+            os._exit(0)
 
     def get_view(self) -> view.View:
         if threading.get_ident() != self.work_thread:
