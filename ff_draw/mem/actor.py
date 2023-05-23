@@ -102,6 +102,16 @@ class ActorOffsets630(ActorOffsets):
     status = 0x1B60
 
 
+class ActorOffsets640(ActorOffsets630):
+    class_job = 0x1E2
+    level = 0x1E3
+    model_attr = 0x1E6
+    pc_target_id = 0xCB0
+    b_npc_target_id = 0x1AB8
+    shield = 0x1ED
+    status = 0x1B80
+
+
 class Actor:
     offsets = ActorOffsets
 
@@ -186,11 +196,13 @@ class ActorTable:
         self.main = main
         self.handle = main.handle
         self.base_address = main.scanner.find_point('4c ? ? * * * * 89 ac cb')[0]
-        self.sorted_table_address = self.base_address + main.scanner.find_val('4e ? ? ? * * * * 41 ? ? ? 3b ? 73')[0]
-        self.sorted_count_address = self.base_address + \
-                                    main.scanner.find_val('44 ? ? * * * * 45 ? ? 41 ? ? ? 48 ? ? 78')[0]
+        self.sorted_table_address = self.base_address + main.scanner.find_val('4e ? ? ? * * * * 41 ? ? ? 3b ? 73 ? 44')[0]
+        self.sorted_count_address = self.base_address + main.scanner.find_val('44 ? ? * * * * 45 ? ? 41 ? ? ? 48 ? ? 78')[0]
         self.me_ptr = main.scanner.find_point('48 ? ? * * * * 49 39 87')[0]
-        if main.game_version >= (6, 3, 0):
+
+        if main.game_version >= (6, 4, 0):
+            Actor.offsets = ActorOffsets640
+        elif main.game_version >= (6, 3, 0):
             Actor.offsets = ActorOffsets630
         else:
             Actor.offsets = ActorOffsets

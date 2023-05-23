@@ -2,6 +2,7 @@ import math
 import os
 import typing
 
+import glfw
 import glm
 import imgui
 
@@ -22,6 +23,7 @@ class XivMemPanel:
         self.territory = ''
         self.cached = ''
         self.show_exit_process = False
+        self.is_dev = False
 
     def render(self):
         mem = self.mem
@@ -93,6 +95,12 @@ class XivMemPanel:
                 imgui.text('N/A - ' + str(e))
 
             imgui.tree_pop()
+        if not self.is_dev:
+            io = imgui.get_io()
+            if io.key_ctrl and io.key_shift and io.key_alt and io.keys_down[glfw.KEY_D]:
+                self.is_dev = True
+        else:
+            _, self.mem.actor_table.use_brute_search = imgui.checkbox('actor_table use_brute_search', self.mem.actor_table.use_brute_search)
 
 
 class XivMem:
