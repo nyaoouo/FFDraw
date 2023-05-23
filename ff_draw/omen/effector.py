@@ -19,6 +19,9 @@ class Effector:
     def on_end(self):
         pass
 
+    def display(self):
+        return True
+
     def update(self):
         return True
 
@@ -30,10 +33,6 @@ class Effector:
 
     def scale(self, s: glm.vec3):
         return s
-
-    @classmethod
-    def create(cls, omen: 'BaseOmen'):
-        return cls(omen)
 
 
 class ScaleInEffector(Effector):
