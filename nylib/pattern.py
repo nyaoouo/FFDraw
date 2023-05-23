@@ -59,6 +59,14 @@ class StaticPatternSearcher:
         self.section_virtual_addresses = [sect.VirtualAddress for sect in self.text_sections]
         self.base_address = base_address
 
+    def get_original_text(self, address, size):
+        i = 0
+        for i, a in enumerate(self.section_virtual_addresses):
+            if a > address: break
+        i -= 1
+        section_address = address - self.base_address - self.section_virtual_addresses[i]
+        return self.section_datas[i][section_address:section_address + size]
+
     def search_raw_pattern(self, pattern: bytes):
         res = []
         for i in range(len(self.text_sections)):
@@ -71,7 +79,7 @@ class StaticPatternSearcher:
             )
         return res
 
-    def search_from_text(self, pattern: str):
+    def search_from_text(self, pattern: str) -> list[tuple[int, list[int]]]:
         _pattern, offsets = sig_to_pattern(pattern)
         return [(
             address, [g + offsets[i] for i, g in enumerate(groups)]
@@ -83,7 +91,7 @@ class StaticPatternSearcher:
     def find_points(self, pattern: str):
         return [[address + offset for offset in offsets] for address, offsets in self.search_from_text(pattern)]
 
-    def find_vals(self, pattern: str):
+    def find_vals(self, pattern: str) -> list[list[int]]:
         return [v for a, v in self.search_raw_pattern(sig_to_pattern(pattern)[0])]
 
     def find_address(self, pattern: str):
