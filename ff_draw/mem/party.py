@@ -47,9 +47,9 @@ class Member:
     def status(self):
         return StatusManager(self.handle, self.address + self.offsets.status)
 
-    @property
-    def actor(self):
-        return self.status.actor
+    # @property # has bug, status manager in party is not the same as actor
+    # def actor(self):
+    #     return self.status.actor
 
 
 class PartyOffset:
