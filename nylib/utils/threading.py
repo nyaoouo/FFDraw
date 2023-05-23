@@ -4,7 +4,7 @@ import ctypes
 
 
 def terminate_thread(t: threading.Thread, exc_type=SystemExit):
-    if not t.is_alive():return
+    if not t.is_alive(): return
     try:
         tid = next(tid for tid, tobj in threading._active.items() if tobj is t)
     except StopIteration:
@@ -18,25 +18,32 @@ class ResEvent(threading.Event):
         super().__init__()
         self.res = None
         self.is_exc = False
+        self.is_waiting = False
 
     def set(self, data=None) -> None:
+        assert not self.is_set()
         self.res = data
         self.is_exc = False
         super().set()
 
     def set_exception(self, exc) -> None:
+        assert not self.is_set()
         self.res = exc
         self.is_exc = True
         super().set()
 
     def wait(self, timeout: float | None = None) -> typing.Any:
-        if super().wait(timeout):
-            if self.is_exc:
-                raise self.res
+        self.is_waiting = True
+        try:
+            if super().wait(timeout):
+                if self.is_exc:
+                    raise self.res
+                else:
+                    return self.res
             else:
-                return self.res
-        else:
-            raise TimeoutError()
+                raise TimeoutError()
+        finally:
+            self.is_waiting = False
 
 
 class ResEventList:

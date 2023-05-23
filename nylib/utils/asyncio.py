@@ -43,23 +43,30 @@ class AsyncResEvent(asyncio.Event):
         self.res = None
         self.is_exc = False
         self._loop = asyncio.get_event_loop()
+        self.is_waiting = False
 
     def set(self, data=None) -> None:
+        assert not self.is_set()
         self.res = data
         self.is_exc = False
         self._loop.call_soon_threadsafe(super().set)
 
     def set_exception(self, exc) -> None:
+        assert not self.is_set()
         self.res = exc
         self.is_exc = True
         self._loop.call_soon_threadsafe(super().set)
 
     async def wait(self, timeout: float | None = None):
-        await asyncio.wait_for(super().wait(), timeout)
-        if self.is_exc:
-            raise self.res
-        else:
-            return self.res
+        self.is_waiting = True
+        try:
+            await asyncio.wait_for(super().wait(), timeout)
+            if self.is_exc:
+                raise self.res
+            else:
+                return self.res
+        finally:
+            self.is_waiting = False
 
 
 class AsyncEvtList:

@@ -33,6 +33,7 @@ class Handle:
 
     def start_server(self):
         assert not self.is_active()
+        # pywin32_dll_place()
         self.is_starting_server = True
         shell_code = f'''
 def run_rpc_server_main(lock_name, pipe_name):

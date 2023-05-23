@@ -16,12 +16,6 @@ def default_orig(*args): return args
 
 
 class Hook(object):
-    """
-    本地 hook 的 ctypes 封装 easy hook 实现，需要继承 ```restype```， ```argtypes``` 以及 ```hook_function```
-    """
-    restype: Annotated[any, "返回类型"] = c_void_p
-    argtypes: Annotated[List[any], "参数类型（列表）"] = []
-    original: Optional[Callable]
 
     def __init__(self, at: int, hook_func: Callable, restype: Type = c_void_p, argtypes: Iterable[Type] = ()):
         """

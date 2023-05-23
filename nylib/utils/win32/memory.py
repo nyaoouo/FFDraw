@@ -37,7 +37,7 @@ def iter_memory_region(handle, start=0, end=None):
         if mbi.Protect & 256 != 256 and mbi.Protect & 4 == 4:
             yield mbi.BaseAddress, mbi.RegionSize
         next_addr = mbi.BaseAddress + mbi.RegionSize
-        if pos >= next_addr or end is not None and end > next_addr: break
+        if pos >= next_addr or end is not None and end < next_addr: break
         pos = next_addr
 
 

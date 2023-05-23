@@ -100,7 +100,6 @@ class Macro(list):
         assert buffer.pop(0) == MacroType.BEGIN.value, Exception("Macro must BEGIN with BEGIN")
         obj = cls(MacroType(buffer.pop(0)))
         data = read_buffer(buffer, decode_integer(buffer))
-        assert len(data) <= 0xCF
         assert buffer.pop(0) == MacroType.END.value
         v = None
         while data:

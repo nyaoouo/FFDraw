@@ -193,7 +193,7 @@ class Sheet(Generic[_T]):
             if row in block_range: return block_range
         raise KeyError(f"{row} is not in range of sheet {self.name}")
 
-    def get_row(self, row_id: int, user_lang: 'Language' = None, default=dummy):
+    def get_row(self, row_id: int, user_lang: 'Language' = None, default=dummy) -> _T:
         return self.get_lang_sheet(user_lang).get_row(row_id, default)
 
     def iter_rows(self, condition: Callable[[_T], bool] = None, user_lang: 'Language' = None):

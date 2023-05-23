@@ -1,4 +1,11 @@
+import io
 import logging
+import os.path
+import sys
+import threading
+import time
+import typing
+import zipfile
 
 Verbose1 = 9
 Verbose2 = 8
@@ -105,3 +112,61 @@ def install(
         logging.Formatter.format = new_formatter_format
 
     logging.basicConfig(level=level, format=format)
+
+
+STDERR = 1
+STDOUT = 2
+STDALL = 3
+
+
+class _Std2FileWriter(io.IOBase):
+    def __init__(self, file_name, max_size=1024 * 1024 * 10, archive_zip=None, another_output: typing.Iterable[io.IOBase] = None):
+        self.file_name = file_name
+        self.max_size = max_size
+        self.archive_zip = archive_zip
+        self.another_output = another_output
+        self.archive_fmt = f'{os.path.basename(self.file_name)}_%Y_%m_%d_%H_%M_%S.{os.path.splitext(self.file_name)[1]}'
+        self.file = None
+        self._open()
+        self.lock = threading.Lock()
+
+    def __del__(self):
+        self._close()
+
+    def _open(self):
+        self._close()
+        self.file = open(self.file_name, 'a', encoding='utf-8', buffering=1)
+
+    def _close(self):
+        if self.file:
+            self.file.close()
+            self.file = None
+            return True
+        return False
+
+    def archive(self):
+        if not self.archive_zip: return
+        self._close()
+        if os.path.exists(self.file_name):
+            with zipfile.ZipFile(self.archive_zip, 'a') as zip_file:
+                zip_file.write(self.file_name, time.strftime(self.archive_fmt), compress_type=zipfile.ZIP_DEFLATED)
+            os.remove(self.file_name)
+
+    def write(self, s):
+        # with self.lock:
+        if not self.file: self._open()
+        if self.file.tell() > self.max_size:
+            self.archive()
+            self._open()
+        if self.another_output:
+            for another in self.another_output:
+                another.write(s)
+        self.file.write(s)
+
+
+def std2file(file_name, max_size=1024 * 1024 * 10, archive_zip=None, select_type=0):
+    writer = _Std2FileWriter(file_name, max_size, archive_zip)
+    if select_type & STDERR:
+        sys.stderr = writer
+    if select_type & STDOUT:
+        sys.stdout = writer
