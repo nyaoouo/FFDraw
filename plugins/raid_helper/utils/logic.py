@@ -134,14 +134,18 @@ class NActor(Actor):
         self.__id = actor.id
         self.__name = actor.name
 
+    def __str__(self):
+        return f'{self.__name}#{self.__id:X}'
+
     def update(self):
         if a := main.mem.actor_table.get_actor_by_id(self.__id):
             self.address = a.address
         else:
-            raise KeyError(f'{self.__name}#{self.__id:X} is not exists')
+            raise KeyError(f'{self} is not exists')
         return self
 
     @classmethod
     def by_id(cls, aid):
         if a:=main.mem.actor_table.get_actor_by_id(aid):
             return cls(a)
+        raise KeyError(f'actor {aid:X} is not exists')
