@@ -120,7 +120,7 @@ class OpenglPynputRenderer(ProgrammablePipelineRenderer):
         io.key_alt = io.keys_down[nput_alt] or io.keys_down[nput_alt_l] or io.keys_down[nput_alt_r]
         io.key_shift = io.keys_down[nput_shift] or io.keys_down[nput_shift_l] or io.keys_down[nput_shift_r]
         io.key_super = io.keys_down[nput_cmd] or io.keys_down[nput_cmd_l] or io.keys_down[nput_cmd_r]
-        if key.char and 32 <= (c := ord(key.char)):
+        if is_press and key.char and 32 <= (c := ord(key.char)):
             io.add_input_character(c)
 
     def _get_clipboard_text(self):
