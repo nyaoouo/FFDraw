@@ -14,27 +14,6 @@ def hex_to_rgba(hex_color: str, alpha: int = 1):
     return rgb
 
 
-def json_open():
-    try:
-        with open('AppData/config.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        web_server = data['web_server']
-        re = f'http://{web_server["host"]}:{web_server["port"]}/rpc'
-    except Exception as e:
-        re = 'http://127.0.0.1:8001/rpc'
-    return re
-
-
-web_server_url = json_open()
-
-
-def send_post(json_data: dict):
-    """发送post"""
-    global web_server_url
-    res = requests.post(web_server_url, json=json_data)
-    return int(json.loads(res.text)['res'])
-
-
 # class Instance:
 #     """实例类"""
 #
@@ -203,7 +182,6 @@ def send_post(json_data: dict):
 #         return re
 
 
-
 class ActorList(FFDrawPlugin):
     """实体信息表格"""
 
@@ -212,6 +190,10 @@ class ActorList(FFDrawPlugin):
         self.actor_list = main.mem.actor_table
         self.current_omen_id = None
         self.show = self.data.setdefault('show', False)
+
+    def send_post(self, json_data: dict):
+        res = requests.post(f'http://127.0.0.1:{self.main.http_port}/rpc', json=json_data)
+        return int(json.loads(res.text)['res'])
 
     def draw_panel(self):
         imgui.text("")
