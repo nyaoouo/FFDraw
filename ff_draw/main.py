@@ -66,8 +66,8 @@ class FFDraw:
         self.omens = {}
         self.preset_omen_colors = omen.preset_colors.copy()
         for k, v in self.config.setdefault('omen', {}).setdefault('preset_colors', {}).items():
-            surface_color = glm.vec4(*v['surface']) if 'surface' in v else None
-            line_color = glm.vec4(*v['line']) if 'surface' in v else None
+            surface_color = glm.vec4(*v['surface']) if (_surface_color:=v.get('surface')) else None
+            line_color = glm.vec4(*v['line']) if (_line_color:=v.get('line')) else None
             self.logger.debug(f'load color {k}: surface={surface_color} line={line_color}')
             self.preset_omen_colors[k] = surface_color, line_color
 
