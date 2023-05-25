@@ -112,7 +112,11 @@ class Drawing:
         self.window_panel = window.init_window('panel_window', False, None, None)
         self.imgui_panel_renderer = ffd_imgui.OpenglPynputRenderer(self.window_panel)
         fonts = imgui.get_io().fonts
-        self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size, fonts.get_glyph_ranges_chinese_full())
+        try:
+            self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size, fonts.get_glyph_ranges_chinese_full())
+        except Exception as e:
+            self.logger.error('load font failed, chinese wont be shown:', exc_info=e)
+            self.font = None
         self.imgui_panel_renderer.refresh_font_texture()
         self.panel = m_panel.FFDPanel(self)
         self.window_draw = window.init_window('draw_window', True, self.window_panel, self.game_hwnd)
@@ -130,9 +134,9 @@ class Drawing:
 
         self.imgui_panel_renderer.process_inputs(glfw.get_window_attrib(self.window_panel, glfw.FOCUSED))
         imgui.new_frame()
-        imgui.push_font(self.font)
+        if self.font: imgui.push_font(self.font)
         self.panel.draw()
-        imgui.pop_font()
+        if self.font: imgui.pop_font()
         imgui.end_frame()
         imgui.render()
 
@@ -147,7 +151,7 @@ class Drawing:
         self._view.projection_view, self._view.screen_size = self.main.mem.load_screen()
 
         imgui.new_frame()
-        imgui.push_font(self.font)
+        if self.font: imgui.push_font(self.font)
 
         gl.glClearColor(0, 0, 0, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
@@ -180,7 +184,7 @@ class Drawing:
             gl.glClearColor(0, 0, 0, 0)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-        imgui.pop_font()
+        if self.font: imgui.pop_font()
         imgui.end_frame()
         imgui.render()
         self.imgui_draw_renderer.render(imgui.get_draw_data())
