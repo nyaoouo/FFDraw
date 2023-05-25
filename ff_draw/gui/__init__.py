@@ -113,7 +113,7 @@ class Drawing:
         self.imgui_panel_renderer = ffd_imgui.OpenglPynputRenderer(self.window_panel)
         fonts = imgui.get_io().fonts
         try:
-            self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size, fonts.get_glyph_ranges_chinese_full())
+            self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size, None, fonts.get_glyph_ranges_chinese_full())
         except Exception as e:
             self.logger.error('load font failed, chinese wont be shown:', exc_info=e)
             self.font = None
