@@ -135,7 +135,7 @@ class WindowManager:
         imgui_io = imgui.get_io()
         if os.path.exists(p := os.path.join(os.environ.get('SystemDrive','/') + os.sep, 'Windows', 'Fonts', 'msyh.ttc')):
             fonts = imgui_io.fonts
-            self.imgui_font = fonts.add_font_from_file_ttf(p, self.font_size)
+            self.imgui_font = fonts.add_font_from_file_ttf(p, self.font_size, None, fonts.get_glyph_ranges_chinese_full())
         else:
             self.imgui_font = None
         imgui_io.ini_file_name = self._ini_file_name
