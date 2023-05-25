@@ -207,7 +207,7 @@ class ActorList(FFDrawPlugin):
                     'cmd': 'destroy_omen',
                     'id': self.current_omen_id
                 }
-                send_post(_data)
+                self.send_post(_data)
 
         if self.show:
             imgui.text("")
@@ -276,7 +276,7 @@ class ActorList(FFDrawPlugin):
                     'cmd': 'destroy_omen',
                     'id': self.current_omen_id
                 }
-                send_post(_data)
+                self.send_post(_data)
                 self.current_omen_id = None
             # 新增绘制
             _data = {
@@ -292,4 +292,4 @@ class ActorList(FFDrawPlugin):
                     'id': actor.id,
                 },
             }
-            self.current_omen_id = send_post(_data)
+            self.current_omen_id = self.send_post(_data)
