@@ -4,6 +4,11 @@ import imgui
 from ff_draw.plugins import FFDrawPlugin
 from ff_draw.omen import preset_colors
 
+styles = [
+    ('Text color', imgui.COLOR_TEXT),
+    ('Background color', imgui.COLOR_WINDOW_BACKGROUND),
+]
+
 
 class StyleEditor(FFDrawPlugin):
     def __init__(self, main):
@@ -13,22 +18,25 @@ class StyleEditor(FFDrawPlugin):
         imgui.begin = self.imgui_begin
 
         self.style_colors = self.data.setdefault('style_colors', {})
-        self.text_color = self.style_colors.get('text_color', None)
 
     def on_unload(self):
         imgui.begin = self._old_imgui_begin
 
     def imgui_begin(self, *args, **kwargs):
+        pop_cnt = 0
+        for k, code in styles:
+            if color := self.style_colors.get(k):
+                imgui.push_style_color(code, *color)
+                pop_cnt += 1
         res = self._old_imgui_begin(*args, **kwargs)
-        if self.text_color is None: return res
-        imgui.push_style_color(imgui.COLOR_TEXT, *self.text_color)
 
         old_end = imgui.end
 
         def new_end():
-            imgui.pop_style_color()
             old_end()
             imgui.end = old_end
+            for _ in range(pop_cnt):
+                imgui.pop_style_color()
 
         imgui.end = new_end
         return res
@@ -36,20 +44,27 @@ class StyleEditor(FFDrawPlugin):
     def draw_panel(self):
         with imgui.begin_tab_bar("styleEditorBar") as tab_bar:
             if tab_bar.opened:
-                with imgui.begin_tab_item("界面") as item1:
-                    if item1.selected:
-                        self.style_editor()
                 with imgui.begin_tab_item("绘制") as item2:
                     if item2.selected:
                         self.omen_preset_color_editor()
+                with imgui.begin_tab_item("界面") as item1:
+                    if item1.selected:
+                        self.style_editor()
 
     def style_editor(self):
-        if self.text_color is None:
-            self.text_color = imgui.get_style_color_vec_4(imgui.COLOR_TEXT)
-        changed, self.text_color = imgui.color_edit4('Text Color', *self.text_color, imgui.COLOR_EDIT_FLOAT)
-        if changed:
-            self.style_colors['text_color'] = self.text_color
-            self.storage.save()
+        for k, code in styles:
+            if not (color := self.style_colors.get(k)):
+                color = imgui.get_style_color_vec_4(code)
+            if imgui.button(f'reset##style_color_reset_{code}'):
+                self.style_colors.pop(k, None)
+                self.storage.save()
+            imgui.same_line()
+            changed, new_color = imgui.color_edit4(f'##style_color_select_{code}', *color, imgui.COLOR_EDIT_FLOAT)
+            imgui.same_line()
+            imgui.text(k)
+            if changed:
+                self.style_colors[k] = new_color
+                self.storage.save()
 
     def omen_preset_color_editor(self):
         imgui.columns(4)
