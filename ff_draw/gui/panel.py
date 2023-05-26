@@ -6,7 +6,7 @@ import glfw
 import glm
 import imgui
 
-from .default_style import set_default_style, pop_default_style
+from .default_style import set_default_style, pop_default_style, color_main_up, format_rgba
 
 if typing.TYPE_CHECKING:
     from . import Drawing
@@ -86,7 +86,7 @@ class FFDPanel:
         window_flag = 0
         if not self.is_expand: window_flag |= imgui.WINDOW_NO_MOVE
 
-        set_default_style()
+        set_default_style()  # 设置默认gui风格
         self.is_expand, self.is_show = imgui.begin('FFDPanel', True, window_flag)
         glfw.set_window_size(self.window, *map(int, imgui.get_window_size()))
         if not self.is_expand: return imgui.end()
@@ -95,16 +95,42 @@ class FFDPanel:
             glfw.set_window_pos(self.window, *map(int, glm.vec2(*glfw.get_window_pos(self.window)) + win_pos))
         imgui.set_window_position(0, 0)
 
+        # panel窗口绘制
+        imgui.begin_child('##leftFrame', 300, 0)
+        # --左侧导航窗口
         plugin_keys = set(self.main.plugins.keys())
         if self.current_page not in plugin_keys:
             self.current_page = main_page
-        if (imgui.text if self.current_page == main_page else imgui.button)(main_page):
-            self.current_page = main_page
+        plugins = [main_page] + list(sorted(plugin_keys))
+        for name in plugins:
+            button_w = 295
+            button_h = 50
+            button_name = name + ' ' * 200
+            imgui.push_style_color(imgui.COLOR_BORDER, *color_main_up)
+            imgui.push_style_color(imgui.COLOR_BUTTON, *format_rgba(26, 26, 26))
+            imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, *color_main_up)
+            if name == self.current_page:  # 选中的按钮
+                imgui.text(" ")
+                imgui.same_line()
+                imgui.push_style_color(imgui.COLOR_BUTTON, *format_rgba(15, 15, 15))
+                imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, *format_rgba(15, 15, 15))
+                imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, *format_rgba(15, 15, 15))
+                if imgui.button(button_name, button_w, button_h):
+                    self.current_page = name
+                imgui.pop_style_color(3)
+            else:  # 未选中的
+                imgui.push_style_var(imgui.STYLE_FRAME_BORDERSIZE, 1)
+                if imgui.button(button_name, button_w, button_h):
+                    self.current_page = name
+                imgui.pop_style_var()
+            imgui.pop_style_color(3)
 
-        for k in sorted(plugin_keys):
-            imgui.same_line()
-            if (imgui.text if self.current_page == k else imgui.button)(k):
-                self.current_page = k
+        # if (imgui.text if self.current_page == main_page else imgui.button)(main_page):
+        #     self.current_page = main_page
+        imgui.end_child()
+        imgui.same_line()
+        imgui.begin_child('##rightFrame', 0, 0)
+        # --右侧插件页面
         try:
             if self.current_page == main_page:
                 self.ffd_page()
@@ -113,5 +139,7 @@ class FFDPanel:
                     p.draw_panel()
         except Exception as e:
             self.logger.error('error in tab drawing', exc_info=e)
+        imgui.end_child()
+
         imgui.end()
         pop_default_style()
