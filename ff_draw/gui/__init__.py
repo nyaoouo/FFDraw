@@ -93,7 +93,7 @@ class Drawing:
         self.timer = DrawTimeMgr()
         self.cfg = self.main.config.setdefault('gui', {})
         self.always_draw = self.cfg.setdefault('always_draw', False)
-        self.font_path = self.cfg.setdefault('font_path', r'C:\Windows\Fonts\msyh.ttc')
+        self.font_path = self.cfg.setdefault('font_path', r'res\PingFang.ttf')
         self.font_size = self.cfg.setdefault('font_size', 18)
         self._label_counter = 0
 
