@@ -96,9 +96,15 @@ def radian_to_name(rad):
     return degree_names[((rad % math.pi / 2 // (math.pi / 16)) + 1) // 2]
 
 
-def get_actor_by_dis(source_actor: Actor, idx, alive=True):
-    source_pos = source_actor.pos.xz
-    if actors := sorted(iter_main_party(alive, source_actor.id), key=lambda a: glm.distance(source_pos, a.pos.xz)):
+def get_actor_by_dis(source_actor: Actor | glm.vec3 | glm.vec2, idx, alive=True):
+    it = iter_main_party(alive, source_actor.id) if isinstance(source_actor, Actor) else iter_main_party(alive)
+    if isinstance(source_actor, Actor):
+        source_pos = source_actor.pos.xz
+    elif isinstance(source_actor, glm.vec3):
+        source_pos = source_actor.xz
+    else:
+        source_pos = source_actor
+    if actors := sorted(it, key=lambda a: glm.distance(source_pos, a.pos.xz)):
         return actors[idx % len(actors)]
 
 
@@ -146,6 +152,6 @@ class NActor(Actor):
 
     @classmethod
     def by_id(cls, aid):
-        if a:=main.mem.actor_table.get_actor_by_id(aid):
+        if a := main.mem.actor_table.get_actor_by_id(aid):
             return cls(a)
         raise KeyError(f'actor {aid:X} is not exists')
