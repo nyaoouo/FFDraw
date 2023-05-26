@@ -1,4 +1,5 @@
 import logging
+import tkinter.filedialog
 import typing
 
 import glfw
@@ -36,25 +37,42 @@ class FFDPanel:
                     p.unload()
                 self.main.enable_plugins[k] = v
                 self.main.save_config()
-        # if imgui.button('reload'):
-        #     plugins.reload_plugin_lists()
+        imgui.new_line()
+        if imgui.collapsing_header('plugin paths')[0]:
+            for i, path in list(enumerate(self.main.config['plugin_paths'])):
+                imgui.text(path)
+                imgui.same_line()
+                if imgui.button(f'delete##delete_plugin_path_{i}'):
+                    self.main.config['plugin_paths'].pop(i)
+                    self.main.save_config()
+                imgui.same_line()
+                if imgui.button(f'edit##edit_plugin_path_{i}'):
+                    if p := tkinter.filedialog.askdirectory():
+                        self.main.config['plugin_paths'][i] = p
+                        self.main.save_config()
+                    self.main.save_config()
+            if imgui.button('add plugin path') and (p := tkinter.filedialog.askdirectory()):
+                self.main.config['plugin_paths'].append(p)
+                self.main.save_config()
+            imgui.same_line()
+            imgui.text('*plugin path change active when restart')
 
-        imgui.text('gui')
-        gui = self.main.gui
-        clicked, gui.always_draw = imgui.checkbox("always_draw", gui.always_draw)
-        if clicked:
-            gui.cfg['always_draw'] = gui.always_draw
-            self.main.save_config()
+        if imgui.collapsing_header('gui')[0]:
+            gui = self.main.gui
+            clicked, gui.always_draw = imgui.checkbox("always_draw", gui.always_draw)
+            if clicked:
+                gui.cfg['always_draw'] = gui.always_draw
+                self.main.save_config()
 
-        imgui.text('sniffer')
-        self.main.sniffer.render_panel()
+        if imgui.collapsing_header('sniffer')[0]:
+            self.main.sniffer.render_panel()
 
-        imgui.text('func_parser')
-        parser = self.main.parser
-        clicked, parser.print_compile = imgui.checkbox("print_compile", parser.print_compile)
-        if clicked:
-            parser.compile_config.setdefault('print_debug', {})['enable'] = parser.print_compile
-            self.main.save_config()
+        if imgui.collapsing_header('func_parser')[0]:
+            parser = self.main.parser
+            clicked, parser.print_compile = imgui.checkbox("print_compile", parser.print_compile)
+            if clicked:
+                parser.compile_config.setdefault('print_debug', {})['enable'] = parser.print_compile
+                self.main.save_config()
 
     def draw(self):
         if not self.is_show:
