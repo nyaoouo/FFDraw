@@ -51,7 +51,7 @@ def iter_main_party(alive=True, exclude_id=None):
                 yield NActor(actor)
     elif me := get_me():
         if exclude_id != me.id and (not alive or me.current_hp):
-            yield me
+            yield NActor(me)
 
 
 def sleep(sec):
