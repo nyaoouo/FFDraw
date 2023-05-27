@@ -1,6 +1,7 @@
 import io
 import logging
 import os.path
+import pathlib
 import sys
 import threading
 import time
@@ -54,6 +55,10 @@ def install(
         format='[%(asctime)s]\t[%(levelname)s]\t[%(name)s]\t%(message)s',
         use_color=True,
         multiline_process=True,
+        std_out=True,
+        file_name=None,
+        file_size=1024 * 1024 * 10,
+        archive_zip=None,
 ):
     logging.addLevelName(Verbose1, 'Verbose1')
     logging.addLevelName(Verbose2, 'Verbose2')
@@ -111,7 +116,17 @@ def install(
 
         logging.Formatter.format = new_formatter_format
 
-    logging.basicConfig(level=level, format=format)
+    handlers = []
+    if std_out:
+        std_handler = logging.StreamHandler(sys.stdout)
+        std_handler.setLevel(level)
+        handlers.append(std_handler)
+    if file_name:
+        file_handler = logging.StreamHandler(_Std2FileWriter(file_name, max_size=file_size, archive_zip=archive_zip))
+        file_handler.setLevel(level)
+        handlers.append(file_handler)
+
+    logging.basicConfig(level=level, format=format, handlers=handlers)
 
 
 STDERR = 1
@@ -120,12 +135,15 @@ STDALL = 3
 
 
 class _Std2FileWriter(io.IOBase):
+    logger = logging.getLogger('Std2FileWriter')
+
     def __init__(self, file_name, max_size=1024 * 1024 * 10, archive_zip=None, another_output: typing.Iterable[io.IOBase] = None):
-        self.file_name = file_name
+        self.file_name = pathlib.Path(file_name) if isinstance(file_name, str) else file_name
+        self.file_name = self.file_name.absolute()
         self.max_size = max_size
-        self.archive_zip = archive_zip
+        self.archive_zip = pathlib.Path(archive_zip) if isinstance(archive_zip, str) else archive_zip
         self.another_output = another_output
-        self.archive_fmt = f'{os.path.basename(self.file_name)}_%Y_%m_%d_%H_%M_%S.{os.path.splitext(self.file_name)[1]}'
+        self.archive_fmt = f'{self.file_name.stem}_%Y_%m_%d_%H_%M_%S{self.file_name.suffix}'
         self.file = None
         self._open()
         self.lock = threading.Lock()
@@ -135,6 +153,7 @@ class _Std2FileWriter(io.IOBase):
 
     def _open(self):
         self._close()
+        self.file_name.parent.mkdir(parents=True, exist_ok=True)
         self.file = open(self.file_name, 'a', encoding='utf-8', buffering=1)
 
     def _close(self):
@@ -148,6 +167,7 @@ class _Std2FileWriter(io.IOBase):
         if not self.archive_zip: return
         self._close()
         if os.path.exists(self.file_name):
+            self.archive_zip.parent.mkdir(parents=True, exist_ok=True)
             with zipfile.ZipFile(self.archive_zip, 'a') as zip_file:
                 zip_file.write(self.file_name, time.strftime(self.archive_fmt), compress_type=zipfile.ZIP_DEFLATED)
             os.remove(self.file_name)
