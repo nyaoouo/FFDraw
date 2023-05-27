@@ -44,11 +44,11 @@ class StyleEditor(FFDrawPlugin):
     def draw_panel(self):
         with imgui.begin_tab_bar("styleEditorBar") as tab_bar:
             if tab_bar.opened:
-                with imgui.begin_tab_item("绘制") as item2:
-                    if item2.selected:
-                        self.omen_preset_color_editor()
-                with imgui.begin_tab_item("界面") as item1:
+                with imgui.begin_tab_item("绘制") as item1:
                     if item1.selected:
+                        self.omen_preset_color_editor()
+                with imgui.begin_tab_item("界面") as item2:
+                    if item2.selected:
                         self.style_editor()
 
     def style_editor(self):
