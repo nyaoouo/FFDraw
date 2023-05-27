@@ -1,5 +1,3 @@
-import os
-
 shell_code = r'''
 
 def hook_sniff(cb):
@@ -82,7 +80,7 @@ res = try_hook()
 
 
 def install():
-    import pathlib
+    import os
     import sys
     import time
 
@@ -107,7 +105,7 @@ def install():
 
     def callback(_, args):
         is_zone, is_up, pno, src_id, data = args
-        main.sniffer._on_ipc_message(is_zone, is_up, message.ElementMessage(
+        main.sniffer.on_ipc_message(is_zone, is_up, message.ElementMessage(
             bundle_header=message.BundleHeader(timestamp_ms=int(time.time() * 1000)),
             el_header=message.ElementHeader(source_id=src_id),
             element=message.IpcHeader(proto_no=pno),
