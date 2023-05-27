@@ -97,7 +97,7 @@ def set_style(style_color):
     imgui.push_style_color(imgui.COLOR_POPUP_BACKGROUND, *style_color['color_background2'])
     imgui.push_style_color(imgui.COLOR_WINDOW_BACKGROUND, *style_color['color_background'])
     imgui.push_style_color(imgui.COLOR_CHILD_BACKGROUND, *rgba_to_float(0, 0, 0, 0))
-    imgui.push_style_color(imgui.COLOR_BORDER_SHADOW, *style_color['color_background'])
+    imgui.push_style_color(imgui.COLOR_BORDER_SHADOW, *rgba_to_float(0, 0, 0, 0))
     imgui.push_style_color(imgui.COLOR_FRAME_BACKGROUND, *style_color['color_input'])
     imgui.push_style_color(imgui.COLOR_FRAME_BACKGROUND_ACTIVE, *style_color['color_control_up'])
     imgui.push_style_color(imgui.COLOR_FRAME_BACKGROUND_HOVERED, *style_color['color_input_up'])
