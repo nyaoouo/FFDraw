@@ -10,7 +10,6 @@ import traceback
 import typing
 
 import imgui
-import requests
 
 from nylib.utils import serialize_data, KeyRoute, BroadcastHook
 from nylib.utils.win32.network import find_process_tcp_connections
@@ -54,7 +53,7 @@ class Sniffer:
         if self.auto_update:
             for f_name in ('ChatServerIpc.csv', 'ChatClientIpc.csv', 'ZoneServerIpc.csv', 'ZoneClientIpc.csv'):
                 try:
-                    (res := requests.get(self.auto_update_host + f_name)).raise_for_status()
+                    (res := self.main.requests.get(self.auto_update_host + f_name)).raise_for_status()
                     assert res.headers.get('content-type', '').startswith('text/csv'), 'Invalid content type'
                 except Exception as e:
                     self.logger.warning(f'Failed to update {f_name}, {e}')
