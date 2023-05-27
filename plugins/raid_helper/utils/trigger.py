@@ -1,9 +1,12 @@
 import functools
+import inspect
+import threading
 import typing
 
 import imgui
 
 from nylib.utils import BroadcastHook
+from nylib.utils.threading import terminate_thread
 from ff_draw.main import FFDraw
 from .typing import *
 
@@ -117,10 +120,7 @@ class HookMap:
 
 
 def call_safe(func, *args):
-    try:
-        return func(*args)
-    except Exception as e:
-        raid_helper.logger.error('error in trigger call:', exc_info=e)
+    return raid_helper.create_mission(func, *args, _log_exception=True)
 
 
 class TriggerGroup:
