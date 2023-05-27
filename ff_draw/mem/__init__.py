@@ -108,24 +108,24 @@ class CachedSigScanner(StaticPatternSearcher):
     def __init__(self, mem: 'XivMem', pe, base_address):
         super().__init__(pe, base_address)
         self.mem = mem
-        self._cache_file = mem.main.app_data_path / 'sig_cache' / (mem.game_build_date + '.pkl')
+        self._cache_file = mem.main.app_data_path / 'sig_cache' / (mem.game_build_date + '.json')
         self._cache = self._load_cache()
 
     def find_address(self, pattern):
         cache = self._cache.setdefault('address', {})
         if pattern in cache:
-            return cache[pattern]
+            return cache[pattern] + self.base_address
         address = super().find_address(pattern)
-        cache[pattern] = address
+        cache[pattern] = address - self.base_address
         self._save_cache()
         return address
 
     def find_point(self, pattern: str):
         cache = self._cache.setdefault('point', {})
         if pattern in cache:
-            return cache[pattern]
+            return [a + self.base_address for a in cache[pattern]]
         point = super().find_point(pattern)
-        cache[pattern] = point
+        cache[pattern] = [a - self.base_address for a in point]
         self._save_cache()
         return point
 
