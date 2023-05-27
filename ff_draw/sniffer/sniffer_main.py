@@ -2,8 +2,11 @@ import logging
 import multiprocessing
 import os
 import pathlib
+import queue
+import sys
 import threading
 import time
+import traceback
 import typing
 
 import imgui
@@ -52,7 +55,7 @@ class Sniffer:
             for f_name in ('ChatServerIpc.csv', 'ChatClientIpc.csv', 'ZoneServerIpc.csv', 'ZoneClientIpc.csv'):
                 try:
                     (res := requests.get(self.auto_update_host + f_name)).raise_for_status()
-                    assert res.headers.get('content-type','').startswith('text/csv'), 'Invalid content type'
+                    assert res.headers.get('content-type', '').startswith('text/csv'), 'Invalid content type'
                 except Exception as e:
                     self.logger.warning(f'Failed to update {f_name}, {e}')
                 else:
@@ -84,6 +87,11 @@ class Sniffer:
         self.extra = extra.SnifferExtra(self)
 
         self.update_dump()
+        self.msg_queue = queue.Queue()
+        self._msg_queue = queue.Queue()
+        self._msg_evt = threading.Event()
+        self.msg_loop_thread = threading.Thread(target=self.msg_loop, daemon=True)
+        self.msg_loop_watcher_thread = threading.Thread(target=self.msg_loop_watcher, daemon=True)
 
     def update_dump(self):
         if self.dump:
@@ -94,7 +102,29 @@ class Sniffer:
             self.dump = message_dump.MessageDumper(file_name, self.main.mem.game_build_date)
             self.logger.info(f'dump packets at {file_name}')
 
-    def _on_ipc_message(self, is_zone, is_up, msg: message.ElementMessage[structs.IpcHeader]):
+    def msg_loop_watcher(self):
+        while True:
+            is_zone, is_up, msg = self.msg_queue.get()
+            self._msg_evt.clear()
+            start_time = time.time()
+            self._msg_queue.put((is_zone, is_up, msg))
+            self._msg_evt.wait(.1)
+            while not self._msg_evt.is_set():
+                try:
+                    self.logger.warning(f'parse ipc {is_zone=} {is_up=} {msg.element.proto_no=} run for {time.time() - start_time:.3f}s, for blocking event, please use async method\n' + ''.join(
+                        traceback.format_stack(sys._current_frames()[self.msg_loop_thread.ident])[10:]
+                    ))
+                except Exception as e:
+                    self.logger.warning(f'exception when get overtime stack', exc_info=e)
+                self._msg_evt.wait(.5)
+
+    def msg_loop(self):
+        msg: message.ElementMessage[structs.IpcHeader]
+        while True:
+            self._on_ipc_message(*self._msg_queue.get())
+            self._msg_evt.set()
+
+    def _on_ipc_message(self, is_zone, is_up, msg):
         fix_value = None
         if self.dump and ((not self.dump_zone_down_only) or (is_zone and not is_up)):
             self.dump.write(msg.bundle_header.timestamp_ms, is_zone, is_up, msg.element.proto_no, msg.el_header.source_id, msg.raw_data[16:], fix_value := self.packet_fix.value)
@@ -136,7 +166,12 @@ class Sniffer:
             except Exception as e:
                 self.logger.error(f'error in processing network message {pno}', exc_info=e)
 
+    def on_ipc_message(self, is_zone, is_up, msg: message.ElementMessage[structs.IpcHeader]):
+        self.msg_queue.put((is_zone, is_up, msg))
+
     def start(self):
+        self.msg_loop_thread.start()
+        self.msg_loop_watcher_thread.start()
         hook_sniff.install()
 
     def render_panel(self):

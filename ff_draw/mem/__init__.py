@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import typing
@@ -103,6 +104,54 @@ class XivMemPanel:
             _, self.mem.actor_table.use_brute_search = imgui.checkbox('actor_table use_brute_search', self.mem.actor_table.use_brute_search)
 
 
+class CachedSigScanner(StaticPatternSearcher):
+    def __init__(self, mem: 'XivMem', pe, base_address):
+        super().__init__(pe, base_address)
+        self.mem = mem
+        self._cache_file = mem.main.app_data_path / 'sig_cache' / (mem.game_build_date + '.json')
+        self._cache = self._load_cache()
+
+    def find_address(self, pattern):
+        cache = self._cache.setdefault('address', {})
+        if pattern in cache:
+            return cache[pattern] + self.base_address
+        address = super().find_address(pattern)
+        cache[pattern] = address - self.base_address
+        self._save_cache()
+        return address
+
+    def find_point(self, pattern: str):
+        cache = self._cache.setdefault('point', {})
+        if pattern in cache:
+            return [a + self.base_address for a in cache[pattern]]
+        point = super().find_point(pattern)
+        cache[pattern] = [a - self.base_address for a in point]
+        self._save_cache()
+        return point
+
+    def find_val(self, pattern: str):
+        cache = self._cache.setdefault('val', {})
+        if pattern in cache:
+            return cache[pattern]
+        val = super().find_val(pattern)
+        cache[pattern] = val
+        self._save_cache()
+        return val
+
+    def _load_cache(self):
+        if not self._cache_file.exists(): return {}
+        try:
+            with self._cache_file.open('r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {}
+
+    def _save_cache(self):
+        self._cache_file.parent.mkdir(parents=True, exist_ok=True)
+        with self._cache_file.open('w', encoding='utf-8') as f:
+            json.dump(self._cache, f, indent=4, ensure_ascii=False)
+
+
 class XivMem:
     def __init__(self, main: 'FFDraw', pid: int):
         self.main = main
@@ -110,9 +159,9 @@ class XivMem:
         self.handle = ny_proc.open_process(pid)
         self.base_module = ny_proc.get_base_module(self.handle)
         file_name = self.base_module.filename.decode(self.main.path_encoding)
-        self.scanner = StaticPatternSearcher(PE(file_name, fast_load=True), self.base_module.lpBaseOfDll)
         self.hwnd = utils.get_hwnd(self.pid)
         self.game_version, self.game_build_date = utils.get_game_version_info(file_name)
+        self.scanner = CachedSigScanner(self, PE(file_name, fast_load=True), self.base_module.lpBaseOfDll)
         self.screen_address = self.scanner.find_point('48 ? ? * * * * e8 ? ? ? ? 42 ? ? ? 39 05')[0] + 0x1b4
         self.replay_flag_address = self.scanner.find_point('84 1d * * * * 74 ? 80 3d')[0]
         self._a_p_framework = self.scanner.find_point('48 ? ? * * * * 41 39 b1')[0]

@@ -73,7 +73,6 @@ def on_channel_shattering_heat(msg: ActorControlMessage[actor_control.SetChannel
 
 
 @map_ex.on_add_status(3483)
-@raid_utils.new_thread
 def on_add_status_blooming_welt(msg: ActorControlMessage[actor_control.AddStatus]):
     # 12s
     # Blooming Welt
@@ -91,7 +90,6 @@ def on_add_status_blooming_welt(msg: ActorControlMessage[actor_control.AddStatus
 
 
 @map_ex.on_add_status(3484)
-@raid_utils.new_thread
 def on_add_status_furious_welt(msg: ActorControlMessage[actor_control.AddStatus]):
     # 12s
     # Furious Welt
@@ -104,7 +102,6 @@ def on_add_status_furious_welt(msg: ActorControlMessage[actor_control.AddStatus]
 
 
 @map_ex.on_add_status(3485)
-@raid_utils.new_thread
 def on_add_status_stinging_welt(msg: ActorControlMessage[actor_control.AddStatus]):
     # 15s
     # Stinging Welt
