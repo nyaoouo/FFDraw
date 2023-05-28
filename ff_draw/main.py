@@ -9,6 +9,8 @@ import threading
 
 import aiohttp.web
 import glm
+import requests
+
 from fpt4.utils.sqpack import SqPack
 
 try:
@@ -40,6 +42,17 @@ class FFDraw:
             self.path_encoding = self.config.setdefault('path_encoding', 'gbk')
         else:
             self.path_encoding = self.config.setdefault('path_encoding', sys.getfilesystemencoding())
+
+        proxy_cfg = self.config.setdefault('proxy', {})
+
+        self.requests = requests.Session()
+        if http_proxy := proxy_cfg.get('http'):
+            self.requests.proxies['http'] = http_proxy
+            self.logger.debug(f'set http proxy: {http_proxy}')
+        if https_proxy := proxy_cfg.get('https'):
+            self.requests.proxies['https'] = https_proxy
+            self.logger.debug(f'set https proxy: {https_proxy}')
+
         web_server_cfg = self.config.setdefault('web_server', {})
         self.http_host = web_server_cfg.setdefault('host', '127.0.0.1')
         self.http_port = web_server_cfg.setdefault('port', 8001)
@@ -48,6 +61,7 @@ class FFDraw:
         self.logger.debug(f'set path_encoding:%s', self.path_encoding)
 
         threading.Thread(target=update.check, args=(
+            self.requests,
             self.config.setdefault('update_source', ('fastgit' if default_cn else 'github')),
         )).start()
 
@@ -66,8 +80,8 @@ class FFDraw:
         self.omens = {}
         self.preset_omen_colors = omen.preset_colors.copy()
         for k, v in self.config.setdefault('omen', {}).setdefault('preset_colors', {}).items():
-            surface_color = glm.vec4(*v['surface']) if (_surface_color:=v.get('surface')) else None
-            line_color = glm.vec4(*v['line']) if (_line_color:=v.get('line')) else None
+            surface_color = glm.vec4(*v['surface']) if (_surface_color := v.get('surface')) else None
+            line_color = glm.vec4(*v['line']) if (_line_color := v.get('line')) else None
             self.logger.debug(f'load color {k}: surface={surface_color} line={line_color}')
             self.preset_omen_colors[k] = surface_color, line_color
 
