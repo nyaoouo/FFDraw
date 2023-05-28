@@ -6,6 +6,8 @@ import glm
 import imgui
 
 from .default_style import set_style, pop_style, text_tip, style_color_default, set_color
+from .localization import local_lang, localStr
+from ..omen import preset_colors
 
 if typing.TYPE_CHECKING:
     from . import Drawing
@@ -23,28 +25,30 @@ class FFDPanel:
         self.is_show = True
         self.current_page = ''
 
-        # 初始化界面颜色
+        # 初始化
+        self.lang_all = local_lang
+        self.language = self.main.config.setdefault('language', self.lang_all[0])
         self.style_color = self.main.config.setdefault('style_color', style_color_default)
 
     def ffd_page(self):
         with imgui.begin_tab_bar("tabBar") as tab_bar:
             if tab_bar.opened:
-                with imgui.begin_tab_item("控制台") as item1:
+                with imgui.begin_tab_item(localStr("控制台", self.language,0)) as item1:
                     if item1.selected:
                         self.main.mem.panel.render()
-                with imgui.begin_tab_item("插件") as item2:
+                with imgui.begin_tab_item(localStr("Plugin", self.language,0)) as item2:
                     if item2.selected:
                         self.tab_plugin()
-                with imgui.begin_tab_item("配色") as item3:
+                with imgui.begin_tab_item(localStr("Style", self.language,0)) as item3:
                     if item3.selected:
                         self.tab_style()
-                with imgui.begin_tab_item("设置") as item4:
+                with imgui.begin_tab_item(localStr("Setting", self.language,0)) as item4:
                     if item4.selected:
                         self.tab_setting()
 
     def tab_plugin(self):
         """插件标签页"""
-        imgui.text('启用插件')
+        imgui.text(localStr("启用插件", self.language,0))
 
         for k, v in self.main.enable_plugins.items():
             clicked, v = imgui.checkbox(k.replace('/', '-'), v)
@@ -56,7 +60,7 @@ class FFDPanel:
                 self.main.enable_plugins[k] = v
                 self.main.save_config()
         imgui.new_line()
-        if imgui.collapsing_header('自定义插件路径', None, imgui.TREE_NODE_DEFAULT_OPEN)[0]:
+        if imgui.collapsing_header(localStr('自定义插件路径', self.language,0), None, imgui.TREE_NODE_DEFAULT_OPEN)[0]:
             for i, path in list(enumerate(self.main.config['plugin_paths'])):
                 imgui.text(path)
                 imgui.same_line()
@@ -69,46 +73,107 @@ class FFDPanel:
                         self.main.config['plugin_paths'][i] = p
                         self.main.save_config()
                     self.main.save_config()
-            if imgui.button('添加') and (p := tkinter.filedialog.askdirectory()):
+            if imgui.button(localStr('添加', self.language)) and (p := tkinter.filedialog.askdirectory()):
                 self.main.config['plugin_paths'].append(p)
                 self.main.save_config()
-            text_tip('*重启FFDraw后路径更改生效')
+            text_tip(localStr('*重启FFDraw后路径更改生效', self.language))
 
     def tab_style(self):
         flag = imgui.TREE_NODE_DEFAULT_OPEN
-        if imgui.collapsing_header('界面', None, flag)[0]:
+        if imgui.collapsing_header(localStr('GUI', self.language), None, flag)[0]:
             changed, new_color = imgui.color_edit3(f'##style_color_select_1', *self.style_color['color_main_up'])
             imgui.same_line()
-            imgui.text('配色')
+            imgui.text(localStr('颜色', self.language))
             if changed:
                 set_color(self.style_color, new_color, self.style_color['color_background'])
                 self.main.save_config()
 
             style = imgui.get_style()
-            changed, style.alpha = imgui.slider_float("透明度", self.style_color['alpha'], 0.5, 1)
+            changed, style.alpha = imgui.slider_float(localStr('透明度', self.language), self.style_color['alpha'], 0.5, 1)
             if changed:
                 self.style_color['alpha'] = style.alpha
                 self.main.save_config()
 
-        if imgui.collapsing_header('绘制', None, flag)[0]:
-            pass
+        if imgui.collapsing_header(localStr('绘制', self.language,0))[0]:
+            imgui.columns(3)
+            imgui.set_column_width(0, 150)
+            imgui.set_column_width(1, 600)
+            imgui.text(localStr('Name', self.language))
+            imgui.next_column()
+            imgui.text(localStr('Color', self.language))
+            imgui.next_column()
+            imgui.next_column()
+            for k in self.main.preset_omen_colors.keys():
+                imgui.separator()
+                surface_color, line_color = self.main.preset_omen_colors[k]
+                if surface_color is None: surface_color = glm.vec4()
+                if line_color is None: line_color = glm.vec4()
+
+                imgui.text(k)
+                imgui.next_column()
+                changed, new_surface_color = imgui.color_edit4(f'##{k}_surface_color', *surface_color)
+                if changed: self.apply_color(k, False, new_surface_color)
+                imgui.same_line()
+                imgui.text(localStr('填充', self.language))
+                imgui.next_column()
+                if imgui.button(f'reset##{k}_reset'):
+                    new_surface_color, new_line_color = preset_colors.get(k, [None, None])
+                    self.apply_color(k, False, new_surface_color)
+                    self.apply_color(k, True, new_line_color)
+                imgui.next_column()
+                imgui.next_column()
+                changed, new_line_color = imgui.color_edit4(f'##{k}_line_color', *line_color)
+                if changed: self.apply_color(k, True, new_line_color)
+                imgui.same_line()
+                imgui.text(localStr('边框', self.language))
+                imgui.next_column()
+                imgui.next_column()
+            imgui.columns(1)
+
+    def apply_color(self, k, is_line, color: tuple[float, float, float, float] | glm.vec4):
+        if isinstance(color, tuple):
+            color = glm.vec4(*color)
+        if is_line:
+            surface_color = self.main.preset_omen_colors.get(k, [None, None])[0]
+            line_color = color
+        else:
+            surface_color = color
+            line_color = self.main.preset_omen_colors.get(k, [None, None])[1]
+
+        self.main.preset_omen_colors[k] = surface_color, line_color
+
+        self.main.config.setdefault('omen', {}).setdefault('preset_colors', {})[k] = {
+            'surface': list(surface_color) if line_color is not None else None,
+            'line': list(line_color) if line_color is not None else None,
+        }
+        self.main.save_config()
 
     def tab_setting(self):
         """设置标签页"""
         flag = imgui.TREE_NODE_DEFAULT_OPEN
-        if imgui.collapsing_header('gui', None, flag)[0]:
+        if imgui.collapsing_header(localStr('常规', self.language,0), None, flag)[0]:
+            imgui.text(localStr('语言', self.language))
+            imgui.same_line()
+            lang_idx = self.lang_all.index(self.language)
+            changed, lang_idx = imgui.combo('##lang', lang_idx, ['English', '简体中文'])
+            if changed:
+                self.language = self.lang_all[lang_idx]
+                self.main.config['language'] = self.language
+                self.main.save_config()
+            # clicked, _ = imgui.input_text('地址','1')
+        if imgui.collapsing_header(localStr('绘制', self.language,0), None, flag)[0]:
             gui = self.main.gui
-            clicked, gui.always_draw = imgui.checkbox("始终绘制", gui.always_draw)
+            clicked, gui.always_draw = imgui.checkbox(localStr('始终绘制', self.language), gui.always_draw)
             if clicked:
                 gui.cfg['always_draw'] = gui.always_draw
                 self.main.save_config()
 
-        if imgui.collapsing_header('sniffer', None, flag)[0]:
+        if imgui.collapsing_header(localStr('Sniffer', self.language), None, flag)[0]:
             self.main.sniffer.render_panel()
 
-        if imgui.collapsing_header('func_parser', None, flag)[0]:
+        if imgui.collapsing_header(localStr('Func parser', self.language), None, flag)[0]:
             parser = self.main.parser
-            clicked, parser.print_compile = imgui.checkbox("print_compile", parser.print_compile)
+            clicked, parser.print_compile = imgui.checkbox(localStr('print compile', self.language), parser.print_compile)
             if clicked:
                 parser.compile_config.setdefault('print_debug', {})['enable'] = parser.print_compile
                 self.main.save_config()
@@ -124,8 +189,8 @@ class FFDPanel:
         if not self.is_expand: window_flag |= imgui.WINDOW_NO_MOVE
 
         set_style(self.style_color)  # 设置gui风格
-        imgui.set_next_window_size(1280, 720, imgui.ONCE)
-        self.is_expand, self.is_show = imgui.begin('FFDPanel', True, window_flag)
+        imgui.set_next_window_size(1280, 720, imgui.FIRST_USE_EVER)
+        self.is_expand, self.is_show = imgui.begin('FFDraw', True, window_flag)
         glfw.set_window_size(self.window, *map(int, imgui.get_window_size()))
         if not self.is_expand: return imgui.end()
         win_pos = glm.vec2(*imgui.get_window_position())

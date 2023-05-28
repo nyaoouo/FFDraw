@@ -91,6 +91,8 @@ def set_style(style_color):
     imgui.push_style_var(imgui.STYLE_ITEM_INNER_SPACING, (8, 6))
     imgui.push_style_var(imgui.STYLE_SCROLLBAR_SIZE, 20)
     imgui.push_style_var(imgui.STYLE_INDENT_SPACING, 22)
+    imgui.push_style_var(imgui.STYLE_GRAB_ROUNDING, 5)
+    imgui.push_style_var(imgui.STYLE_GRAB_MIN_SIZE, 10)
 
     imgui.push_style_color(imgui.COLOR_TEXT, *rgba_to_float(255, 255, 255, 255))
     imgui.push_style_color(imgui.COLOR_TEXT_DISABLED, *rgba_to_float(128, 128, 128, 255))
@@ -105,7 +107,7 @@ def set_style(style_color):
     imgui.push_style_color(imgui.COLOR_TITLE_BACKGROUND_ACTIVE, *style_color['color_main_up'])
     imgui.push_style_color(imgui.COLOR_TITLE_BACKGROUND_COLLAPSED, *style_color['color_minor_up'])
     imgui.push_style_color(imgui.COLOR_MENUBAR_BACKGROUND, *rgba_to_float(36, 36, 36, 255))
-    imgui.push_style_color(imgui.COLOR_SCROLLBAR_BACKGROUND, *style_color['color_background'])
+    imgui.push_style_color(imgui.COLOR_SCROLLBAR_BACKGROUND, *rgba_to_float(0, 0, 0, 0))
     imgui.push_style_color(imgui.COLOR_SCROLLBAR_GRAB, *style_color['color_input_up'])
     imgui.push_style_color(imgui.COLOR_SCROLLBAR_GRAB_HOVERED, *style_color['color_control'])
     imgui.push_style_color(imgui.COLOR_SCROLLBAR_GRAB_ACTIVE, *style_color['color_control_up'])
@@ -127,12 +129,14 @@ def set_style(style_color):
     imgui.push_style_color(imgui.COLOR_TAB, *style_color['color_input_up'])
     imgui.push_style_color(imgui.COLOR_TAB_ACTIVE, *style_color['color_main'])
     imgui.push_style_color(imgui.COLOR_TAB_HOVERED, *style_color['color_main_up'])
+    imgui.push_style_color(imgui.COLOR_SLIDER_GRAB, *style_color['color_main_up'])
+    imgui.push_style_color(imgui.COLOR_SLIDER_GRAB_ACTIVE, *style_color['color_main_up_up'])
 
 
 def pop_style():
-    imgui.pop_style_var(11)
+    imgui.pop_style_var(13)
 
-    imgui.pop_style_color(35)
+    imgui.pop_style_color(37)
 
 
 def text_tip(text):
