@@ -20,19 +20,19 @@ update_desc = [
 ]
 
 
-def check(select_host='github'):
+def check(session: requests.Session, select_host='github'):
     try:
-        is_latest = _check(select_host)
+        is_latest = _check(session, select_host)
     except Exception as e:
         logger.error('check update fail, please check network connection or change update source', exc_info=e)
 
 
-def _check(select_host='github'):
+def _check(session: requests.Session, select_host='github'):
     remote_version = local_version = 0, 0, 0
     if (local_version_path := pathlib.Path(os.environ['ExcPath']) / 'version.txt').exists():
         if _match := re.match(r'^(\d+)\.(\d+)\.(\d+)$', local_version_path.read_text()):
             local_version = int(_match.group(1)), int(_match.group(2)), int(_match.group(3)),
-    (res := requests.get(update_host[select_host] + update_uri)).raise_for_status()
+    (res := session.get(update_host[select_host] + update_uri)).raise_for_status()
     if _match := re.match(r'^(\d+)\.(\d+)\.(\d+)$', res.text):
         remote_version = int(_match.group(1)), int(_match.group(2)), int(_match.group(3)),
     logger.info(f'local version: {local_version}    remote version: {remote_version}')
