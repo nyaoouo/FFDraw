@@ -78,7 +78,7 @@ def set_color(style_color: dict, mainColor: tuple, darkColor: tuple):
 
 def set_style(style_color):
     io = imgui.get_io()
-    io.font_global_scale = 1.3
+    io.font_global_scale = 1.4
 
     imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 5)
     imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, 0)

@@ -6,7 +6,7 @@ import glm
 import imgui
 
 from .default_style import set_style, pop_style, text_tip, style_color_default, set_color
-from .localization import local_lang, localStr
+from .i18n import *
 from ..omen import preset_colors
 
 if typing.TYPE_CHECKING:
@@ -26,29 +26,29 @@ class FFDPanel:
         self.current_page = ''
 
         # 初始化
-        self.lang_all = local_lang
-        self.language = self.main.config.setdefault('language', self.lang_all[0])
+        self.lang_idx = self.main.config.setdefault('language', 1)
+        i18n.current_lang = self.lang_idx
         self.style_color = self.main.config.setdefault('style_color', style_color_default)
 
     def ffd_page(self):
         with imgui.begin_tab_bar("tabBar") as tab_bar:
             if tab_bar.opened:
-                with imgui.begin_tab_item(localStr("控制台", self.language,0)) as item1:
+                with imgui.begin_tab_item(i18n(Panel)) as item1:
                     if item1.selected:
                         self.main.mem.panel.render()
-                with imgui.begin_tab_item(localStr("Plugin", self.language,0)) as item2:
+                with imgui.begin_tab_item(i18n(Plugin)) as item2:
                     if item2.selected:
                         self.tab_plugin()
-                with imgui.begin_tab_item(localStr("Style", self.language,0)) as item3:
+                with imgui.begin_tab_item(i18n(Style)) as item3:
                     if item3.selected:
                         self.tab_style()
-                with imgui.begin_tab_item(localStr("Setting", self.language,0)) as item4:
+                with imgui.begin_tab_item(i18n(Setting)) as item4:
                     if item4.selected:
                         self.tab_setting()
 
     def tab_plugin(self):
         """插件标签页"""
-        imgui.text(localStr("启用插件", self.language,0))
+        imgui.text(i18n(Enable_plugin))
 
         for k, v in self.main.enable_plugins.items():
             clicked, v = imgui.checkbox(k.replace('/', '-'), v)
@@ -60,7 +60,7 @@ class FFDPanel:
                 self.main.enable_plugins[k] = v
                 self.main.save_config()
         imgui.new_line()
-        if imgui.collapsing_header(localStr('自定义插件路径', self.language,0), None, imgui.TREE_NODE_DEFAULT_OPEN)[0]:
+        if imgui.collapsing_header(i18n(Custom_plugin_path), None, imgui.TREE_NODE_DEFAULT_OPEN)[0]:
             for i, path in list(enumerate(self.main.config['plugin_paths'])):
                 imgui.text(path)
                 imgui.same_line()
@@ -73,34 +73,34 @@ class FFDPanel:
                         self.main.config['plugin_paths'][i] = p
                         self.main.save_config()
                     self.main.save_config()
-            if imgui.button(localStr('添加', self.language)) and (p := tkinter.filedialog.askdirectory()):
+            if imgui.button(i18n(Add)) and (p := tkinter.filedialog.askdirectory()):
                 self.main.config['plugin_paths'].append(p)
                 self.main.save_config()
-            text_tip(localStr('*重启FFDraw后路径更改生效', self.language))
+            text_tip(i18n(Enable_plugin_tooltip))
 
     def tab_style(self):
         flag = imgui.TREE_NODE_DEFAULT_OPEN
-        if imgui.collapsing_header(localStr('GUI', self.language), None, flag)[0]:
+        if imgui.collapsing_header(i18n(GUI), None, flag)[0]:
             changed, new_color = imgui.color_edit3(f'##style_color_select_1', *self.style_color['color_main_up'])
             imgui.same_line()
-            imgui.text(localStr('颜色', self.language))
+            imgui.text(i18n(Color))
             if changed:
                 set_color(self.style_color, new_color, self.style_color['color_background'])
                 self.main.save_config()
 
             style = imgui.get_style()
-            changed, style.alpha = imgui.slider_float(localStr('透明度', self.language), self.style_color['alpha'], 0.5, 1)
+            changed, style.alpha = imgui.slider_float(i18n(Opacity), self.style_color['alpha'], 0.5, 1)
             if changed:
                 self.style_color['alpha'] = style.alpha
                 self.main.save_config()
 
-        if imgui.collapsing_header(localStr('绘制', self.language,0))[0]:
+        if imgui.collapsing_header(i18n(Omen_draw))[0]:
             imgui.columns(3)
             imgui.set_column_width(0, 150)
             imgui.set_column_width(1, 600)
-            imgui.text(localStr('Name', self.language))
+            imgui.text(i18n(Name))
             imgui.next_column()
-            imgui.text(localStr('Color', self.language))
+            imgui.text(i18n(Color))
             imgui.next_column()
             imgui.next_column()
             for k in self.main.preset_omen_colors.keys():
@@ -114,7 +114,7 @@ class FFDPanel:
                 changed, new_surface_color = imgui.color_edit4(f'##{k}_surface_color', *surface_color)
                 if changed: self.apply_color(k, False, new_surface_color)
                 imgui.same_line()
-                imgui.text(localStr('填充', self.language))
+                imgui.text(i18n(Padding))
                 imgui.next_column()
                 if imgui.button(f'reset##{k}_reset'):
                     new_surface_color, new_line_color = preset_colors.get(k, [None, None])
@@ -125,7 +125,7 @@ class FFDPanel:
                 changed, new_line_color = imgui.color_edit4(f'##{k}_line_color', *line_color)
                 if changed: self.apply_color(k, True, new_line_color)
                 imgui.same_line()
-                imgui.text(localStr('边框', self.language))
+                imgui.text(i18n(Border))
                 imgui.next_column()
                 imgui.next_column()
             imgui.columns(1)
@@ -151,29 +151,31 @@ class FFDPanel:
     def tab_setting(self):
         """设置标签页"""
         flag = imgui.TREE_NODE_DEFAULT_OPEN
-        if imgui.collapsing_header(localStr('常规', self.language,0), None, flag)[0]:
-            imgui.text(localStr('语言', self.language))
-            imgui.same_line()
-            lang_idx = self.lang_all.index(self.language)
-            changed, lang_idx = imgui.combo('##lang', lang_idx, ['English', '简体中文'])
+        if imgui.collapsing_header(i18n(Normal), None, flag)[0]:
+            imgui.text(i18n(Language))
+            changed, self.lang_idx = imgui.combo('##lang', self.lang_idx, ['English', '简体中文'])
             if changed:
-                self.language = self.lang_all[lang_idx]
-                self.main.config['language'] = self.language
+                i18n.current_lang = self.lang_idx
+                self.main.config['language'] = self.lang_idx
                 self.main.save_config()
-            # clicked, _ = imgui.input_text('地址','1')
-        if imgui.collapsing_header(localStr('绘制', self.language,0), None, flag)[0]:
+            # imgui.text(localStr('代理', self.language))
+            # imgui.same_line()
+            # changed, _ = imgui.input_text('地址','1')
+            # if changed:
+
+        if imgui.collapsing_header(i18n(Omen_draw), None, flag)[0]:
             gui = self.main.gui
-            clicked, gui.always_draw = imgui.checkbox(localStr('始终绘制', self.language), gui.always_draw)
+            clicked, gui.always_draw = imgui.checkbox(i18n(Always_drawing), gui.always_draw)
             if clicked:
                 gui.cfg['always_draw'] = gui.always_draw
                 self.main.save_config()
 
-        if imgui.collapsing_header(localStr('Sniffer', self.language), None, flag)[0]:
+        if imgui.collapsing_header(i18n(Sniffer), None, flag)[0]:
             self.main.sniffer.render_panel()
 
-        if imgui.collapsing_header(localStr('Func parser', self.language), None, flag)[0]:
+        if imgui.collapsing_header(i18n(Func_parser), None, flag)[0]:
             parser = self.main.parser
-            clicked, parser.print_compile = imgui.checkbox(localStr('print compile', self.language), parser.print_compile)
+            clicked, parser.print_compile = imgui.checkbox(i18n(Print_compile), parser.print_compile)
             if clicked:
                 parser.compile_config.setdefault('print_debug', {})['enable'] = parser.print_compile
                 self.main.save_config()
