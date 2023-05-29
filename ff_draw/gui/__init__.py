@@ -130,6 +130,15 @@ class Drawing:
 
     def _process_single_frame(self):
         self._label_counter = 0
+        if self.cfg.get('font_path') != self.font_path:
+            fonts = imgui.get_io().fonts
+            try:
+                self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size, None, fonts.get_glyph_ranges_chinese_full())
+            except Exception as e:
+                self.logger.error('load font failed, chinese wont be shown:', exc_info=e)
+                self.font = None
+            self.imgui_panel_renderer.refresh_font_texture()
+            self.font_path = self.cfg['font_path']
         glfw.poll_events()
 
         self.imgui_panel_renderer.process_inputs(glfw.get_window_attrib(self.window_panel, glfw.FOCUSED))
