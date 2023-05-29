@@ -64,6 +64,12 @@ style_color_default['alpha'] = 1
 style_color_default['alpha_background'] = 1
 
 
+def set_default_color(style_color):
+    for name, value in style_color_default.items():
+        style_color.setdefault(name, value)
+    return style_color
+
+
 def set_color(style_color: dict, mainColor: tuple, darkColor: tuple):
     """输入亮色调和暗色调，改变style_color整体的值"""
     style_color['color_main_up'] = mainColor

@@ -9,7 +9,7 @@ import glm
 import imgui
 import requests
 from . import proxy_test
-from .default_style import set_style, pop_style, text_tip, style_color_default, set_color
+from .default_style import set_style, pop_style, text_tip, set_default_color, set_color
 from .i18n import *
 from ..omen import preset_colors
 
@@ -44,7 +44,7 @@ class FFDPanel:
         # 初始化
         self.lang_idx = self.main.config.setdefault('language', 0)
         i18n.current_lang = self.lang_idx
-        self.style_color = self.main.config.setdefault('style_color', style_color_default)
+        self.style_color = set_default_color(self.main.config.setdefault('style_color', {}))
         self.font_size = self.main.config['gui']['font_size']
         imgui.get_style().alpha = self.style_color['alpha']
 
@@ -187,9 +187,9 @@ class FFDPanel:
         self.main.save_config()
 
     def draw_proxy_test_line(self):
-        imgui.push_style_color(imgui.COLOR_BUTTON, 0,0,0,0)
-        imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, 0,0,0,0)
-        imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, 0,0,0,0)
+        imgui.push_style_color(imgui.COLOR_BUTTON, 0, 0, 0, 0)
+        imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, 0, 0, 0, 0)
+        imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, 0, 0, 0, 0)
         imgui.button('http://')
         imgui.same_line()
         imgui.push_item_width(200)
