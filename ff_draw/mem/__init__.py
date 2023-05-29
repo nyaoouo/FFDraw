@@ -10,7 +10,7 @@ import imgui
 from nylib.utils.win32 import memory as ny_mem, process as ny_proc
 from nylib.pefile import PE
 from nylib.pattern import StaticPatternSearcher
-from . import utils, actor, party, network_target, packet_fix, marking, territory_info, event_module, quest_info
+from . import utils, actor, party, network_target, packet_fix, marking, territory_info, event_module, quest_info, storage
 
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
@@ -173,6 +173,7 @@ class XivMem:
         self.territory_info = territory_info.TerritoryInfo(self)
         self.event_module = event_module.EventModule(self)
         self.quest_info = quest_info.QuestInfo(self)
+        self.storage = storage.StorageManager(self)
         self.panel = XivMemPanel(self)
 
     def load_screen(self):
