@@ -1,4 +1,5 @@
 import imgui
+import win32api, win32con
 
 
 def rgba_to_float(r, g, b, alpha=255):
@@ -35,6 +36,18 @@ def float_to_rgba(r, g, b, alpha=1):
     return rgb
 
 
+# 字号分辨率自适配
+stlye_font_size: int
+screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)  # windows缩放后的分辨率，非实际屏幕分辨率
+screen_heigh = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
+if screen_width <= (1920 + 2560) / 2:
+    stlye_font_size = 22
+elif (1920 + 2560) / 2 < screen_width <= (2560 + 3840) / 2:
+    stlye_font_size = 24
+else:
+    stlye_font_size = 26
+
+# 设置默认颜色
 style_color_default = {}
 style_color_default['color_main'] = rgba_to_float(121, 39, 87)
 style_color_default['color_main_up'] = rgba_to_float(161, 47, 114)
@@ -77,9 +90,6 @@ def set_color(style_color: dict, mainColor: tuple, darkColor: tuple):
 
 
 def set_style(style_color):
-    io = imgui.get_io()
-    io.font_global_scale = 1.4
-
     imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 5)
     imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, 0)
     imgui.push_style_var(imgui.STYLE_WINDOW_PADDING, (10, 10))
