@@ -1,9 +1,11 @@
 import logging
+import threading
 import tkinter.filedialog
 import typing
 import glfw
 import glm
 import imgui
+import requests
 
 from .default_style import set_style, pop_style, text_tip, style_color_default, set_color
 from .i18n import *
@@ -12,6 +14,13 @@ from ..omen import preset_colors
 if typing.TYPE_CHECKING:
     from . import Drawing
 main_page = 'FFDraw'
+
+PROXY_TEST_INV = 0
+PROXY_TEST_PROCESS = 1
+PROXY_TEST_SUCCESS = 2
+PROXY_TEST_FAIL = 3
+PROXY_TEST_TARGET_HTTP = 'http://www.google.com'
+PROXY_TEST_TARGET_HTTPS = 'https://www.google.com'
 
 
 class FFDPanel:
@@ -25,10 +34,31 @@ class FFDPanel:
         self.is_show = True
         self.current_page = ''
 
+        self.proxy_test_state_http = 0
+        self.proxy_test_state_https = 0
+
         # 初始化
         self.lang_idx = self.main.config.setdefault('language', 0)
         i18n.current_lang = self.lang_idx
         self.style_color = self.main.config.setdefault('style_color', style_color_default)
+
+    def test_proxy(self, is_https=False):
+        state_key = 'proxy_test_state_https' if is_https else 'proxy_test_state_http'
+        setattr(self, state_key, PROXY_TEST_PROCESS)
+        if is_https:
+            target = PROXY_TEST_TARGET_HTTPS
+        else:
+            target = PROXY_TEST_TARGET_HTTP
+        try:
+            requests.get(target, proxies={
+                'http': self.main.config['proxy'].get('http', ''),
+                'https': self.main.config['proxy'].get('https', '')
+            }, timeout=5).raise_for_status()
+        except Exception as e:
+            self.logger.warning('test proxy fail: %s', e, exc_info=True)
+            setattr(self, state_key, PROXY_TEST_FAIL)
+        else:
+            setattr(self, state_key, PROXY_TEST_SUCCESS)
 
     def ffd_page(self):
         with imgui.begin_tab_bar("tabBar") as tab_bar:
@@ -64,11 +94,11 @@ class FFDPanel:
             for i, path in list(enumerate(self.main.config['plugin_paths'])):
                 imgui.text(path)
                 imgui.same_line()
-                if imgui.button(f'delete##delete_plugin_path_{i}'):
+                if imgui.button(i18n(Delete) + f'##delete_plugin_path_{i}'):
                     self.main.config['plugin_paths'].pop(i)
                     self.main.save_config()
                 imgui.same_line()
-                if imgui.button(f'edit##edit_plugin_path_{i}'):
+                if imgui.button(i18n(Edit) + f'##edit_plugin_path_{i}'):
                     if p := tkinter.filedialog.askdirectory():
                         self.main.config['plugin_paths'][i] = p
                         self.main.save_config()
@@ -76,7 +106,7 @@ class FFDPanel:
             if imgui.button(i18n(Add)) and (p := tkinter.filedialog.askdirectory()):
                 self.main.config['plugin_paths'].append(p)
                 self.main.save_config()
-            text_tip(i18n(Enable_plugin_tooltip))
+            text_tip(i18n(Enable_changes_tooltip))
 
     def tab_style(self):
         flag = imgui.TREE_NODE_DEFAULT_OPEN
@@ -93,6 +123,13 @@ class FFDPanel:
             if changed:
                 self.style_color['alpha'] = style.alpha
                 self.main.save_config()
+
+            imgui.text(f'{i18n(Font_path)}: {self.main.gui.cfg.get("font_path")}')
+            imgui.same_line()
+            if imgui.button(i18n(Edit)):
+                if new_font_path := tkinter.filedialog.askopenfilename(filetypes=[('Font', '*.ttf')]):
+                    self.main.gui.cfg['font_path'] = new_font_path
+                    self.main.save_config()
 
         if imgui.collapsing_header(i18n(Omen_draw))[0]:
             imgui.columns(3)
@@ -148,6 +185,41 @@ class FFDPanel:
         }
         self.main.save_config()
 
+    def draw_proxy_test_line(self, is_https):
+        name = 'https' if is_https else 'http'
+        state_key = 'proxy_test_state_https' if is_https else 'proxy_test_state_http'
+        changed, new_val = imgui.input_text(f'{name}_proxy', self.main.config['proxy'].get(name, ''), 256)
+        if changed:
+            setattr(self, state_key, PROXY_TEST_INV)
+            self.main.config['proxy'][name] = new_val
+            self.main.save_config()
+        imgui.same_line()
+        current_state = getattr(self, state_key)
+        if current_state == PROXY_TEST_INV:
+            btn_text = i18n(Test)
+            imgui.push_style_color(imgui.COLOR_BUTTON, *imgui.get_style_color_vec_4(imgui.COLOR_BUTTON_ACTIVE))
+            imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, *imgui.get_style_color_vec_4(imgui.COLOR_BUTTON_HOVERED))
+            imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, *imgui.get_style_color_vec_4(imgui.COLOR_BUTTON_HOVERED))
+        elif current_state == PROXY_TEST_PROCESS:
+            btn_text = '...'
+            imgui.push_style_color(imgui.COLOR_BUTTON, .5, .5, .5, 1)
+            imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, .5, .5, .5, 1)
+            imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, .5, .5, .5, 1)
+        elif current_state == PROXY_TEST_SUCCESS:
+            btn_text = 'Ok'
+            imgui.push_style_color(imgui.COLOR_BUTTON, .0, .5, .0, 1)
+            imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, .0, .7, .0, 1)
+            imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, .0, .3, .0, 1)
+        else:
+            btn_text = 'X'
+            imgui.push_style_color(imgui.COLOR_BUTTON, .5, .0, .0, 1)
+            imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, .7, .0, .0, 1)
+            imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, .3, .0, .0, 1)
+        if imgui.button(btn_text) and current_state != PROXY_TEST_PROCESS:
+            setattr(self, state_key, PROXY_TEST_PROCESS)
+            threading.Thread(target=self.test_proxy, args=(is_https,)).start()
+        imgui.pop_style_color(3)
+
     def tab_setting(self):
         """设置标签页"""
         flag = imgui.TREE_NODE_DEFAULT_OPEN
@@ -158,10 +230,9 @@ class FFDPanel:
                 i18n.current_lang = self.lang_idx
                 self.main.config['language'] = self.lang_idx
                 self.main.save_config()
-            # imgui.text(localStr('代理', self.language))
-            # imgui.same_line()
-            # changed, _ = imgui.input_text('地址','1')
-            # if changed:
+            imgui.text(i18n(Proxy))
+            self.draw_proxy_test_line(True)
+            self.draw_proxy_test_line(False)
 
         if imgui.collapsing_header(i18n(Omen_draw) + '###tab_setting_div_draw', None, flag)[0]:
             gui = self.main.gui
