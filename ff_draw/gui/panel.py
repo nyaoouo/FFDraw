@@ -6,6 +6,7 @@ import glfw
 import glm
 import imgui
 import requests
+import re
 
 from .default_style import set_style, pop_style, text_tip, style_color_default, set_color
 from .i18n import *
@@ -19,8 +20,8 @@ PROXY_TEST_INV = 0
 PROXY_TEST_PROCESS = 1
 PROXY_TEST_SUCCESS = 2
 PROXY_TEST_FAIL = 3
-PROXY_TEST_TARGET_HTTP = 'http://www.google.com'
-PROXY_TEST_TARGET_HTTPS = 'https://www.google.com'
+PROXY_TEST_TARGET_HTTP = 'http://www.github.com'
+PROXY_TEST_TARGET_HTTPS = 'https://www.github.com'
 
 
 class FFDPanel:
@@ -34,31 +35,22 @@ class FFDPanel:
         self.is_show = True
         self.current_page = ''
 
-        self.proxy_test_state_http = 0
-        self.proxy_test_state_https = 0
+        self.current_state = PROXY_TEST_INV
+        self.proxy_http = self.main.config['proxy'].get('http', '')
+        self.proxy_https = self.main.config['proxy'].get('https', '')
+        match = re.search(r'//(?P<address>.*?):(?P<port>\d*)', self.proxy_http)
+        if match is None:
+            self.proxy_address = ''
+            self.proxy_port = ''
+        else:
+            self.proxy_address = match.group('address')
+            self.proxy_port = match.group('port')
 
         # 初始化
         self.lang_idx = self.main.config.setdefault('language', 0)
         i18n.current_lang = self.lang_idx
         self.style_color = self.main.config.setdefault('style_color', style_color_default)
-
-    def test_proxy(self, is_https=False):
-        state_key = 'proxy_test_state_https' if is_https else 'proxy_test_state_http'
-        setattr(self, state_key, PROXY_TEST_PROCESS)
-        if is_https:
-            target = PROXY_TEST_TARGET_HTTPS
-        else:
-            target = PROXY_TEST_TARGET_HTTP
-        try:
-            requests.get(target, proxies={
-                'http': self.main.config['proxy'].get('http', ''),
-                'https': self.main.config['proxy'].get('https', '')
-            }, timeout=5).raise_for_status()
-        except Exception as e:
-            self.logger.warning('test proxy fail: %s', e, exc_info=True)
-            setattr(self, state_key, PROXY_TEST_FAIL)
-        else:
-            setattr(self, state_key, PROXY_TEST_SUCCESS)
+        self.font_size = self.main.config['gui']['font_size']
 
     def ffd_page(self):
         with imgui.begin_tab_bar("tabBar") as tab_bar:
@@ -124,12 +116,20 @@ class FFDPanel:
                 self.style_color['alpha'] = style.alpha
                 self.main.save_config()
 
-            imgui.text(f'{i18n(Font_path)}: {self.main.gui.cfg.get("font_path")}')
-            imgui.same_line()
+            imgui.new_line()
+            changed, self.font_size = imgui.slider_int(i18n(Font_size), self.font_size, 15, 30)
+            if changed:
+                self.main.config['gui']['font_size'] = self.font_size
+                self.main.save_config()
+
+            imgui.text(i18n(Font_path))
             if imgui.button(i18n(Edit)):
                 if new_font_path := tkinter.filedialog.askopenfilename(filetypes=[('Font', '*.ttf')]):
                     self.main.gui.cfg['font_path'] = new_font_path
                     self.main.save_config()
+            imgui.same_line()
+            imgui.text(self.main.gui.cfg.get("font_path"))
+            text_tip(i18n(Font_changes_tooltip))
 
         if imgui.collapsing_header(i18n(Omen_draw))[0]:
             imgui.columns(3)
@@ -186,26 +186,31 @@ class FFDPanel:
         self.main.save_config()
 
     def draw_proxy_test_line(self, is_https):
-        name = 'https' if is_https else 'http'
-        state_key = 'proxy_test_state_https' if is_https else 'proxy_test_state_http'
-        changed, new_val = imgui.input_text(f'{name}_proxy', self.main.config['proxy'].get(name, ''), 256)
+
+        changed, self.proxy_address = imgui.input_text(i18n(Proxy_address), self.proxy_address)
+        changed, self.proxy_port = imgui.input_text(i18n(Proxy_port), self.proxy_port)
         if changed:
-            setattr(self, state_key, PROXY_TEST_INV)
-            self.main.config['proxy'][name] = new_val
+            self.current_state = PROXY_TEST_INV
+            self.proxy_http = f'http://{self.proxy_address}:{self.proxy_port}'
+            self.proxy_https = f'https://{self.proxy_address}:{self.proxy_port}'
+            if self.proxy_address == '' or self.proxy_port == '':
+                self.proxy_http = ''
+                self.proxy_https = ''
+            self.main.config['proxy']['http'] = self.proxy_http
+            self.main.config['proxy']['https'] = self.proxy_https
             self.main.save_config()
-        imgui.same_line()
-        current_state = getattr(self, state_key)
-        if current_state == PROXY_TEST_INV:
+
+        if self.current_state == PROXY_TEST_INV:
             btn_text = i18n(Test)
             imgui.push_style_color(imgui.COLOR_BUTTON, *imgui.get_style_color_vec_4(imgui.COLOR_BUTTON_ACTIVE))
             imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, *imgui.get_style_color_vec_4(imgui.COLOR_BUTTON_HOVERED))
             imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, *imgui.get_style_color_vec_4(imgui.COLOR_BUTTON_HOVERED))
-        elif current_state == PROXY_TEST_PROCESS:
+        elif self.current_state == PROXY_TEST_PROCESS:
             btn_text = '...'
             imgui.push_style_color(imgui.COLOR_BUTTON, .5, .5, .5, 1)
             imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, .5, .5, .5, 1)
             imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, .5, .5, .5, 1)
-        elif current_state == PROXY_TEST_SUCCESS:
+        elif self.current_state == PROXY_TEST_SUCCESS:
             btn_text = 'Ok'
             imgui.push_style_color(imgui.COLOR_BUTTON, .0, .5, .0, 1)
             imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, .0, .7, .0, 1)
@@ -215,10 +220,69 @@ class FFDPanel:
             imgui.push_style_color(imgui.COLOR_BUTTON, .5, .0, .0, 1)
             imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, .7, .0, .0, 1)
             imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, .3, .0, .0, 1)
-        if imgui.button(btn_text) and current_state != PROXY_TEST_PROCESS:
-            setattr(self, state_key, PROXY_TEST_PROCESS)
-            threading.Thread(target=self.test_proxy, args=(is_https,)).start()
+
+        if imgui.button(btn_text) and self.current_state != PROXY_TEST_PROCESS:
+            self.current_state = PROXY_TEST_PROCESS
+            threading.Thread(target=self.test_proxy).start()
         imgui.pop_style_color(3)
+
+    def test_proxy(self):
+        current_state1 = PROXY_TEST_PROCESS
+        current_state2 = PROXY_TEST_PROCESS
+        fail = 'https代理连接失败'
+        fail2 = '无代理时连接失败'
+        success = 'https代理连接成功'
+        success2 = '无代理时连接成功'
+        url_https = self.main.config['proxy'].get('https', '')
+        url_http = self.main.config['proxy'].get('http', '')
+
+        # 无代理时
+        if url_http == '' and url_https == '':
+            try:
+                requests.get(PROXY_TEST_TARGET_HTTPS, timeout=4).raise_for_status()
+            except Exception as e:
+                self.logger.warning(fail2)
+                self.current_state = PROXY_TEST_FAIL
+                return
+            else:
+                self.logger.info(success2)
+                self.current_state = PROXY_TEST_SUCCESS
+                return
+
+        # https
+        try:
+            requests.get(PROXY_TEST_TARGET_HTTPS, proxies={
+                'https': url_https
+            }, timeout=4).raise_for_status()
+        except Exception as e:
+            # clash切换https
+            try:
+                requests.get(PROXY_TEST_TARGET_HTTPS, proxies={
+                    'https': url_http
+                }, timeout=4).raise_for_status()
+            except Exception as e:
+                self.logger.warning(fail)
+                current_state1 = PROXY_TEST_FAIL
+            else:
+                self.logger.info(success)
+        else:
+            self.logger.info(success)
+
+        # http
+        try:
+            requests.get(PROXY_TEST_TARGET_HTTP, proxies={
+                'http': url_http
+            }, timeout=4).raise_for_status()
+        except Exception as e:
+            self.logger.warning(fail)
+            current_state2 = PROXY_TEST_FAIL
+        else:
+            self.logger.info(success)
+
+        if current_state1 == PROXY_TEST_FAIL and current_state2 == PROXY_TEST_FAIL:
+            self.current_state = PROXY_TEST_FAIL
+            return
+        self.current_state = PROXY_TEST_SUCCESS
 
     def tab_setting(self):
         """设置标签页"""
@@ -232,7 +296,6 @@ class FFDPanel:
                 self.main.save_config()
             imgui.text(i18n(Proxy))
             self.draw_proxy_test_line(True)
-            self.draw_proxy_test_line(False)
 
         if imgui.collapsing_header(i18n(Omen_draw) + '###tab_setting_div_draw', None, flag)[0]:
             gui = self.main.gui
