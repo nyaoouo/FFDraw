@@ -51,6 +51,7 @@ class FFDPanel:
         i18n.current_lang = self.lang_idx
         self.style_color = self.main.config.setdefault('style_color', style_color_default)
         self.font_size = self.main.config['gui']['font_size']
+        imgui.get_style().alpha = self.style_color['alpha']
 
     def ffd_page(self):
         with imgui.begin_tab_bar("tabBar") as tab_bar:
@@ -114,6 +115,11 @@ class FFDPanel:
             changed, style.alpha = imgui.slider_float(i18n(Opacity), self.style_color['alpha'], 0.5, 1)
             if changed:
                 self.style_color['alpha'] = style.alpha
+                self.main.save_config()
+
+            changed, new_alpha = imgui.slider_float(i18n(Opacity_background), self.style_color['alpha_background'], 0.5, 1)
+            if changed:
+                self.style_color['alpha_background'] = new_alpha
                 self.main.save_config()
 
             imgui.new_line()

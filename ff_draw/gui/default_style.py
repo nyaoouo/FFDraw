@@ -61,6 +61,7 @@ style_color_default['color_input_up'] = rgba_to_float(64, 64, 64)
 style_color_default['color_background'] = rgba_to_float(15, 15, 15)
 style_color_default['color_background2'] = rgba_to_float(26, 26, 26)
 style_color_default['alpha'] = 1
+style_color_default['alpha_background'] = 1
 
 
 def set_color(style_color: dict, mainColor: tuple, darkColor: tuple):
@@ -107,7 +108,8 @@ def set_style(style_color):
     imgui.push_style_color(imgui.COLOR_TEXT, *rgba_to_float(255, 255, 255, 255))
     imgui.push_style_color(imgui.COLOR_TEXT_DISABLED, *rgba_to_float(128, 128, 128, 255))
     imgui.push_style_color(imgui.COLOR_POPUP_BACKGROUND, *style_color['color_background2'])
-    imgui.push_style_color(imgui.COLOR_WINDOW_BACKGROUND, *style_color['color_background'])
+    imgui.push_style_color(imgui.COLOR_WINDOW_BACKGROUND, *style_color['color_background'][:3],
+                           style_color['alpha_background'])
     imgui.push_style_color(imgui.COLOR_CHILD_BACKGROUND, *rgba_to_float(0, 0, 0, 0))
     imgui.push_style_color(imgui.COLOR_BORDER_SHADOW, *rgba_to_float(0, 0, 0, 0))
     imgui.push_style_color(imgui.COLOR_FRAME_BACKGROUND, *style_color['color_input'])

@@ -38,6 +38,7 @@ Font_changes_tooltip = i18n.reg(en='*The font size and style changes will take e
                                 zh='*重启FFDraw后生效字体的大小和样式更改')
 Color = i18n.reg(en='color', zh='颜色')
 Opacity = i18n.reg(en='opacity', zh='透明度')
+Opacity_background = i18n.reg(en='background opacity', zh='背景透明度')
 Omen_draw = i18n.reg(en='Omen draw', zh='绘制')
 Name = i18n.reg(en='Name', zh='名称')
 Padding = i18n.reg(en='padding', zh='填充')
