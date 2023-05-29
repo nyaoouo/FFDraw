@@ -323,12 +323,13 @@ class FFDPanel:
             return
         window_flag = 0
         if not self.is_expand: window_flag |= imgui.WINDOW_NO_MOVE
-
         set_style(self.style_color)  # 设置gui风格
         imgui.set_next_window_size(1280, 720, imgui.FIRST_USE_EVER)
         self.is_expand, self.is_show = imgui.begin('FFDraw', True, window_flag)
         glfw.set_window_size(self.window, *map(int, imgui.get_window_size()))
-        if not self.is_expand: return imgui.end()
+        if not self.is_expand:
+            pop_style()
+            return imgui.end()
         win_pos = glm.vec2(*imgui.get_window_position())
         if any(win_pos):
             glfw.set_window_pos(self.window, *map(int, glm.vec2(*glfw.get_window_pos(self.window)) + win_pos))
