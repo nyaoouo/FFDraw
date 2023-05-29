@@ -26,23 +26,23 @@ class FFDPanel:
         self.current_page = ''
 
         # 初始化
-        self.lang_idx = self.main.config.setdefault('language', 1)
+        self.lang_idx = self.main.config.setdefault('language', 0)
         i18n.current_lang = self.lang_idx
         self.style_color = self.main.config.setdefault('style_color', style_color_default)
 
     def ffd_page(self):
         with imgui.begin_tab_bar("tabBar") as tab_bar:
             if tab_bar.opened:
-                with imgui.begin_tab_item(i18n(Panel)) as item1:
+                with imgui.begin_tab_item(i18n(Panel) + '###tab_panel') as item1:
                     if item1.selected:
                         self.main.mem.panel.render()
-                with imgui.begin_tab_item(i18n(Plugin)) as item2:
+                with imgui.begin_tab_item(i18n(Plugin) + '###tab_plugin') as item2:
                     if item2.selected:
                         self.tab_plugin()
-                with imgui.begin_tab_item(i18n(Style)) as item3:
+                with imgui.begin_tab_item(i18n(Style) + '###tab_style') as item3:
                     if item3.selected:
                         self.tab_style()
-                with imgui.begin_tab_item(i18n(Setting)) as item4:
+                with imgui.begin_tab_item(i18n(Setting) + '###tab_setting') as item4:
                     if item4.selected:
                         self.tab_setting()
 
@@ -151,7 +151,7 @@ class FFDPanel:
     def tab_setting(self):
         """设置标签页"""
         flag = imgui.TREE_NODE_DEFAULT_OPEN
-        if imgui.collapsing_header(i18n(Normal), None, flag)[0]:
+        if imgui.collapsing_header(i18n(Normal) + '###tab_setting_div_normal', None, flag)[0]:
             imgui.text(i18n(Language))
             changed, self.lang_idx = imgui.combo('##lang', self.lang_idx, ['English', '简体中文'])
             if changed:
@@ -163,17 +163,17 @@ class FFDPanel:
             # changed, _ = imgui.input_text('地址','1')
             # if changed:
 
-        if imgui.collapsing_header(i18n(Omen_draw), None, flag)[0]:
+        if imgui.collapsing_header(i18n(Omen_draw) + '###tab_setting_div_draw', None, flag)[0]:
             gui = self.main.gui
             clicked, gui.always_draw = imgui.checkbox(i18n(Always_drawing), gui.always_draw)
             if clicked:
                 gui.cfg['always_draw'] = gui.always_draw
                 self.main.save_config()
 
-        if imgui.collapsing_header(i18n(Sniffer), None, flag)[0]:
+        if imgui.collapsing_header(i18n(Sniffer) + '###tab_setting_div_sniffer', None, flag)[0]:
             self.main.sniffer.render_panel()
 
-        if imgui.collapsing_header(i18n(Func_parser), None, flag)[0]:
+        if imgui.collapsing_header(i18n(Func_parser) + '###tab_setting_div_func_parser', None, flag)[0]:
             parser = self.main.parser
             clicked, parser.print_compile = imgui.checkbox(i18n(Print_compile), parser.print_compile)
             if clicked:
