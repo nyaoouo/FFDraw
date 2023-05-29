@@ -17,7 +17,7 @@ import imgui
 import OpenGL.GL as gl
 from win32gui import GetForegroundWindow
 
-from . import window, view, text, panel as m_panel
+from . import window, view, text, panel as m_panel, default_style
 from .utils import common_shader, models
 
 if typing.TYPE_CHECKING:
@@ -94,7 +94,7 @@ class Drawing:
         self.cfg = self.main.config.setdefault('gui', {})
         self.always_draw = self.cfg.setdefault('always_draw', False)
         self.font_path = self.cfg.setdefault('font_path', r'res\PingFang.ttf')
-        self.font_size = self.cfg.setdefault('font_size', 18)
+        self.font_size = self.cfg.setdefault('font_size', default_style.stlye_font_size)
         self._label_counter = 0
 
         self.draw_work_queue = queue.Queue()
