@@ -25,6 +25,9 @@ def main():
         instance.start_sniffer()
         instance.start_gui_thread()
         instance.start_http_server()
+    except StopIteration:
+        logging.warning('我们要不先开个游戏？')
+        os.system('pause')
     except Exception as e:
         logging.critical('critical error occurred', exc_info=e)
         os.system('pause')
