@@ -247,6 +247,7 @@ class Levinstrike:
         self.fire_counter = 0
 
     def on_start_cast(self, _):
+        chimeric_succession.enable = False
         self.enable = True
         self.ball = [None for _ in range(4)]
         self.fire = [None for _ in range(4)]
@@ -308,6 +309,89 @@ class Levinstrike:
         return raid_utils.draw_circle(radius=20, pos=raid_utils.NActor.by_id(self.ice[idx]), duration=dur)
 
 
+@p9s.on_cast(33133)
+def on_cast_archaic_demolis(evt: 'raid_utils.NetworkMessage[zone_server.ActorCast]'):
+    for actor in raid_utils.iter_main_party(False):
+        if raid_utils.is_class_job_healer(actor.class_job):
+            raid_utils.draw_share(
+                radius=6,
+                pos=actor,
+                duration=evt.message.cast_time
+            )
+
+
+@p9s.on_cast(33145)
+def on_cast_thunderbolt(evt: 'raid_utils.NetworkMessage[zone_server.ActorCast]'):
+    source_actor = raid_utils.NActor.by_id(evt.header.source_id)
+
+    def _draw(_i):
+        raid_utils.draw_fan(
+            degree=60, radius=40,
+            pos=source_actor,
+            facing=lambda _: glm.polar(raid_utils.get_actor_by_dis(source_actor, _i).pos - source_actor.update().pos).y,
+            duration=evt.message.cast_time,
+        )
+
+    for i in range(4): _draw(i)
+
+    share_cast = evt.message.cast_time + 2
+    raid_utils.draw_circle(
+        radius=6,
+        pos=lambda _: raid_utils.get_actor_by_dis(source_actor, -1).pos,
+        duration=share_cast,
+    )
+    raid_utils.sleep(share_cast - 5)
+    raid_utils.draw_share(
+        radius=6,
+        pos=lambda _: raid_utils.get_actor_by_dis(source_actor, -1).pos,
+        duration=min(share_cast, 5),
+    )
+
+
+class ChimericSuccession:
+    # 00.631   icon dice # 0x4f - 0x52
+    # 07.397   cast rear/front combo # 34703/34702
+    # 10.698 effect ice 1 # 33155
+    # 13.697 effect ice 2 # 33168
+    # 15.814 effect ice 3 # 33169
+    # 16.664 effect combo[0] fire share # 34707/34708
+    # 17.931   cast combo[1] swing kick # 34709/34710 # has omen
+    # 19.714 effect ice 4 # 33170
+    # 20.881 effect combo[1] swing kick # 34709/34710
+    ice: list[int | None]
+
+    def __init__(self):
+        self.enable = False
+        p9s.on_cast(33211)(self.on_start_cast)
+        p9s.on_lockon(0x4f, 0x50, 0x51, 0x52)(self.on_lockon_ice)
+        p9s.on_effect(33155, 33168, 33169)(self.on_icemeld)
+
+    def on_start_cast(self, _):
+        self.enable = True
+        levinstrike.enable = False
+        self.ice = [None for _ in range(4)]
+
+    def on_lockon_ice(self, evt: 'raid_utils.ActorControlMessage[actor_control.SetLockOn]'):
+        if not self.enable: return
+        self.ice[i := evt.param.lockon_id - 0x4f] = evt.source_id
+        if i == 0: self.draw_ice(0, 10)
+
+    def on_icemeld(self, evt: 'raid_utils.NetworkMessage[zone_server.ActionEffect]'):
+        if not self.enable: return
+        self.draw_ice([33155, 33168, 33169].index(evt.message.action_id) + 1, 3)
+
+    def draw_ice(self, idx, dur):
+        target_id = self.ice[idx]
+        if not target_id:
+            return logger.warning(f"ice[{idx}] is None: {target_id=:x}")
+        return raid_utils.draw_circle(
+            radius=20,
+            pos=raid_utils.NActor.by_id(target_id),
+            duration=dur,
+        )
+
+
 dual_spell = DualSpell()
 combination = Combination()
 levinstrike = Levinstrike()
+chimeric_succession = ChimericSuccession()
