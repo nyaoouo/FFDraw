@@ -27,6 +27,7 @@ def main():
         instance.start_http_server()
     except Exception as e:
         logging.critical('critical error occurred', exc_info=e)
+        logging.warning('我们要不先开个游戏？')
         os.system('pause')
 
 
