@@ -107,12 +107,13 @@ class FFDPanel:
                 self.main.save_config()
 
             style = imgui.get_style()
-            changed, style.alpha = imgui.slider_float(i18n(Opacity), self.style_color['alpha'], 0.5, 1)
+            changed, style.alpha = imgui.slider_float(i18n(Opacity), self.style_color['alpha'], 0.5, 1, '%.2f')
             if changed:
                 self.style_color['alpha'] = style.alpha
                 self.main.save_config()
 
-            changed, new_alpha = imgui.slider_float(i18n(Opacity_background), self.style_color['alpha_background'], 0.5, 1)
+            changed, new_alpha = imgui.slider_float(i18n(Opacity_background), self.style_color['alpha_background'], 0.5,
+                                                    1, '%.2f')
             if changed:
                 self.style_color['alpha_background'] = new_alpha
                 self.main.save_config()
