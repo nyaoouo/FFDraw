@@ -16,6 +16,7 @@ special_actions[33314] = 0
 special_actions[33315] = 0
 special_actions[33292] = 0
 special_actions[33139] = 0
+special_actions[33145] = 0
 
 delay_until[33121] = 4
 
