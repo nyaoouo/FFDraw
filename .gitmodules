@@ -1,0 +1,3 @@
+[submodule "plugins/dev"]
+	path = plugins/dev
+	url = https://github.com/gogofishman/dev.git
