@@ -30,7 +30,7 @@
 
 ### 注
 
-* 如果在非独显直连的机器上遇到图层黑色无法穿透之类，请尝试游戏级本程序均使用核显并重启程序
+* 如果在非独显直连的机器上遇到图层黑色无法穿透之类，请尝试游戏以及本程序均使用核显并重启程序
 * 如果遇到报错 `failed to set hardware filter to promiscuous mode` 之类，请修改 `config.json` 中的 `sniffer/sniff_promisc` 为 `false` 并重启程序
 * 如果遇到报错 `Npcap/Winpcap is not installed` 之类，请下载 [npcap](https://npcap.com/dist/npcap-1.72.exe) 安装后重启
 * 如果遇到编码问题 `utf8 cant decode` 之类，请修改 `config.json` 中的 `path_encoding` 为 `gbk` 并重启程序
