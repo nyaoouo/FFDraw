@@ -6,9 +6,9 @@ import glm
 
 from ff_draw.omen.effector import Effector, ScaleInEffector, FadeOutEffector
 
-from plugins.raid_helper import utils as raid_utils
-from plugins.raid_helper.utils.typing import *
-from plugins.raid_helper.data import special_actions, delay_until
+from raid_helper import utils as raid_utils
+from raid_helper.utils.typing import *
+from raid_helper.data import special_actions, delay_until
 
 special_actions[33337] = 0
 special_actions[33336] = 0

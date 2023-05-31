@@ -4,9 +4,9 @@ from ff_draw.plugins import FFDrawPlugin
 import imgui
 import requests
 
-from plugins.dev.Code_debug import tab_code_debug
-from plugins.dev.action_list.Action_list import tab_action_list
-from plugins.dev.i18n import *
+from .Code_debug import tab_code_debug
+from .action_list.Action_list import tab_action_list
+from .i18n import *
 
 
 class Dev(FFDrawPlugin):
