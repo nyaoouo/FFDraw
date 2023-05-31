@@ -1,4 +1,3 @@
-import imgui
 from ff_draw.gui.default_style import text_tip
 from .i18n import *
 from raid_helper.utils import *
