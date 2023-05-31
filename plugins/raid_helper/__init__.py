@@ -206,7 +206,7 @@ class RaidHelper(FFDrawPlugin):
             )
         shape = special_actions[action_id] if action_id in special_actions else action_type_to_shape_default.get(effect_type)
         if not shape: return
-        scale = glm.vec3(effect_width if shape == 0x20000 else effect_range, 1, effect_range)
+        scale = glm.vec3(effect_width if shape >> 16 == 2 else effect_range, 1, effect_range)
         is_circle = shape >> 16 == 1
         pos = (lambda _: target.pos) if is_circle and target else data.pos
         facing = 0 if is_circle else (lambda _: glm.polar(target.pos - source.pos).y) if target else data.facing
