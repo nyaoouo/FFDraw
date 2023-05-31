@@ -1,5 +1,5 @@
 import imgui
-from plugins.dev.i18n import *
+from dev.i18n import *
 
 
 def tab_action_list(self):

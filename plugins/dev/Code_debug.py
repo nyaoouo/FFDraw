@@ -1,6 +1,7 @@
 import imgui
-from plugins.dev.i18n import *
-from plugins.raid_helper.utils import *
+from ff_draw.gui.default_style import text_tip
+from .i18n import *
+from raid_helper.utils import *
 from pprint import pprint
 
 
@@ -12,6 +13,7 @@ def tab_code_debug(self):
 
     imgui.new_line()
     imgui.begin_child("##", width=-150)
+    text_tip(i18n(Code_tip))
     imgui.end_child()
 
     imgui.same_line()
