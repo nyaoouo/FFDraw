@@ -139,7 +139,7 @@ def draw_distance_line(
 
 
 def draw_knock_predict_circle(
-        radius: typing.Callable[[], int] | int,
+        radius: typing.Callable[[], float] | float,
         pos: typing.Callable[[], glm.vec3] | glm.vec3 | Actor,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
         surface_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -208,7 +208,7 @@ def draw_knock_predict_circle(
 
 
 def draw_decay(
-        radius: typing.Callable[[BaseOmen], int] | int,
+        radius: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
         surface_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -217,8 +217,8 @@ def draw_decay(
         label_color: typing.Callable[[BaseOmen], tuple[float, float, float,]] | tuple[float, float, float,] = None,
         duration: float = 0,
         alpha: typing.Callable[[BaseOmen], float] | float = None,
-        min_radius: typing.Callable[[BaseOmen], int] | int = None,
-        draw_icon: typing.Callable[[BaseOmen], int] | int = True,
+        min_radius: typing.Callable[[BaseOmen], float] | float = None,
+        draw_icon: typing.Callable[[BaseOmen], bool] | bool = True,
 ):
     if isinstance(pos, Actor):
         pos = pos_tracker(pos)
@@ -276,7 +276,7 @@ def draw_decay(
 
 
 def draw_share(
-        radius: typing.Callable[[BaseOmen], int] | int,
+        radius: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         facing: typing.Callable[[BaseOmen], float] | float | Actor = 0,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -325,7 +325,7 @@ def draw_share(
 
 
 def draw_circle(
-        radius: typing.Callable[[BaseOmen], int] | int,
+        radius: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
         surface_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -333,7 +333,7 @@ def draw_circle(
         label: typing.Callable[[BaseOmen], str] | str = '',
         label_color: typing.Callable[[BaseOmen], tuple[float, float, float,]] | tuple[float, float, float,] = None,
         duration: float = 0,
-        inner_radius: typing.Callable[[BaseOmen], int] | int = 0,
+        inner_radius: typing.Callable[[BaseOmen], float] | float = 0,
         alpha: typing.Callable[[BaseOmen], float] | float = None,
 ):
     if isinstance(radius, int):
@@ -360,8 +360,8 @@ def draw_circle(
 
 
 def draw_rect(
-        width: typing.Callable[[BaseOmen], int] | int,
-        length: typing.Callable[[BaseOmen], int] | int,
+        width: typing.Callable[[BaseOmen], float] | float,
+        length: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         facing: typing.Callable[[BaseOmen], float] | float | Actor = None,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -391,8 +391,8 @@ def draw_rect(
 
 
 def draw_fan(
-        degree: typing.Callable[[BaseOmen], int] | int,
-        radius: typing.Callable[[BaseOmen], int] | int,
+        degree: typing.Callable[[BaseOmen], float] | float,
+        radius: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         facing: typing.Callable[[BaseOmen], float] | float | Actor = None,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -433,7 +433,7 @@ def linear_trans(start_s, start_p, end_s, end_p, remain):
 
 
 def create_game_omen(
-        shape: typing.Callable[[BaseOmen], int] | int,
+        shape: typing.Callable[[BaseOmen], float] | float,
         scale: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         facing: typing.Callable[[BaseOmen], float] | float | Actor = None,
