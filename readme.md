@@ -4,6 +4,15 @@
 
 ## 运行
 
+### 小白懒人包版本
+
+- [下载](https://github.com/gogofishman/FFDraw/releases)
+- 适用人群：python环境我不会装啊，exe怎么报错啊，py文件怎么启动啊，怎么更新啊我去
+- 双击`run.bat`，会自动在当前文件夹安装FFD，同时搭建python环境，并启动FFD
+- 什么？你不会填网络代理端口？兄弟还是当绿玩吧，与科技无缘
+
+
+
 ### python 版本
 
 * 需求 `python3.10` 或以上的`x64版本`作为运行环境
