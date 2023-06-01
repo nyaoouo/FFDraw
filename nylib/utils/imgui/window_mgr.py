@@ -6,7 +6,8 @@ import OpenGL.GL as gl
 import glfw
 import glm
 import imgui
-from imgui.integrations.glfw import GlfwRenderer
+# from imgui.integrations.glfw import GlfwRenderer
+from .glfw_fix import GlfwRenderer
 
 if os.name == 'nt':
     import ctypes
