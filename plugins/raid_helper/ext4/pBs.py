@@ -104,19 +104,54 @@ delay_until[34743] = 8
 delay_until[34744] = 8
 
 dark_violet_surface = glm.vec4(0.58, 0.0, 0.83, .2)
-dark_violet_line = dark_violet_surface + glm.vec4(-.05, -.05, -.05, .5)
+dark_violet_line = dark_violet_surface + glm.vec4(-.05, 0, -.05, .5)
 pale_goldenrod_surface = glm.vec4(0.93, 0.91, 0.66, .2)
 pale_goldenrod_line = pale_goldenrod_surface + glm.vec4(.05, .05, .05, .5)
 
-for _a in [33258, 33263, 34696, 33309, 34742, 33316]:
+_light_actions = [33258, 33263, 34696, 33309, 34742, 33316]
+_dark_actions = [33259, 33271, 33264, 33265, 34697, 33310, 33311, 34743, 34744, 33317]
+
+for _a in _light_actions:
     omen_color[_a] = pale_goldenrod_surface, pale_goldenrod_line
 
-for _a in [33259, 33271, 33264, 33265, 34697, 33310, 33311, 34743, 34744, 33317]:
+for _a in _dark_actions:
     omen_color[_a] = dark_violet_surface, dark_violet_line
 
 pBs = raid_utils.MapTrigger(1152)
 center = glm.vec3(100, 0, 100)
 logger = logging.getLogger('raid_helper/pBs')
+
+is_enable = pBs.add_value(raid_utils.BoolCheckBox('default/enable', True))
+pBs.decorators.append(lambda f: (lambda *args, **kwargs: f(*args, **kwargs) if is_enable.value else None))
+
+light_surface = pBs.add_value(raid_utils.Color4f('default/light_surface', pale_goldenrod_surface))
+dark_surface = pBs.add_value(raid_utils.Color4f('default/dark_surface', dark_violet_surface))
+light_line = pBs.add_value(raid_utils.Color4f('default/light_line', pale_goldenrod_line))
+dark_line = pBs.add_value(raid_utils.Color4f('default/dark_line', dark_violet_line))
+
+
+@light_surface.listen_change
+def on_light_surface_change(value):
+    for _a in _light_actions:
+        omen_color[_a] = value, light_line.value
+
+
+@light_line.listen_change
+def on_light_line_change(value):
+    for _a in _light_actions:
+        omen_color[_a] = light_surface.value, value
+
+
+@dark_surface.listen_change
+def on_dark_surface_change(value):
+    for _a in _dark_actions:
+        omen_color[_a] = value, dark_line.value
+
+
+@dark_line.listen_change
+def on_dark_line_change(value):
+    for _a in _dark_actions:
+        omen_color[_a] = dark_surface.value, value
 
 
 class CallOnce:
@@ -142,8 +177,8 @@ def on_cast_light_combo(evt: 'NetworkMessage[zone_server.ActorCast]'):
     cast_time = min(evt.message.cast_time, 4)
     for actor in raid_utils.iter_main_party(False):
         if raid_utils.is_class_job_healer(actor.class_job):
-            raid_utils.draw_share(radius=6, pos=actor, duration=cast_time, line_color=pale_goldenrod_line, surface_color=pale_goldenrod_surface)
-            raid_utils.draw_circle(radius=6, pos=actor, duration=cast_time, line_color=pale_goldenrod_line, surface_color=pale_goldenrod_surface)
+            raid_utils.draw_share(radius=6, pos=actor, duration=cast_time, line_color=light_line.value, surface_color=light_surface.value)
+            raid_utils.draw_circle(radius=6, pos=actor, duration=cast_time, line_color=light_line.value, surface_color=light_surface.value)
 
 
 @pBs.on_cast(33259, 33271, 33264, 34697, 34743)
@@ -153,13 +188,13 @@ def on_cast_dark_combo(evt: 'NetworkMessage[zone_server.ActorCast]'):
     cast_time = min(evt.message.cast_time, 4)
     for actor in raid_utils.iter_main_party(False):
         if raid_utils.is_class_job_dps(actor.class_job):
-            raid_utils.draw_share(radius=3, pos=actor, duration=cast_time, line_color=dark_violet_line, surface_color=dark_violet_surface)
-            raid_utils.draw_circle(radius=3, pos=actor, duration=cast_time, line_color=dark_violet_line, surface_color=dark_violet_surface)
+            raid_utils.draw_share(radius=3, pos=actor, duration=cast_time, line_color=dark_line.value, surface_color=dark_surface.value)
+            raid_utils.draw_circle(radius=3, pos=actor, duration=cast_time, line_color=dark_line.value, surface_color=dark_surface.value)
 
 
 @pBs.on_cast(33254, 33255)
 def on_cast_jury_overruling(evt: 'NetworkMessage[zone_server.ActorCast]'):
-    colors = (pale_goldenrod_surface,pale_goldenrod_line) if evt.message.action_id == 33254 else (dark_violet_surface, dark_violet_line)
+    colors = (light_surface.value, light_line.value) if evt.message.action_id == 33254 else (dark_surface.value, dark_line.value)
     source = raid_utils.NActor.by_id(evt.header.source_id)
 
     def _draw(actor: raid_utils.NActor):
@@ -199,10 +234,10 @@ def on_cast_upheld_ruling(data: 'list[NetworkMessage[zone_server.ActorCast]|Acto
             continue
         target = raid_utils.NActor.by_id(target_id)
         if cast_id == 34771 or cast_id == 34768:  # light
-            raid_utils.draw_circle(radius=6, pos=target, duration=cast_time, line_color=pale_goldenrod_line, surface_color=pale_goldenrod_surface)
-            raid_utils.draw_share(radius=6, pos=target, duration=cast_time, line_color=pale_goldenrod_line, surface_color=pale_goldenrod_surface)
+            raid_utils.draw_circle(radius=6, pos=target, duration=cast_time, line_color=light_line.value, surface_color=light_surface.value)
+            raid_utils.draw_share(radius=6, pos=target, duration=cast_time, line_color=light_line.value, surface_color=light_surface.value)
         elif cast_id == 34772 or cast_id == 34769:  # dark
-            raid_utils.draw_circle(radius=13, pos=target, duration=cast_time, line_color=dark_violet_line, surface_color=dark_violet_surface)
+            raid_utils.draw_circle(radius=13, pos=target, duration=cast_time, line_color=dark_line.value, surface_color=dark_surface.value)
 
 
 @pBs.on_cast(34694, 34695)
@@ -248,3 +283,6 @@ def on_dark_current(evt: 'NetworkMessage[zone_server.MapEffect]'):
         rad += math.pi
         raid_utils.draw_circle(radius=8, pos=glm.vec3(math.sin(rad), 0, -math.cos(rad)) * 13 + center, duration=4)
         raid_utils.sleep(1)
+
+
+pBs.clear_decorators()

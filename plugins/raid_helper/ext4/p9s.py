@@ -26,6 +26,9 @@ center = glm.vec3(100, 0, 100)
 
 logger = logging.getLogger('raid_helper/p9s')
 
+is_enable = p9s.add_value(raid_utils.BoolCheckBox('default/enable', True))
+p9s.decorators.append(lambda f: (lambda *args, **kwargs: f(*args, **kwargs) if is_enable.value else None))
+
 
 class HideWhenActorDead(Effector):
     def __init__(self, omen, actor_id):
@@ -398,3 +401,4 @@ dual_spell = DualSpell()
 combination = Combination()
 levinstrike = Levinstrike()
 chimeric_succession = ChimericSuccession()
+p9s.clear_decorators()
