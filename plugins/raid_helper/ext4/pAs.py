@@ -17,6 +17,9 @@ center = glm.vec3(100, 0, 100)
 
 logger = logging.getLogger('raid_helper/pAs')
 
+is_enable = pAs.add_value(raid_utils.BoolCheckBox('default/enable', True))
+pAs.decorators.append(lambda f: (lambda *args, **kwargs: f(*args, **kwargs) if is_enable.value else None))
+
 
 @pAs.on_set_channel(242)
 def on_tether_dividing_wings(evt: 'ActorControlMessage[actor_control.SetChanneling]'):
@@ -31,7 +34,7 @@ def on_tether_dividing_wings(evt: 'ActorControlMessage[actor_control.SetChanneli
 
 @pAs.on_cast(33434, 33435)
 def on_cast_wicked_step(evt: 'NetworkMessage[zone_server.ActorCast]'):
-    raid_utils.draw_knock_predict_circle(radius=4, pos=evt.message.pos, knock_distance=36,duration=evt.message.cast_time)
+    raid_utils.draw_knock_predict_circle(radius=4, pos=evt.message.pos, knock_distance=36, duration=evt.message.cast_time)
 
 
 @pAs.on_add_status(3550)
@@ -99,6 +102,9 @@ def on_arcane_sphere(evt: 'NetworkMessage[zone_server.NpcSpawn]'):
     raid_utils.draw_rect(
         width=2, length=80, arg=1,
         pos=pos,
-        facing=math.pi/2,
+        facing=math.pi / 2,
         duration=3.5
     )
+
+
+pAs.clear_decorators()

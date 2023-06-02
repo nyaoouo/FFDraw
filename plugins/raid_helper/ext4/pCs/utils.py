@@ -12,3 +12,6 @@ pCs = raid_utils.MapTrigger(1154)
 center = glm.vec3(100, 0, 100)
 
 logger = logging.getLogger('raid_helper/pCs')
+
+is_enable = pCs.add_value(raid_utils.BoolCheckBox('default/enable', True))
+pCs.decorators.append(lambda f: (lambda *args, **kwargs: f(*args, **kwargs) if is_enable.value else None))
