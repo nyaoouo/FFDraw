@@ -21,6 +21,9 @@ delay_until[33883] = 4
 
 map_ex = raid_utils.MapTrigger(1141)
 
+is_enable = map_ex.add_value(raid_utils.BoolCheckBox('default/enable', True))
+map_ex.decorators.append(lambda f: (lambda *args, **kwargs: f(*args, **kwargs) if is_enable.value else None))
+
 
 @map_ex.on_set_channel(17)
 def on_cauterize(msg: ActorControlMessage[actor_control.SetChanneling]):
@@ -42,3 +45,6 @@ def on_dragons_descent_lockon(msg: ActorControlMessage[actor_control.SetLockOn])
         duration=8.5,
         knock_distance=12
     )
+
+
+map_ex.clear_decorators()
