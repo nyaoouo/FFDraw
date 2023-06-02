@@ -29,6 +29,9 @@ class Timer:
 
 
 map_ex = raid_utils.MapTrigger(998)
+is_enable = map_ex.add_value(raid_utils.BoolCheckBox('default/enable', True))
+map_ex.decorators.append(lambda f: (lambda *args, **kwargs: f(*args, **kwargs) if is_enable.value else None))
+
 save_cast = {28668, 28678, 28681, 28682}
 cast_stack: dict[int, list] = dict()
 cast_timer = Timer()
@@ -38,7 +41,7 @@ icon_timer = Timer()
 
 @map_ex.on_cast(28667, 28677)
 def on_cast_star_knock(evt: NetworkMessage[zone_server.ActorCast]):
-    raid_utils.draw_knock_predict_circle(radius=40, pos=evt.message.pos, duration=evt.message.cast_time,knock_distance=19)
+    raid_utils.draw_knock_predict_circle(radius=40, pos=evt.message.pos, duration=evt.message.cast_time, knock_distance=19)
 
 
 @map_ex.on_cast(28668, 28678, 28681, 28682)
@@ -51,7 +54,7 @@ def on_store_save_cast(evt: NetworkMessage[zone_server.ActorCast]):
     actor = raid_utils.NActor.by_id(evt.header.source_id)
     match evt.message.action_id:
         case 28668 | 28678:
-            cb = lambda: raid_utils.draw_fan(degree=180, radius=20, pos=actor,facing=evt.message.facing, duration=20)
+            cb = lambda: raid_utils.draw_fan(degree=180, radius=20, pos=actor, facing=evt.message.facing, duration=20)
         case 28681:
             cb = lambda: raid_utils.draw_circle(radius=15, pos=actor, duration=20)
         case 28682:
@@ -101,3 +104,6 @@ def tether(evt: ActorControlMessage[actor_control.SetChanneling]) -> None:
     # 连线189是从boss到小鸟，181是小鸟间传递
     duration = 9.1 if evt.param.channel_id == 189 else 8.1
     raid_utils.draw_circle(radius=15, pos=raid_utils.NActor.by_id(evt.source_id), duration=duration)
+
+
+map_ex.clear_decorators()

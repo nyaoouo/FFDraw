@@ -1,13 +1,13 @@
 import functools
-import inspect
 import threading
 import typing
 
+import glm
 import imgui
 
 from nylib.utils import BroadcastHook
-from nylib.utils.threading import terminate_thread
 from ff_draw.main import FFDraw
+from ff_draw.gui import i18n
 from .typing import *
 
 if typing.TYPE_CHECKING:
@@ -17,29 +17,47 @@ main = FFDraw.instance
 raid_helper: 'RaidHelper|None' = None
 
 
-def _add_set(d, ids):
-    def dec(f):
-        for i in ids:
-            d.setdefault(i, []).append(f)
-        return f
-
-    return dec
-
-
 class TValue:
-    def __init__(self, key: str, label: str, default_value=None):
+    _cache_need_init = []
+    _cache_value: typing.Any
+
+    def __init__(self, key: str, label: str, default_value=None, on_change=None):
         self.key = key
         self.label = label
         self.default_value = default_value
+        if isinstance(on_change, list):
+            self.on_change = on_change
+        elif callable(on_change):
+            self.on_change = [on_change]
+        else:
+            self.on_change = []
+
+    def val_serialize(self, v):
+        return v
+
+    def val_deserialize(self, v):
+        return v
 
     @property
     def value(self):
-        return raid_helper.data.setdefault('values', {}).get(self.key, self.default_value)
+        if hasattr(self, '_cache_value'): return self._cache_value
+        val = self.val_deserialize(raid_helper.data.setdefault('values', {}).get(self.key, self.default_value))
+        self._cache_value = val
+        return val
 
     @value.setter
     def value(self, v):
         raid_helper.data.setdefault('values', {})[self.key] = v
         raid_helper.storage.save()
+        for f in self.on_change: f(v)
+        self._cache_value = v
+
+    def reset(self):
+        raid_helper.data.setdefault('values', {}).pop(self.key, None)
+        raid_helper.storage.save()
+        self._cache_value = self.default_value
+        for f in self.on_change: f(self.default_value)
+
 
     def do_render(self):
         imgui.text(self.label + ': ')
@@ -49,6 +67,22 @@ class TValue:
         imgui.same_line()
         changed, value = imgui.input_text('##' + self.key, self.value, 256, imgui.COLOR_EDIT_NO_LABEL)
         if changed: self.value = value
+
+    def __init_cb(self, f):
+        def cb():
+            if self.key in (vals := raid_helper.data.setdefault('values', {})):
+                f(vals[self.key])
+
+        return cb
+
+    def listen_change(self, f):
+        self.on_change.append(f)
+        cb = self.__init_cb(f)
+        if raid_helper:
+            cb()
+        else:
+            self._cache_need_init.append(cb)
+        return f
 
 
 class IntSlider(TValue):
@@ -71,6 +105,50 @@ class BoolCheckBox(TValue):
         imgui.same_line()
         changed, value = imgui.checkbox('##' + self.key, self.value)
         if changed: self.value = value
+
+
+class Color4f(TValue):
+    def __init__(self, key: str, default_value, flags=0):
+        self.flags = flags
+        super(Color4f, self).__init__(key + ':color4f', key.rsplit('/', 1)[-1], list(default_value))
+
+    def val_serialize(self, v):
+        assert len(v) == 4
+        return list(v)
+
+    def val_deserialize(self, v):
+        assert len(v) == 4
+        return glm.vec4(*v)
+
+    def render(self):
+        imgui.same_line()
+        changed, value = imgui.color_edit4('##' + self.key, *self.value, self.flags)
+        if changed: self.value = value
+        imgui.same_line()
+        if imgui.button(i18n.i18n(i18n.Reset) + '##reset_btn' + self.key):
+            self.reset()
+
+
+class Color3f(TValue):
+    def __init__(self, key: str, default_value, flags=0):
+        self.flags = flags
+        super(Color3f, self).__init__(key + ':color3f', key.rsplit('/', 1)[-1], list(default_value))
+
+    def val_serialize(self, v):
+        assert len(v) == 3
+        return list(v)
+
+    def val_deserialize(self, v):
+        assert len(v) == 3
+        return glm.vec3(*v)
+
+    def render(self):
+        imgui.same_line()
+        changed, value = imgui.color_edit3('##' + self.key, *self.value, self.flags)
+        if changed: self.value = value
+        imgui.same_line()
+        if imgui.button(i18n.i18n(i18n.Reset) + '##reset_btn' + self.key):
+            self.reset()
 
 
 class Select(TValue):
@@ -127,6 +205,7 @@ class TriggerGroup:
     def __init__(self, identifier: str, label=None):
         self.identifier = identifier
         self.label = label or identifier
+        self._decorators = {}
         self.hook_map = HookMap()
         self.value_tree = {}
         self.values = {}
@@ -144,6 +223,27 @@ class TriggerGroup:
         self._on_actor_play_action_timeline = {}
         self._on_map_effect = []
         self._on_reset = []
+
+    @property
+    def decorators(self) -> list[typing.Callable[[typing.Callable], typing.Callable]]:
+        return self._decorators.setdefault(threading.get_ident(), [])
+
+    @decorators.setter
+    def decorators(self, v: list[typing.Callable[[typing.Callable], typing.Callable]]):
+        self._decorators[threading.get_ident()] = v
+
+    def clear_decorators(self):
+        self._decorators.pop(threading.get_ident(), None)
+
+    def _add_set(self, d, ids):
+        def dec(f):
+            for _d in self._decorators.get(threading.get_ident(), []):
+                f = _d(f)
+            for i in ids:
+                d.setdefault(i, []).append(f)
+            return f
+
+        return dec
 
     def add_value(self, v: TValue):
         key = v.key
@@ -186,7 +286,7 @@ class TriggerGroup:
 
     def on_lockon(self, *icon_id):
         self.hook_map.set(main.sniffer.on_actor_control[ActorControlId.SetLockOn], self._recv_on_lockon)
-        return _add_set(self._on_lockon_map, icon_id or pair_all)
+        return self._add_set(self._on_lockon_map, icon_id or pair_all)
 
     # endregion
     # region on_cast
@@ -197,7 +297,7 @@ class TriggerGroup:
 
     def on_cast(self, *action_id):
         self.hook_map.set(main.sniffer.on_zone_server_message[ZoneServer.ActorCast], self._recv_on_cast)
-        return _add_set(self._on_cast_map, action_id or pair_all)
+        return self._add_set(self._on_cast_map, action_id or pair_all)
 
     # endregion
     # region on_effect
@@ -208,7 +308,7 @@ class TriggerGroup:
 
     def on_effect(self, *action_id):
         self.hook_map.set(main.sniffer.on_action_effect, self._recv_on_effect)
-        return _add_set(self._on_effect_map, action_id or pair_all)
+        return self._add_set(self._on_effect_map, action_id or pair_all)
 
     # endregion
     # region on_add_status
@@ -218,7 +318,7 @@ class TriggerGroup:
 
     def on_add_status(self, *status_id):
         self.hook_map.set(main.sniffer.on_actor_control[ActorControlId.AddStatus], self._recv_on_add_status)
-        return _add_set(self._on_add_status, status_id or pair_all)
+        return self._add_set(self._on_add_status, status_id or pair_all)
 
     # endregion
     # region on_npc_spawn
@@ -229,7 +329,7 @@ class TriggerGroup:
     def on_npc_spawn(self, *base_id):
         self.hook_map.set(main.sniffer.on_zone_server_message[ZoneServer.NpcSpawn], self._recv_on_npc_spawn)
         self.hook_map.set(main.sniffer.on_zone_server_message[ZoneServer.NpcSpawn2], self._recv_on_npc_spawn)
-        return _add_set(self._on_npc_spawn, base_id or pair_all)
+        return self._add_set(self._on_npc_spawn, base_id or pair_all)
 
     # endregion
     # region on_object_spawn
@@ -239,7 +339,7 @@ class TriggerGroup:
 
     def on_object_spawn(self, *base_id):
         self.hook_map.set(main.sniffer.on_zone_server_message[ZoneServer.ObjectSpawn], self._recv_on_object_spawn)
-        return _add_set(self._on_object_spawn, base_id or pair_all)
+        return self._add_set(self._on_object_spawn, base_id or pair_all)
 
     # endregion
     # region on_actor_delete
@@ -247,6 +347,7 @@ class TriggerGroup:
         for c in self._on_actor_delete: call_safe(c, msg)
 
     def on_actor_delete(self, func):
+        for _d in self._decorators.get(threading.get_ident(), []): func = _d(func)
         self.hook_map.set(main.sniffer.on_zone_server_message[ZoneServer.ActorDelete], self._recv_on_actor_delete)
         self._on_actor_delete.append(func)
         return func
@@ -259,7 +360,7 @@ class TriggerGroup:
 
     def on_npc_yell(self, *npc_yell_id):
         self.hook_map.set(main.sniffer.on_zone_server_message[ZoneServer.NpcYell], self._recv_on_npc_yell)
-        return _add_set(self._on_npc_yell, npc_yell_id or pair_all)
+        return self._add_set(self._on_npc_yell, npc_yell_id or pair_all)
 
     # endregion
     # region on_set_channel
@@ -269,7 +370,7 @@ class TriggerGroup:
 
     def on_set_channel(self, *channel_id):
         self.hook_map.set(main.sniffer.on_actor_control[ActorControlId.SetChanneling], self._recv_on_set_channel)
-        return _add_set(self._on_set_channel, channel_id or pair_all)
+        return self._add_set(self._on_set_channel, channel_id or pair_all)
 
     # endregion
     # region on_cancel_channel
@@ -279,7 +380,7 @@ class TriggerGroup:
 
     def on_cancel_channel(self, *channel_id):
         self.hook_map.set(main.sniffer.on_actor_control[ActorControlId.RemoveChanneling], self._recv_on_cancel_channel)
-        return _add_set(self._on_cancel_channel, channel_id or pair_all)
+        return self._add_set(self._on_cancel_channel, channel_id or pair_all)
 
     # endregion
     # region on_actor_play_action_timeline
@@ -289,7 +390,7 @@ class TriggerGroup:
 
     def on_actor_play_action_timeline(self, *timeline_id):
         self.hook_map.set(main.sniffer.on_play_action_timeline, self._recv_on_actor_play_action_timeline)
-        return _add_set(self._on_actor_play_action_timeline, timeline_id or pair_all)
+        return self._add_set(self._on_actor_play_action_timeline, timeline_id or pair_all)
 
     # endregion
     # region on_map_effect
@@ -297,12 +398,14 @@ class TriggerGroup:
         for c in self._on_map_effect: call_safe(c, msg)
 
     def on_map_effect(self, func):
+        for _d in self._decorators.get(threading.get_ident(), []): func = _d(func)
         self.hook_map.set(main.sniffer.on_zone_server_message[ZoneServer.MapEffect], self._recv_on_map_effect)
         self._on_map_effect.append(func)
         return func
 
     # endregion
     def on_reset(self, func):
+        for _d in self._decorators.get(threading.get_ident(), []): func = _d(func)
         self._on_reset.append(func)
         return func
 
@@ -327,7 +430,7 @@ class MapTrigger(TriggerGroup):
         except KeyError:
             label = f'unk_territory_{territory_id}'
         else:
-            label = f'{territory.area.text_sgl} [{territory_id}]'
+            label = f'{territory.area.text_sgl} - {territory.content_finder_condition.text_name or "?"} [{territory_id}]'
         super().__init__(f'@territory_{territory_id}', label)
 
     def get_index(self):

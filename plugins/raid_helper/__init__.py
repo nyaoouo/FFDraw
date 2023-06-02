@@ -12,6 +12,8 @@ def set_raid_helper_instance(raid_helper: 'RaidHelper'):
     from . import utils
     from .utils import trigger
     utils.raid_helper = trigger.raid_helper = RaidHelper.instance = raid_helper
+    for t_val_cb in trigger.TValue._cache_need_init:
+        t_val_cb()
 
 
 def load_triggers():
@@ -66,8 +68,8 @@ class RaidHelper(FFDrawPlugin):
     instance: 'RaidHelper' = None
 
     def __init__(self, main):
-        set_raid_helper_instance(self)
         super().__init__(main)
+        set_raid_helper_instance(self)
         self.hook_map = HookMap2()
         self._init_hook_map()
         for h, c in self.hook_map.iter():
