@@ -29,6 +29,7 @@ Custom_plugin_path = i18n.reg(en='Custom plugin path', zh='自定义插件路径
 Delete = i18n.reg(en='delete', zh='删除')
 Edit = i18n.reg(en='edit', zh='编辑')
 Add = i18n.reg(en='add', zh='添加')
+Reset = i18n.reg(en='reset', zh='重置')
 Enable_changes_tooltip = i18n.reg(en='*The change takes effect after restarting FFDraw',
                                   zh='*重启FFDraw后更改生效')
 GUI = i18n.reg(en='GUI', zh='界面')

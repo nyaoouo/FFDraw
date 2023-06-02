@@ -80,7 +80,7 @@ class Drawing:
     window_panel = None
     panel: m_panel.FFDPanel = None
     imgui_draw_renderer: 'ffd_imgui.OpenglPynputRenderer' = None
-    imgui_panel_renderer: 'ffd_imgui.OpenglPynputRenderer' = None
+    imgui_panel_renderer: 'ffd_imgui.FFDGlfwRenderer' = None
 
     def __init__(self, main: "FFDraw"):
         self.main = main
@@ -110,7 +110,7 @@ class Drawing:
         self.logger.debug('imgui is enabled')
         from . import ffd_imgui
         self.window_panel = window.init_window('panel_window', False, None, None)
-        self.imgui_panel_renderer = ffd_imgui.OpenglPynputRenderer(self.window_panel)
+        self.imgui_panel_renderer = ffd_imgui.FFDGlfwRenderer(self.window_panel)
         fonts = imgui.get_io().fonts
         try:
             self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size, None, fonts.get_glyph_ranges_chinese_full())
