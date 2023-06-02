@@ -12,6 +12,8 @@ def set_raid_helper_instance(raid_helper: 'RaidHelper'):
     from . import utils
     from .utils import trigger
     utils.raid_helper = trigger.raid_helper = RaidHelper.instance = raid_helper
+    for t_val_cb in trigger.TValue._cache_need_init:
+        t_val_cb()
 
 
 def load_triggers():
@@ -66,8 +68,8 @@ class RaidHelper(FFDrawPlugin):
     instance: 'RaidHelper' = None
 
     def __init__(self, main):
-        set_raid_helper_instance(self)
         super().__init__(main)
+        set_raid_helper_instance(self)
         self.hook_map = HookMap2()
         self._init_hook_map()
         for h, c in self.hook_map.iter():
@@ -206,7 +208,7 @@ class RaidHelper(FFDrawPlugin):
             )
         shape = special_actions[action_id] if action_id in special_actions else action_type_to_shape_default.get(effect_type)
         if not shape: return
-        scale = glm.vec3(effect_width if shape == 0x20000 else effect_range, 1, effect_range)
+        scale = glm.vec3(effect_width if shape >> 16 == 2 else effect_range, 1, effect_range)
         is_circle = shape >> 16 == 1
         pos = (lambda _: target.pos) if is_circle and target else data.pos
         facing = 0 if is_circle else (lambda _: glm.polar(target.pos - source.pos).y) if target else data.facing
