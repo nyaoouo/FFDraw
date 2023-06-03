@@ -61,7 +61,7 @@ style_color_default['color_input_up'] = rgba_to_float(64, 64, 64)
 style_color_default['color_background'] = rgba_to_float(15, 15, 15)
 style_color_default['color_background2'] = rgba_to_float(26, 26, 26)
 style_color_default['alpha'] = 1
-style_color_default['alpha_background'] = 1
+style_color_default['alpha_background'] = 0.95
 
 
 def set_default_color(style_color):

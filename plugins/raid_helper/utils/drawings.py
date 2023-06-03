@@ -13,6 +13,9 @@ donut_shape = lambda inner, outer: 0x10000 | int(inner / outer * 0xffff)
 
 
 def default_color(is_enemy=True):
+    """
+    返回敌友字符串
+    """
     if is_enemy:
         return 'enemy'
     else:
@@ -20,6 +23,10 @@ def default_color(is_enemy=True):
 
 
 def pos_tracker(actor: Actor):
+    """
+    返回一个单位的坐标
+    @return: x,z,y
+    """
     if not isinstance(actor, NActor): actor = NActor(actor)
     return lambda o: safe_lazy(lambda: actor.update().pos, _default=o.timeout)
 
