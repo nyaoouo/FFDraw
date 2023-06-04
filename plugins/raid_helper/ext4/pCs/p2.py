@@ -1,6 +1,7 @@
 import math
 import threading
 
+import raid_helper
 from .utils import *
 
 special_actions[33613] = 0
@@ -248,6 +249,11 @@ def on_tether_ekpyrosis(evt: 'ActorControlMessage[actor_control.SetChanneling]')
         facing=lambda _: target_actor.target_radian(source_actor),
         duration=8,
     )
+
+
+@pCs.on_set_channel(84)
+def on_channel_factor_in(evt: 'ActorControlMessage[actor_control.SetChanneling]'):
+    raid_utils.timeout_when_channeling_change(raid_helper.draw_circle(radius=20, pos=raid_utils.NActor.by_id(evt.param.target_id), duration=10), evt)
 
 
 the_classical_concepts = TheClassicalConcepts()
