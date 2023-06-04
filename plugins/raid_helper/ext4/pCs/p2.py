@@ -246,7 +246,7 @@ def on_tether_ekpyrosis(evt: 'ActorControlMessage[actor_control.SetChanneling]')
     raid_utils.draw_rect(
         width=6, length=20,
         pos=source_actor,
-        facing=lambda _: target_actor.target_radian(source_actor),
+        facing=lambda _: source_actor.target_radian(target_actor),
         duration=8,
     )
 
