@@ -166,7 +166,7 @@ class TheClassicalConcepts:
                 self.omens.append(raid_utils.draw_line(
                     source=glm.vec3(el_x * 8 + 88, 1, el_y * 8 + 84),
                     target=glm.vec3(water_x * 8 + 88, 1, water_y * 8 + 84),
-                    color=glm.vec4(.3, .3, .7, 1),
+                    color=color,
                     width=5,
                     duration=dur,
                 ))
