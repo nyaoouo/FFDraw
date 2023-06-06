@@ -51,6 +51,8 @@ def download_and_save_ffmpeg(path: pathlib.Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     with gzip.open(temp, 'rb') as f, open(path, 'wb') as f2:
         f2.write(f.read())
+    temp.close()
+    os.unlink(temp.name)
 
 
 def download_and_save_ffplay(path: pathlib.Path):
@@ -58,6 +60,8 @@ def download_and_save_ffplay(path: pathlib.Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     with tarfile.open(temp.name, 'r:gz') as f, open(path, 'wb') as f2:
         f2.write(f.extractfile('package/bin/win32/x64/ffplay.exe').read())
+    temp.close()
+    os.unlink(temp.name)
 
 
 def download_and_save_ffprobe(path: pathlib.Path):
@@ -65,6 +69,8 @@ def download_and_save_ffprobe(path: pathlib.Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     with tarfile.open(temp.name, 'r:gz') as f, open(path, 'wb') as f2:
         f2.write(f.extractfile('package/bin/win32/x64/ffprobe.exe').read())
+    temp.close()
+    os.unlink(temp.name)
 
 
 def init_env():
