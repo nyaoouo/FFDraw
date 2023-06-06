@@ -4,6 +4,7 @@ release/
 FFDraw.exe
 AppData/
 venv*/
+res/ffmpeg/
 
 ### Python template
 # Byte-compiled / optimized / DLL files
