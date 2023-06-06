@@ -29,6 +29,13 @@ class direct_mem_property:
         except WinAPIError:
             return self.default
 
+    def __set__(self, instance, value):
+        if instance is None: return
+        if not (addr := instance.address): return
+        try:
+            return ny_mem.write_bytes(instance.handle, addr + getattr(instance.offsets, self.offset_key), bytearray(self.type(value)))
+        except Exception:
+            return
 
 def get_hwnd(pid):
     _p_hwnds = []

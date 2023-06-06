@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import sys
 import typing
 
 import glfw
@@ -10,7 +11,9 @@ import imgui
 from nylib.utils.win32 import memory as ny_mem, process as ny_proc
 from nylib.pefile import PE
 from nylib.pattern import StaticPatternSearcher
+from nylib.utils.win32.inject_rpc import Handle, pywin32_dll_place
 from . import utils, actor, party, network_target, packet_fix, marking, territory_info, event_module, quest_info, storage
+from . import hook_main_update, do_text_command, utf8string
 
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
@@ -175,6 +178,15 @@ class XivMem:
         self.quest_info = quest_info.QuestInfo(self)
         self.storage = storage.StorageManager(self)
         self.panel = XivMemPanel(self)
+        utf8string.Utf8String.init_cls(self)
+
+        pywin32_dll_place()
+        self.inject_handle = Handle(self.pid, self.handle)
+        if getattr(sys, 'frozen', False):
+            self.inject_handle.add_path(os.path.join(os.environ['ExcPath'], 'res', 'lib.zip'))
+        self.inject_handle.wait_inject()
+        self.add_game_main_func, self.remove_game_main_func, self.call_once_game_main = hook_main_update.install(self)
+        self.do_text_command = do_text_command.DoTextCommand(self)
 
     def load_screen(self):
         buf = ny_mem.read_bytes(self.handle, self.screen_address, 0x48)
