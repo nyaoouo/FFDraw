@@ -1,12 +1,16 @@
 import enum
+import io
+
 from win32com import client
 from ff_draw.plugins import FFDrawPlugin
 import imgui
+from . import utils, cafe_tts
 
 
 class TTSType(enum.Enum):
     NULL = 0
     System = 1
+    Cafe = 2
 
 
 def system_tts(msg: str, lang=804, flag=0):
@@ -18,7 +22,13 @@ def system_tts(msg: str, lang=804, flag=0):
 class TTS(FFDrawPlugin):
     def __init__(self, main):
         super().__init__(main)
+        utils.init_env()
         self.use_type = self.data.setdefault('use_type', TTSType.System.value)
+        self.player = utils.Player()
+        self.tts_impl = {
+            TTSType.Cafe.value: cafe_tts.CafeTTS(self),
+        }
+        self.test_str = '达达图书飞机墨鱼'
 
     def set_use_type(self, use_type: TTSType | int | str):
         if isinstance(use_type, str):
@@ -48,12 +58,22 @@ class TTS(FFDrawPlugin):
             imgui.end_popup()
         imgui.pop_id()
 
+        if self.use_type != TTSType.System.value:
+            self.tts_impl[self.use_type].render()
+
+        imgui.text('test: ')
+        imgui.same_line()
+        _, self.test_str = imgui.input_text('##tts_test', self.test_str, 1024)
+        imgui.same_line()
+        if imgui.button('speak'):
+            self.speak(self.test_str)
+
+    def impl_speak(self, msg: str):
+        self.player.play(io.BytesIO(self.tts_impl[self.use_type].tts(msg)))
+
     def speak(self, msg: str, do_async=True):
         self.logger.debug(f'speak: {msg}')
-        if self.use_type == TTSType.System.value:
-            call = system_tts
-        else:
-            return
+        call = system_tts if self.use_type == TTSType.System.value else self.impl_speak
         if do_async:
             self.create_mission(call, msg)
         else:
