@@ -31,24 +31,39 @@ class Handle:
     def is_python_load(self):
         return process.get_module_by_name(self.process_handle, injection.python_dll_name) is not None
 
-    def start_server(self):
+    def start_server(self, alloc_console=False):
         assert not self.is_active()
         # pywin32_dll_place()
         self.is_starting_server = True
         shell_code = f'''
-def run_rpc_server_main(lock_name, pipe_name):
+def run_rpc_server_main():
+    if {repr(alloc_console)}:
+        import win32console
+        win32console.FreeConsole()
+        win32console.AllocConsole()
+        print('alloc console')
+    
     import threading
+    import logging
+    import nylib.logging as ny_log
     from nylib.utils import Mutex, Counter
     from nylib.rpc.namedpipe_pickle import RpcServer
+    ny_log.install()
     res_id_counter = Counter()
-
+    pipe_name = {repr(self.pipe_name)}
+    lock_file_name = {repr(str(self.lock_file.name))}
+    
     def run_call(code, res_key='res'):
         exec(code, namespace := {{'inject_server': server}})
         return namespace.get(res_key)
 
     server = RpcServer(pipe_name, {{"run": run_call}})
-    with Mutex(lock_name):
-        server.serve()
+    mutex = Mutex(lock_file_name)
+    if not mutex.is_lock():
+        logging.debug(f'start server with pipe {{pipe_name=}} and lock {{lock_file_name=}}')
+        sys.modules['inject_server'] = server
+        with mutex:
+            server.serve()
 import traceback
 import ctypes
 try:
@@ -56,13 +71,14 @@ try:
     for _p in {repr(sys.path + self.paths)}:
         if _p not in sys.path:
             sys.path.append(_p)
-    run_rpc_server_main({repr(str(self.lock_file.name))}, {repr(self.pipe_name)})
-except Exception:
+    run_rpc_server_main()
+except:
     # ctypes.windll.user32.MessageBoxW(0, 'error:\\n'+traceback.format_exc() ,'error' , 0x40010)
+    logging.critical('error occurred in injection:\\n'+traceback.format_exc())
     with open({repr(str(self.exc_file))},'w',encoding='utf-8') as f:
         f.write(traceback.format_exc())
 '''
-        # compile(shell_code, 's', 'exec')
+        compile(shell_code, 's', 'exec')
         res = injection.exec_shell_code(self.process_handle, shell_code.encode('utf-8'), True)
         if self.exc_file.exists():
             self.logger.error('error occurred in injection:\n' + self.exc_file.read_text('utf-8'))
@@ -77,7 +93,7 @@ except Exception:
             if not self.is_starting_server:
                 threading.Thread(target=self.start_server, daemon=True).start()
             time.sleep(.1)
-            wait_until(self.is_active)
+            wait_until(self.is_active, timeout=10)
         if not self.client.is_connected.is_set():
             self.client.connect()
 
