@@ -66,12 +66,12 @@ class ActorOffsets:
     id = 0x74
     base_id = 0x80
     actor_type = 0x8c
-    status_flag = 0x94
-    pos = 0xA0
-    facing = 0xB0
-    radius = 0xC0
-    draw_object = 0xF0
-    hide_flag = 0x104
+    status_flag = 0x95
+    pos = 0xB0
+    facing = 0xC0
+    radius = 0xD0
+    draw_object = 0x100
+    hide_flag = 0x114
     current_hp = 0x1C4
     max_hp = 0x1C8
     current_mp = 0x1CC
@@ -83,31 +83,22 @@ class ActorOffsets:
     class_job = 0x1E0
     level = 0x1E1
     model_attr = 0x1E4
-    pc_target_id = 0xC60
-    b_npc_target_id = 0x1A68
-    shield = 0x1AEb
-    status = 0x1b40
-
-
-class ActorOffsets630(ActorOffsets):
-    status_flag = 0x95
-    pos = 0xB0
-    facing = 0xC0
-    radius = 0xD0
-    draw_object = 0x100
-    hide_flag = 0x114
     pc_target_id = 0xC80
     b_npc_target_id = 0x1A88
+    current_world = 0x1AF4
+    home_world = 0x1AF6
     shield = 0x1B17
     status = 0x1B60
 
 
-class ActorOffsets640(ActorOffsets630):
+class ActorOffsets640(ActorOffsets):
     class_job = 0x1E2
     level = 0x1E3
     model_attr = 0x1E6
     pc_target_id = 0xCB0
     b_npc_target_id = 0x1AB8
+    current_world = 0x1B1C
+    home_world = 0x1B1E
     shield = 0x1ED
     status = 0x1B80
 
@@ -151,6 +142,8 @@ class Actor:
     class_job = direct_mem_property(ctypes.c_byte)
     level = direct_mem_property(ctypes.c_byte)
     model_attr = direct_mem_property(ctypes.c_byte)
+    current_world = direct_mem_property(ctypes.c_ushort)
+    home_world = direct_mem_property(ctypes.c_ushort)
     shield = direct_mem_property(ctypes.c_ubyte)
 
     def target_radian(self, target: 'Actor'):
@@ -202,8 +195,6 @@ class ActorTable:
 
         if main.game_version >= (6, 4, 0):
             Actor.offsets = ActorOffsets640
-        elif main.game_version >= (6, 3, 0):
-            Actor.offsets = ActorOffsets630
         else:
             Actor.offsets = ActorOffsets
 

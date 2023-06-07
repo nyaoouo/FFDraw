@@ -1,3 +1,4 @@
+import os
 from ctypes import *
 
 import glm
@@ -8,6 +9,7 @@ from ff_draw.sniffer.utils.simple import pos_web_to_raw, dir_web_to_raw
 from . import TypeMap, ZoneServer
 
 type_map = TypeMap()
+game_version = tuple(map(int, os.environ.get('FFXIV_GAME_VERSION').split('.')))
 
 
 @set_fields_from_annotations
@@ -199,7 +201,6 @@ class UpdateHpMpGp(Structure):
     gp: 'fctypes.c_uint16' = eval('0X6')
 
 
-
 @set_fields_from_annotations
 class EffectResultStatus(Structure):
     _size_ = 0X10
@@ -381,24 +382,46 @@ class ObjectSpawn(Structure):
 
 @set_fields_from_annotations
 class PartyMember(Structure):
-    _size_ = 0X1B8
-    _name: 'fctypes.array(fctypes.c_char, 32)' = eval('0X0')
-    character_id: 'fctypes.c_uint64' = eval('0X20')
-    actor_id: 'fctypes.c_uint32' = eval('0X28')
-    pet_id: 'fctypes.c_uint32' = eval('0X2C')
-    buddy_id: 'fctypes.c_uint32' = eval('0X30')
-    current_hp: 'fctypes.c_uint32' = eval('0X34')
-    max_hp: 'fctypes.c_uint32' = eval('0X38')
-    current_mp: 'fctypes.c_uint16' = eval('0X3C')
-    max_mp: 'fctypes.c_uint16' = eval('0X3E')
-    home_world_id: 'fctypes.c_uint16' = eval('0X40')
-    territory_id: 'fctypes.c_uint16' = eval('0X42')
-    flag: 'fctypes.c_uint8' = eval('0X44')
-    class_job: 'fctypes.c_uint8' = eval('0X45')
-    sex: 'fctypes.c_uint8' = eval('0X46')
-    level: 'fctypes.c_uint8' = eval('0X47')
-    level_sync: 'fctypes.c_uint8' = eval('0X48')
-    status: 'fctypes.array(Status, 30)' = eval('0X4C')
+    if game_version >= (6, 4, 0):
+        _size_ = 0X1C0
+        _name: 'fctypes.array(fctypes.c_char, 32)' = eval('0X0')
+        account_id: 'fctypes.c_uint64' = eval('0X20')
+        character_id: 'fctypes.c_uint64' = eval('0X28')
+        actor_id: 'fctypes.c_uint32' = eval('0X30')
+        pet_id: 'fctypes.c_uint32' = eval('0X34')
+        buddy_id: 'fctypes.c_uint32' = eval('0X38')
+        current_hp: 'fctypes.c_uint32' = eval('0X3C')
+        max_hp: 'fctypes.c_uint32' = eval('0X40')
+        current_mp: 'fctypes.c_uint16' = eval('0X44')
+        max_mp: 'fctypes.c_uint16' = eval('0X46')
+        home_world_id: 'fctypes.c_uint16' = eval('0X48')
+        territory_id: 'fctypes.c_uint16' = eval('0X4A')
+        flag: 'fctypes.c_uint8' = eval('0X4C')
+        class_job: 'fctypes.c_uint8' = eval('0X4D')
+        sex: 'fctypes.c_uint8' = eval('0X4E')
+        level: 'fctypes.c_uint8' = eval('0X4F')
+        level_sync: 'fctypes.c_uint8' = eval('0X50')
+        platform_type: 'fctypes.c_char' = eval('0X51')
+        status: 'fctypes.array(ZoneProtoDownStatusWork, 30)' = eval('0X54')
+    else:
+        _size_ = 0X1B8
+        _name: 'fctypes.array(fctypes.c_char, 32)' = eval('0X0')
+        character_id: 'fctypes.c_uint64' = eval('0X20')
+        actor_id: 'fctypes.c_uint32' = eval('0X28')
+        pet_id: 'fctypes.c_uint32' = eval('0X2C')
+        buddy_id: 'fctypes.c_uint32' = eval('0X30')
+        current_hp: 'fctypes.c_uint32' = eval('0X34')
+        max_hp: 'fctypes.c_uint32' = eval('0X38')
+        current_mp: 'fctypes.c_uint16' = eval('0X3C')
+        max_mp: 'fctypes.c_uint16' = eval('0X3E')
+        home_world_id: 'fctypes.c_uint16' = eval('0X40')
+        territory_id: 'fctypes.c_uint16' = eval('0X42')
+        flag: 'fctypes.c_uint8' = eval('0X44')
+        class_job: 'fctypes.c_uint8' = eval('0X45')
+        sex: 'fctypes.c_uint8' = eval('0X46')
+        level: 'fctypes.c_uint8' = eval('0X47')
+        level_sync: 'fctypes.c_uint8' = eval('0X48')
+        status: 'fctypes.array(Status, 30)' = eval('0X4C')
 
     @property
     def name(self) -> str:
@@ -408,12 +431,20 @@ class PartyMember(Structure):
 @type_map.set(ZoneServer.PartyUpdate)
 @set_fields_from_annotations
 class PartyUpdate(Structure):
-    _size_ = 0XDD8
-    member: 'fctypes.array(PartyMember, 8)' = eval('0X0')
-    party_id: 'fctypes.c_uint64' = eval('0XDC0')
-    chat_channel: 'fctypes.c_uint64' = eval('0XDC8')
-    leader_index: 'fctypes.c_uint8' = eval('0XDD0')
-    party_count: 'fctypes.c_uint8' = eval('0XDD1')
+    if game_version >= (6, 4, 0):
+        _size_ = 0XE18
+        member: 'fctypes.array(PartyMember, 8)' = eval('0X0')
+        party_id: 'fctypes.c_uint64' = eval('0XE00')
+        chat_channel: 'fctypes.c_uint64' = eval('0XE08')
+        leader_index: 'fctypes.c_uint8' = eval('0XE10')
+        party_count: 'fctypes.c_uint8' = eval('0XE11')
+    else:
+        _size_ = 0XDD8
+        member: 'fctypes.array(PartyMember, 8)' = eval('0X0')
+        party_id: 'fctypes.c_uint64' = eval('0XDC0')
+        chat_channel: 'fctypes.c_uint64' = eval('0XDC8')
+        leader_index: 'fctypes.c_uint8' = eval('0XDD0')
+        party_count: 'fctypes.c_uint8' = eval('0XDD1')
 
 
 @type_map.set(ZoneServer.StartActionTimelineMulti)
