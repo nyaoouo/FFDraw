@@ -146,6 +146,46 @@ class FFDraw:
     async def rpc_handler_required_password(self, request):
         return aiohttp.web.json_response({'success': False, 'msg': 'required password'})
 
+    async def post_namazu_command(self, request):
+        cmd = await request.text()
+        self.logger.debug(f"post_namazu_command: {cmd}")
+        try:
+            self.mem.do_text_command(cmd)
+        except Exception as e:
+            self.logger.error(f"error when post_namazu_command: {cmd}", exc_info=e)
+            return aiohttp.web.json_response({'success': False, 'msg': 'server exception'})
+        else:
+            return aiohttp.web.json_response({'success': True, 'msg': 'success'})
+
+    async def post_namazu_mark(self, request: aiohttp.web.Request):
+        try:
+            data = json.loads(await request.text())
+        except json.JSONDecodeError:
+            return aiohttp.web.json_response({'success': False, 'msg': 'invalid json'})
+        if not isinstance(data, dict):
+            return aiohttp.web.json_response({'success': False, 'msg': 'invalid json'})
+
+        if "Name" in data:
+            target = next((a.id for a in self.mem.actor_table if a.name == data["Name"]), None)
+            if not target:
+                return aiohttp.web.json_response({'success': False, 'msg': 'actor not found'})
+        elif "ActorId" in data:
+            target = int(data["ActorId"])
+        else:
+            return aiohttp.web.json_response({'success': False, 'msg': 'invalid json'})
+
+        mark_type = ["attack1", "attack2", "attack3", "attack4", "attack5",
+                     "bind1", "bind2", "bind3", "stop1", "stop2",
+                     "square", "circle", "cross", "triangle",
+                     "attack6", "attack7", "attack8", ].index(data["MarkType"]) + 1
+        try:
+            self.mem.marking.request_head_mark(mark_type, target)
+        except Exception as e:
+            self.logger.error(f"error when head_mark_handler: {data}", exc_info=e)
+            return aiohttp.web.json_response({'success': False, 'msg': 'server exception'})
+        else:
+            return aiohttp.web.json_response({'success': True, 'msg': 'success'})
+
     def start_http_server(self, host=None, port=None):
         app = aiohttp.web.Application()
         if self.rpc_password:
@@ -153,6 +193,8 @@ class FFDraw:
             app.router.add_post('/rpc', self.rpc_handler_required_password)
         else:
             app.router.add_post('/rpc', self.rpc_handler)
+        app.router.add_post('/command', self.post_namazu_command)
+        app.router.add_post('/mark', self.post_namazu_mark)
         if self.enable_cors:
             cors = aiohttp_cors.setup(app, defaults={
                 "*": aiohttp_cors.ResourceOptions(
