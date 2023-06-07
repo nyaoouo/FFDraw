@@ -1,6 +1,7 @@
 import json
 import subprocess
 
+import glfw
 import glm
 import imgui
 
@@ -101,7 +102,8 @@ class MarkPreset(FFDrawPlugin):
         teri_id = self.main.sq_pack.sheets.map_sheet[map_id].territory_type.key if map_id != 0 else 0
         _dir = self.storage.path / 'presets' / str(teri_id)
         _dir.mkdir(parents=True, exist_ok=True)
-        (_dir / f'{data["Name"]}.json').write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding='utf-8')
+        assert not (_file := _dir / f'{data["Name"]}.json').exists(), 'preset name already exists'
+        _file.write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding='utf-8')
 
     def apply_preset(self, data):
         try:
@@ -197,6 +199,16 @@ class MarkPreset(FFDrawPlugin):
 
         imgui.new_line()
         imgui.text('import preset:')
+        imgui.same_line()
+        if imgui.button('import from clipboard'):
+            try:
+                self.import_preset(glfw.get_clipboard_string(None))
+            except Exception as e:
+                self.logger.error(f'import preset failed: {e}', exc_info=True)
+                self._import_preset_json_warn = str(e)
+            else:
+                self._import_preset_json = ''
+                self._import_preset_json_warn = ''
 
         if self._import_preset_json:
             imgui.same_line()
