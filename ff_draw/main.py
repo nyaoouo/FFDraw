@@ -21,7 +21,6 @@ else:
     use_aiohttp_cors = True
 
 from . import gui, omen, mem, func_parser, plugins, update
-from .sniffer import sniffer_main as sniffer
 
 default_cn = bool(os.environ.get('DefaultCn'))
 
@@ -73,6 +72,7 @@ class FFDraw:
         self.gui.draw_update_call.add(self.update)
         self.gui_thread = None
 
+        from .sniffer import sniffer_main as sniffer
         self.sniffer = sniffer.Sniffer(self)
 
         self.parser = func_parser.FuncParser(self)

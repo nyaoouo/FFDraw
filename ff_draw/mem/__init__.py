@@ -164,6 +164,8 @@ class XivMem:
         file_name = self.base_module.filename.decode(self.main.path_encoding)
         self.hwnd = utils.get_hwnd(self.pid)
         self.game_version, self.game_build_date = utils.get_game_version_info(file_name)
+        os.environ['FFXIV_GAME_VERSION'] = '.'.join(map(str, self.game_version))
+        os.environ['FFXIV_GAME_BUILD_DATE'] = self.game_build_date
         self.scanner = CachedSigScanner(self, PE(file_name, fast_load=True), self.base_module.lpBaseOfDll)
         self.screen_address = self.scanner.find_point('48 ? ? * * * * e8 ? ? ? ? 42 ? ? ? 39 05')[0] + 0x1b4
         self.replay_flag_address = self.scanner.find_point('84 1d * * * * 74 ? 80 3d')[0]
