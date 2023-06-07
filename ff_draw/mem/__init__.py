@@ -188,6 +188,9 @@ class XivMem:
         self.add_game_main_func, self.remove_game_main_func, self.call_once_game_main = hook_main_update.install(self)
         self.do_text_command = do_text_command.DoTextCommand(self)
 
+    def call_native_once_game_main(self, func_ptr, res_type, arg_types, args):
+        return self.call_once_game_main(f'from ctypes import *\nres=CFUNCTYPE({res_type},{",".join(arg_types)})({func_ptr})({",".join(repr(a) for a in args)})')
+
     def load_screen(self):
         buf = ny_mem.read_bytes(self.handle, self.screen_address, 0x48)
         return glm.mat4.from_bytes(bytes(buf[:0x40])), glm.vec2.from_bytes(bytes(buf[0x40:]))
