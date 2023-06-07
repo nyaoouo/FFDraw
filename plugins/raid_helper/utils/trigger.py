@@ -1,5 +1,6 @@
 import functools
 import threading
+import time
 import typing
 
 import glm
@@ -57,7 +58,6 @@ class TValue:
         raid_helper.storage.save()
         self._cache_value = self.default_value
         for f in self.on_change: f(self.default_value)
-
 
     def do_render(self):
         imgui.text(self.label + ': ')
@@ -458,3 +458,39 @@ def new_thread(f):
 def tts(msg):
     if tts_plugin := main.plugins.get("tts/TTS"):
         tts_plugin.speak(msg)
+
+
+def game_output(msg, echo=False, use_tts=False):
+    if echo or main.mem.party.party_list.party_size < 2:
+        cmd = '/e '
+    else:
+        cmd = '/p '
+    main.mem.do_text_command(cmd + msg)
+    if use_tts:
+        if not isinstance(use_tts, str): use_tts = msg
+        tts(use_tts)
+
+
+class set_head_mark:
+    missions = {}
+
+    def __init__(self, mark_type: int | HeadMarkType, target_id, cancel_after: float = 0.0):
+        if isinstance(mark_type, HeadMarkType): mark_type = mark_type.value
+        self.mark_type = mark_type
+        self.target_id = target_id
+        self.cancel_after = cancel_after
+        main.mem.marking.request_head_mark(mark_type, target_id)
+        self.missions[mark_type] = self
+        if cancel_after: new_thread(self._delay_check)()
+
+    def _delay_check(self):
+        time.sleep(self.cancel_after)
+        if self.missions.get(self.mark_type) is self:
+            self.cancel()
+
+    def cancel(self):
+        marking = main.mem.marking
+        if marking.head_mark_target(self.mark_type) == self.target_id:
+            marking.request_head_mark(self.mark_type, self.target_id)
+        if self.missions.get(self.mark_type) is self:
+            self.missions.pop(self.mark_type, None)
