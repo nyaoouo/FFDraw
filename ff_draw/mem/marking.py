@@ -79,7 +79,7 @@ class MarkingController:
         res = self.main.call_native_once_game_main(self.fp_request_head_mark, 'c_uint8', ('c_void_p', 'c_uint', 'c_uint64'), (
             self.address, mark_type, target_id
         ))
-        assert res == 0, f'Failed to request head mark: {res=}'
+        assert res == 0, f'Failed to request head mark {mark_type}: {res=}'
 
     def request_way_mark(self, mark_type: int | WayMarkType, pos: glm.vec3):
         if isinstance(mark_type, WayMarkType): mark_type = mark_type.value
@@ -88,14 +88,14 @@ from ctypes import *
 vec=(c_float * 3)({pos.x},{pos.y},{pos.z})
 res=CFUNCTYPE(c_uint8,c_void_p,c_uint,c_void_p)({self.fp_request_way_mark})({self.address},{mark_type},byref(vec))
 ''')
-        assert res == 0, f'Failed to request way mark: {res=}'
+        assert res == 0, f'Failed to request way mark {mark_type}: {res=}'
 
     def request_clear_way_mark(self, mark_type: int | WayMarkType):
         if isinstance(mark_type, WayMarkType): mark_type = mark_type.value
         res = self.main.call_native_once_game_main(self.fp_request_clear_way_mark, 'c_uint8', ('c_void_p', 'c_uint'), (
             self.address, mark_type
         ))
-        assert res == 0, f'Failed to request clear way mark: {res=}'
+        assert res == 0, f'Failed to request clear way mark {mark_type}: {res=}'
 
     def request_clear_all_way_mark(self):
         res = self.main.call_native_once_game_main(self.fp_request_clear_all_way_mark, 'c_uint8', ('c_void_p',), (self.address,))
