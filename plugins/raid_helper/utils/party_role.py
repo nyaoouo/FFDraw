@@ -102,7 +102,7 @@ def default_job_order_key(job):
 
 
 class PartyRole:
-    data: list[typing.TypedDict('member', {'name': str, 'id': int, 'job': int}) | None]
+    data: list[typing.TypedDict('member', {'name': str, 'id': int, 'class_job': int}) | None]
 
     def __init__(self):
         self.lock = threading.Lock()
@@ -113,6 +113,9 @@ class PartyRole:
         self.role_map = {r['id']: i for i, r in enumerate(self.data) if r}
 
     def update(self, data: list[tuple[str, int, int, int]], reload):
+        """
+        :param data: [(name, world, actor_id, job), ...]
+        """
         with self.lock:
             new_data: list[typing.Any] = [None for _ in range(8)]
             if len(data) >= 2:
@@ -127,7 +130,7 @@ class PartyRole:
                         'name': f'[{class_job_sheet[job].text_abbreviation}] {p_name}',
                         'p_name': p_name,
                         'id': actor_id,
-                        'job': job
+                        'class_job': job
                     }
                     for i in range(8 if not reload else 0):
                         if not (o_r := self.data[i]): continue
@@ -149,11 +152,11 @@ class PartyRole:
                             magic_dps.append(row)
                         elif is_range(job):
                             range_dps.append(row)
-                tanks.sort(key=lambda r: default_job_order_key(r['job']))
-                healers.sort(key=lambda r: default_job_order_key(r['job']))
-                melee_dps.sort(key=lambda r: default_job_order_key(r['job']))
-                range_dps.sort(key=lambda r: default_job_order_key(r['job']))
-                magic_dps.sort(key=lambda r: default_job_order_key(r['job']))
+                tanks.sort(key=lambda r: default_job_order_key(r['class_job']))
+                healers.sort(key=lambda r: default_job_order_key(r['class_job']))
+                melee_dps.sort(key=lambda r: default_job_order_key(r['class_job']))
+                range_dps.sort(key=lambda r: default_job_order_key(r['class_job']))
+                magic_dps.sort(key=lambda r: default_job_order_key(r['class_job']))
                 if new_data[Role.mt.value] is None and tanks: new_data[Role.mt.value] = tanks.pop(0)
                 if new_data[Role.st.value] is None and tanks: new_data[Role.st.value] = tanks.pop(0)
                 if new_data[Role.h1.value] is None and healers: new_data[Role.h1.value] = healers.pop(0)

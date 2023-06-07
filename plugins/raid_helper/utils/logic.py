@@ -5,8 +5,13 @@ import typing
 import glm
 from ff_draw.main import FFDraw
 from ff_draw.mem.actor import Actor
+from .party_role import make as make_role_rule
+
+if typing.TYPE_CHECKING:
+    from .. import RaidHelper
 
 main = FFDraw.instance
+raid_helper: 'RaidHelper|None' = None
 
 
 def is_class_job_in_category(class_job_category: int):
@@ -155,3 +160,19 @@ class NActor(Actor):
         if a := main.mem.actor_table.get_actor_by_id(aid):
             return cls(a)
         raise KeyError(f'actor {aid:X} is not exists')
+
+
+def role_idx(actor_id):
+    return raid_helper.party_role.role_map.get(actor_id, 99)
+
+
+def role_key(rule: list | str, actor_id):
+    """
+    usage: actors.sort(key=lambda a: raid_utils.role_key(rule, a.id))
+    rule: 'h1tdh2', 'thd' order of role, use `make_role_rule` to precompile
+    """
+    if isinstance(rule, str):
+        rule = make_role_rule(rule)
+    idx = role_idx(actor_id)
+    if idx == 99: return 99
+    return rule[idx]
