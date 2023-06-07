@@ -6,6 +6,7 @@ from .utf8string import Utf8String
 if typing.TYPE_CHECKING:
     from . import XivMem
 
+
 class DoTextCommand:
     def __init__(self, main: 'XivMem'):
         self.main = main
@@ -17,6 +18,6 @@ class DoTextCommand:
         if isinstance(text, str): text = text.encode('utf-8')
         ui_module = ny_mem.read_address(self.handle, ny_mem.read_address(self.handle, self.p_ui_module))
         string = Utf8String.create(self.handle, text)
-        self.main.call_once_game_main(f'import ctypes\nctypes.CFUNCTYPE( ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)({self.func_ptr})({ui_module}, {string.address}, 0, 0)\n')
+        self.main.call_native_once_game_main(self.func_ptr, 'c_void_p', ('c_void_p', 'c_void_p', 'c_void_p', 'c_void_p'), (ui_module, string.address, 0, 0))
         # ny_proc.remote_call(self.handle, self.func_ptr, ui_module, string.address, 0, 0)
         string.free()
