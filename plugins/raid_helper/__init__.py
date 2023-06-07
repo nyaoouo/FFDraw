@@ -1,17 +1,20 @@
 import itertools
 
+import imgui
+
 from ff_draw.func_parser import action_type_to_shape_default
 from ff_draw.plugins import FFDrawPlugin
 from ff_draw.sniffer.message_structs.zone_server import ActorCast
 from nylib.utils.win32 import memory as ny_mem
 from .data import special_actions, delay_until, omen_color
 from .utils import *
+from .utils import party_role
 
 
 def set_raid_helper_instance(raid_helper: 'RaidHelper'):
     from . import utils
-    from .utils import trigger
-    utils.raid_helper = trigger.raid_helper = RaidHelper.instance = raid_helper
+    from .utils import trigger, logic
+    utils.raid_helper = trigger.raid_helper = logic.raid_helper = RaidHelper.instance = raid_helper
     for t_val_cb in trigger.TValue._cache_need_init:
         t_val_cb()
 
@@ -87,6 +90,11 @@ class RaidHelper(FFDrawPlugin):
         self.on_cancel_cast = lambda m: self.remove_actor_omen(m.source_id)
         self.main.sniffer.on_actor_control[ActorControlId.CancelCast].append(self.on_cancel_cast)
 
+        # party_role
+        self.party_role = party_role.PartyRole()
+        self.main.sniffer.on_zone_server_message[ZoneServer.PartyUpdate].append(self.on_party_update)
+        self.party_reload()
+
         self.actor_omens = {}
         self.bnpc_battalion_offset = self.main.mem.scanner.find_val('44 ? ? ? * * * * 4c 89 68 ? 4c 89 70')[0]
         self.logger.debug(f'bnpc b offset {self.bnpc_battalion_offset:x}')
@@ -109,6 +117,22 @@ class RaidHelper(FFDrawPlugin):
         self.main.sniffer.on_action_effect.remove(self.on_action_effect)
         self.main.sniffer.on_actor_control[ActorControlId.CancelCast].remove(self.on_cancel_cast)
 
+        # party_role
+        self.main.sniffer.on_zone_server_message[ZoneServer.PartyUpdate].remove(self.on_party_update)
+
+    def on_party_update(self, evt: NetworkMessage[zone_server.PartyUpdate]):
+        self.party_role.update([
+            (m.name, m.home_world_id, m.actor_id, m.class_job,)
+            for m in (evt.message.member[i] for i in range(evt.message.party_count))
+        ], False)
+
+    def party_reload(self, reload=False):
+        if get_me():
+            self.party_role.update([
+                (m.name, m.home_world, m.id, m.class_job,)
+                for m in iter_main_party(False)
+            ], reload)
+
     def draw_panel(self):
         imgui.text(f'has tts: {"tts/TTS" in self.main.plugins}')
         if imgui.tree_node('simple cast'):
@@ -120,6 +144,26 @@ class RaidHelper(FFDrawPlugin):
             if clicked:
                 self.simple_cast_cfg['print_history'] = self.print_history
                 self.storage.save()
+            imgui.tree_pop()
+        if imgui.tree_node('party role'):
+            role_datas = self.party_role.data
+            for role in party_role.Role:
+                if not (_d := role_datas[role.value]):
+                    imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, *imgui.get_style_color_vec_4(imgui.COLOR_BUTTON))
+                    imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, *imgui.get_style_color_vec_4(imgui.COLOR_BUTTON))
+                    imgui.button(f"{role.name}: None")
+                    imgui.pop_style_color(2)
+                    continue
+                if imgui.button(f"{role.name}: {_d['name']}"):
+                    imgui.open_popup(f"##select_role_{role.value}")
+                if imgui.begin_popup(f"##select_role_{role.value}"):
+                    imgui.push_id(f'select_role_{role.value}')
+                    for _role in party_role.Role:
+                        if role == _role: continue
+                        if imgui.selectable(f'Set as {_role.name}')[1]:
+                            role_datas[_role.value], role_datas[role.value] = role_datas[role.value], role_datas[_role.value]
+                    imgui.pop_id()
+                    imgui.end_popup()
             imgui.tree_pop()
         if self._panel_filter_string:
             if imgui.button(' x '):
