@@ -65,6 +65,7 @@ class ActorOffsets:
     name = 0x30
     id = 0x74
     base_id = 0x80
+    owner_id = 0x84
     actor_type = 0x8c
     status_flag = 0x95
     pos = 0xB0
@@ -123,6 +124,7 @@ class Actor:
 
     id = direct_mem_property(ctypes.c_uint)
     base_id = direct_mem_property(ctypes.c_uint)
+    owner_id = direct_mem_property(ctypes.c_uint)
 
     @property
     def pos(self):
