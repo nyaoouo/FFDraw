@@ -45,7 +45,7 @@ class _ActionEffect(Structure):
     arg2: 'fctypes.c_uint8' = eval('0X3')
     arg3: 'fctypes.c_uint8' = eval('0X4')
     flag: 'fctypes.c_uint8' = eval('0X5')
-    value: 'fctypes.c_int16' = eval('0X6')
+    value: 'fctypes.c_uint16' = eval('0X6')
 
 
 ActionEffects = fctypes.array(_ActionEffect, 8)
