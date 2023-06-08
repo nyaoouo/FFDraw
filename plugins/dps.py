@@ -385,21 +385,23 @@ class Dps(FFDrawPlugin):
     def get_evnet_monitor(self, refresh=False):
         self._update_member_ids()
         if not self.monitor or self.__must_cut:
+            if not refresh: return None
             self.__must_cut = False
             self._cached_owner.clear()
             self._cached_name.clear()
             self.monitor = Monitor(self.main.mem.territory_info.territory_id)
             return self.monitor
         monitor = self.monitor
-        if refresh:
-            if (tid := self.main.mem.territory_info.territory_id) != monitor.territory_id:
-                self._cached_owner.clear()
-                self._cached_name.clear()
-                self.monitor = monitor = Monitor(tid)
-            if monitor.events and time.time() - monitor.last_event_at > self.cutoff:
-                self._cached_owner.clear()
-                self._cached_name.clear()
-                self.monitor = monitor = Monitor(tid)
+        if (tid := self.main.mem.territory_info.territory_id) != monitor.territory_id:
+            if not refresh: return None
+            self._cached_owner.clear()
+            self._cached_name.clear()
+            self.monitor = monitor = Monitor(tid)
+        if monitor.events and time.time() - monitor.last_event_at > self.cutoff:
+            if not refresh: return None
+            self._cached_owner.clear()
+            self._cached_name.clear()
+            self.monitor = monitor = Monitor(tid)
         return monitor
 
     def wrap_owner(self, actor_id):
@@ -446,15 +448,16 @@ class Dps(FFDrawPlugin):
                     value = effect.value
                     if effect.flag & (1 << 6):
                         value += effect.arg3 * 65536
-                    self.get_evnet_monitor().on_heal(
-                        time_stamp=time.time(),
-                        source=source_id,
-                        target=target_id,
-                        value=value,
-                        is_status=False,
-                        is_critical=bool(effect.arg1 & (1 << 5)),
-                        owner_id=owner_id,
-                    )
+                    if monitor := self.get_evnet_monitor():
+                        monitor.on_heal(
+                            time_stamp=time.time(),
+                            source=source_id,
+                            target=target_id,
+                            value=value,
+                            is_status=False,
+                            is_critical=bool(effect.arg1 & (1 << 5)),
+                            owner_id=owner_id,
+                        )
 
     def on_actor_control_death(self, evt: ActorControlMessage[actor_control.Death]):
         self.get_evnet_monitor().on_death(evt.source_id)
@@ -471,14 +474,15 @@ class Dps(FFDrawPlugin):
                 owner_id=owner_id,
             )
         elif evt.param.effect_type == EffectType.heal_hp:
-            self.get_evnet_monitor().on_heal(
-                time_stamp=time.time(),
-                source=source_id,
-                target=evt.source_id,
-                value=evt.param.value,
-                is_status=True,
-                owner_id=owner_id,
-            )
+            if monitor := self.get_evnet_monitor():
+                monitor.on_heal(
+                    time_stamp=time.time(),
+                    source=source_id,
+                    target=evt.source_id,
+                    value=evt.param.value,
+                    is_status=True,
+                    owner_id=owner_id,
+                )
 
     def on_reset(self, _):
         self.__must_cut = True
