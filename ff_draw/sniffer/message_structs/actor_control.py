@@ -1,3 +1,4 @@
+import enum
 import struct
 import dataclasses
 from ff_draw.mem.actor import is_invalid_id
@@ -141,10 +142,29 @@ class SetTargetable:
     is_targetable: int
 
 
+class EventDirectorType(enum.Enum):
+    Start = 0x40000001
+    PvpReady = 0x40000004
+    Reset = 0x40000005
+    Restart = 0x40000006
+
+
 @type_map.set(ActorControlId.EventDirector)  # 0X6D
 @dataclasses.dataclass
 class EventDirector:
-    pass
+    handler_id: int
+    director_id: int
+    arg0: int
+    arg1: int
+    arg2: int
+    arg3: int
+
+    @property
+    def type(self):
+        try:
+            return EventDirectorType(self.handler_id)
+        except ValueError:
+            return None
 
 
 @type_map.set(ActorControlId.SetLimitBreak)  # 0X1F9

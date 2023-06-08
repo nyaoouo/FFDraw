@@ -404,11 +404,17 @@ class TriggerGroup:
         return func
 
     # endregion
+    # region on_reset
+    def _recv_on_reset(self, msg: ActorControlMessage[actor_control.EventDirector]):
+        for c in self._on_reset: call_safe(c, msg)
+
     def on_reset(self, func):
         for _d in self._decorators.get(threading.get_ident(), []): func = _d(func)
+        self.hook_map.set(main.sniffer.on_reset, self._recv_on_reset)
         self._on_reset.append(func)
         return func
 
+    # endregion
     def on_hook(self, *hooks: BroadcastHook):
         def dec(func):
             for hook in hooks:
