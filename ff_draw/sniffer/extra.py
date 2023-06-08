@@ -7,7 +7,13 @@ from .utils import message
 from .message_structs import zone_server, actor_control
 
 if typing.TYPE_CHECKING:
-    from . import Sniffer
+    from .sniffer_main import Sniffer
+
+RESTART_EVENT_DIRECTOR = {
+    actor_control.EventDirectorType.Start.value,
+    actor_control.EventDirectorType.Restart.value,
+    actor_control.EventDirectorType.PvpReady.value,
+}
 
 
 class SnifferExtra:
@@ -27,6 +33,11 @@ class SnifferExtra:
         sniffer.on_zone_server_message[enums.ZoneServer.RsvString].append(self.on_rsv_string)
         sniffer.on_zone_server_message[enums.ZoneServer.StartActionTimelineMulti].append(self.on_play_action_timeline_muliti)
         sniffer.on_actor_control[enums.ActorControlId.PlayActionTimeLine].append(self.on_actor_control_play_action_timeline)
+        sniffer.on_actor_control[enums.ActorControlId.EventDirector].append(self.on_actor_control_event_director)
+
+    def on_actor_control_event_director(self, msg: message.ActorControlMessage[actor_control.EventDirector]):
+        if msg.param.director_id in RESTART_EVENT_DIRECTOR:
+            self.sniffer.on_reset(msg)
 
     def on_rsv_string(self, msg: message.NetworkMessage[zone_server.RsvString]):
         k = msg.message.key

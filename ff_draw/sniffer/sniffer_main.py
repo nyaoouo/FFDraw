@@ -78,6 +78,7 @@ class Sniffer:
         self.on_actor_control = KeyRoute(lambda m: m.id)
         self.on_action_effect = BroadcastHook()
         self.on_play_action_timeline = BroadcastHook()
+        self.on_reset = BroadcastHook()
 
         self.packet_fix = self.main.mem.packet_fix
 
