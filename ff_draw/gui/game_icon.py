@@ -36,7 +36,7 @@ spinner = Image.open(io.BytesIO(zlib.decompress(base64.b64decode(
     b'6YiZfX7JzSv++iSPGZzN3ZuvJSsrwwn+tqC6uDZl5xhplt2tTkCEcijjBT7aipndN/0dtASs6s6KEhuMrs2AYFPp1+0M4d2UVBwArd7f8I39mlI7soqKo6JIXxUoTxu9qU'
     b'RJJPEARBEARBEARBEARBgCLxH4AZf8T/PXRAAAAAAElFTkSuQmCCB8JURA=='
 ))))
-spinner_frames = 60
+spinner_frames = 100
 spinner_dur = 3
 
 
@@ -50,7 +50,7 @@ class GameIcon:
         self._game_icon_to_load_queue = queue.Queue()
         self._placeholder_texture = None
 
-    def placeholder_texture(self, sec: float):
+    def placeholder_texture(self, idx):
         if self._placeholder_texture is None:
             self._placeholder_texture = gl.glGenTextures(spinner_frames)
             for i in range(spinner_frames):
@@ -59,12 +59,14 @@ class GameIcon:
                 gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, img.width, img.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, img.tobytes())
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-        return self._placeholder_texture[int((sec % spinner_dur) / spinner_dur * spinner_frames)]
+        return self._placeholder_texture[idx]
 
-    def imgui_image_place_holder(self, width: int = None, height: int = None, *args):
+    def imgui_image_place_holder(self, width: int = None, height: int = None):
         if width is None: width = 64
         if height is None: height = 64
-        imgui.image(self.placeholder_texture(time.time()), width, height, *args)
+        imgui.image(self.placeholder_texture(
+            int((time.time() % spinner_dur) / spinner_dur * spinner_frames)
+        ), width, height)
 
     def load_game_icon_texture(self):
         while True:
@@ -88,7 +90,6 @@ class GameIcon:
                 break
             if self._game_icon_texture_cache.get(to_load_id) is None:
                 try:
-                    time.sleep(5)  # simulate loading
                     res = self.main.sq_pack.pack.get_texture_file(icon_path(to_load_id, True)).get_image()
                 except Exception as e:
                     self._game_icon_texture_cache[to_load_id] = e
