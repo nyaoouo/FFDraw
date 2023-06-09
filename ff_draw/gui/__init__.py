@@ -298,9 +298,6 @@ class Drawing:
                 to_load_id, res = self._game_icon_res_queue.get_nowait()
             except queue.Empty:
                 break
-            if isinstance(res, Exception):
-                self._game_icon_texture_cache[to_load_id] = res
-                continue
             texture = gl.glGenTextures(1)
             gl.glBindTexture(gl.GL_TEXTURE_2D, texture)
             gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, res.width, res.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, res.tobytes())
@@ -313,13 +310,15 @@ class Drawing:
             try:
                 to_load_id = self._game_icon_to_load_queue.get_nowait()
             except queue.Empty:
+                self._load_game_icon_thread = None
                 break
             if self._game_icon_texture_cache.get(to_load_id) is None:
                 try:
                     res = self.main.sq_pack.pack.get_texture_file(icon_path(to_load_id, True)).get_image()
                 except Exception as e:
-                    res = e
-                self._game_icon_res_queue.put((to_load_id, res))
+                    self._game_icon_texture_cache[to_load_id] = e
+                else:
+                    self._game_icon_res_queue.put((to_load_id, res))
 
     def imgui_game_icon(self, icon_id, width, height, *args):
         if icon_id not in self._game_icon_texture_cache:
