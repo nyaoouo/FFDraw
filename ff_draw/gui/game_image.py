@@ -10,7 +10,7 @@ import OpenGL.GL as gl
 from PIL import Image
 import imgui
 
-from fpt4.utils.sqpack.utils import icon_path
+from fpt4.utils.sqpack.utils import icon_path, map_path
 
 if typing.TYPE_CHECKING:
     from . import Drawing
@@ -107,6 +107,7 @@ class GameImage:
     def __init__(self, gui: 'Drawing'):
         self.main = gui.main
         self._game_icon_cache = {}
+        self._game_map_cache = {}
         self._game_texture_cache = {}
         self._game_res_queue = queue.Queue()
         self._game_to_load_queue = queue.Queue()
@@ -201,4 +202,25 @@ class GameImage:
             if res is not None: self._game_icon_cache[icon_id] = res
         else:
             res = self._game_icon_cache[icon_id]
+        return self._image(res, width, height, exc_handling, *args)
+
+    def map_image(self, map_id, width=None, height=None, size='m', exc_handling=2, *args):
+        """
+        :param map_id: map id
+        :param width: image width, None for auto
+        :param height: image height, None for auto
+        :param size: map size, 's' for small, 'm' for medium
+        :param exc_handling: 0 for ignore, 1 for show exception, 2 for show error icon
+        :param args: imgui.image remain args
+        :return: 0 for success, 1 for loading, 2 for load failed
+        """
+        if map_id not in self._game_map_cache:
+            try:
+                texture_path = map_path(self.main.sq_pack, map_id, size)
+            except Exception as e:
+                return self._image(e, width, height, exc_handling, *args)
+            res = self.get_game_texture(texture_path)
+            if res is not None: self._game_map_cache[map_id] = res
+        else:
+            res = self._game_map_cache[map_id]
         return self._image(res, width, height, exc_handling, *args)
