@@ -73,7 +73,8 @@ class GameIcon:
 
     def imgui_image(self, icon_id, width=None, height=None, *args):
         res = self.get_gl_texture(icon_id)
-        if res is None: return None  # todo: load default icon
+        if res is None:
+            return imgui.text(f'[icon {icon_id}]')
         texture, (_width, _height) = res
         if width is None: width = _width
         if height is None: height = _height
