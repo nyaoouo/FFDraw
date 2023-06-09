@@ -152,9 +152,10 @@ class MarkPreset(FFDrawPlugin):
 
     def draw_panel(self):
         tid = self.main.mem.territory_info.territory_id
-        territory_type_sheet = self.main.sq_pack.sheets.territory_type_sheet
-        imgui.text(f'current teri: {tid}[{territory_type_sheet[tid].area.text_sgl}]')
-        imgui.text(f'current map: {self.main.mem.territory_info.map_id}')
+        if tid:
+            territory_type_sheet = self.main.sq_pack.sheets.territory_type_sheet
+            imgui.text(f'current teri: {tid}[{territory_type_sheet[tid].area.text_sgl}]')
+            imgui.text(f'current map: {self.main.mem.territory_info.map_id}')
 
         marking = self.main.mem.marking
         for i in range(8):
@@ -188,8 +189,9 @@ class MarkPreset(FFDrawPlugin):
             imgui.pop_style_color()
 
         imgui.new_line()
-        if self.presets.get(tid, {}) and imgui.collapsing_header(f'{tid}[{territory_type_sheet[tid].area.text_sgl}]')[0]:
-            self.render_presets(tid)
+        if tid:
+            if self.presets.get(tid, {}) and imgui.collapsing_header(f'{tid}[{territory_type_sheet[tid].area.text_sgl}]')[0]:
+                self.render_presets(tid)
         if self.presets.get(0, {}) and imgui.collapsing_header(f'common')[0]:
             self.render_presets(0)
         for tid in self.presets:
