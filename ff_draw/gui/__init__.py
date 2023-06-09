@@ -16,8 +16,7 @@ import glfw
 import imgui
 import OpenGL.GL as gl
 from win32gui import GetForegroundWindow
-from fpt4.utils.sqpack.utils import icon_path
-from . import window, view, text, panel as m_panel, default_style
+from . import window, view, text, panel as m_panel, default_style, game_icon
 from .utils import common_shader, models
 
 if typing.TYPE_CHECKING:
@@ -96,14 +95,9 @@ class Drawing:
         self.font_path = self.cfg.setdefault('font_path', r'res\PingFang.ttf')
         self.font_size = self.cfg.setdefault('font_size', default_style.stlye_font_size)
         self._label_counter = 0
-
+        self.game_icon = game_icon.GameIcon(self)
         self.draw_work_queue = queue.Queue()
         self.draw_update_call = set()
-
-        self._game_icon_texture_cache = {}
-        self._game_icon_res_queue = queue.Queue()
-        self._game_icon_to_load_queue = queue.Queue()
-        self._load_game_icon_thread = threading.Thread(target=self._load_game_icon_res, daemon=True)
 
         self.game_hwnd = main.mem.hwnd
 
@@ -145,7 +139,7 @@ class Drawing:
             self.imgui_panel_renderer.refresh_font_texture()
             self.font_path = self.cfg['font_path']
         glfw.poll_events()
-        self._load_game_icon_texture()
+        self.game_icon.load_game_icon_texture()
         self.imgui_panel_renderer.process_inputs(glfw.get_window_attrib(self.window_panel, glfw.FOCUSED))
         imgui.new_frame()
         if self.font: imgui.push_font(self.font)
@@ -291,50 +285,3 @@ class Drawing:
         imgui.text_colored(string, *color)
         imgui.end()
         imgui.pop_style_color()
-
-    def _load_game_icon_texture(self):
-        while True:
-            try:
-                to_load_id, res = self._game_icon_res_queue.get_nowait()
-            except queue.Empty:
-                break
-            texture = gl.glGenTextures(1)
-            gl.glBindTexture(gl.GL_TEXTURE_2D, texture)
-            gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, res.width, res.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, res.tobytes())
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-            self._game_icon_texture_cache[to_load_id] = texture, (res.width, res.height)
-
-    def _load_game_icon_res(self):
-        while True:
-            try:
-                to_load_id = self._game_icon_to_load_queue.get_nowait()
-            except queue.Empty:
-                self._load_game_icon_thread = None
-                break
-            if self._game_icon_texture_cache.get(to_load_id) is None:
-                try:
-                    res = self.main.sq_pack.pack.get_texture_file(icon_path(to_load_id, True)).get_image()
-                except Exception as e:
-                    self._game_icon_texture_cache[to_load_id] = e
-                else:
-                    self._game_icon_res_queue.put((to_load_id, res))
-
-    def gl_game_icon_texture(self, icon_id):
-        if icon_id not in self._game_icon_texture_cache:
-            self._game_icon_texture_cache[icon_id] = None
-            self._game_icon_to_load_queue.put(icon_id)
-            if not self._load_game_icon_thread or not self._load_game_icon_thread.is_alive():
-                self._load_game_icon_thread = threading.Thread(target=self._load_game_icon_res, daemon=True)
-                self._load_game_icon_thread.start()
-        res = self._game_icon_texture_cache[icon_id]
-        if isinstance(res, Exception): raise res
-        return res
-
-    def imgui_game_icon(self, icon_id, width=None, height=None, *args):
-        res = self.gl_game_icon_texture(icon_id)
-        if res is None: return None  # todo: load default icon
-        texture, (_width, _height) = res
-        if width is None: width = _width
-        if height is None: height = _height
-        return imgui.image(texture, width, height, *args)
