@@ -16,7 +16,7 @@ import glfw
 import imgui
 import OpenGL.GL as gl
 from win32gui import GetForegroundWindow
-from . import window, view, text, panel as m_panel, default_style, game_icon
+from . import window, view, text, panel as m_panel, default_style, game_image
 from .utils import common_shader, models
 
 if typing.TYPE_CHECKING:
@@ -95,7 +95,7 @@ class Drawing:
         self.font_path = self.cfg.setdefault('font_path', r'res\PingFang.ttf')
         self.font_size = self.cfg.setdefault('font_size', default_style.stlye_font_size)
         self._label_counter = 0
-        self.game_icon = game_icon.GameIcon(self)
+        self.game_image = game_image.GameImage(self)
         self.draw_work_queue = queue.Queue()
         self.draw_update_call = set()
         self.frame_cache = {}
@@ -141,7 +141,7 @@ class Drawing:
             self.imgui_panel_renderer.refresh_font_texture()
             self.font_path = self.cfg['font_path']
         glfw.poll_events()
-        self.game_icon.load_game_icon_texture()
+        self.game_image.load_game_texture()
         self.imgui_panel_renderer.process_inputs(glfw.get_window_attrib(self.window_panel, glfw.FOCUSED))
         imgui.new_frame()
         if self.font: imgui.push_font(self.font)
