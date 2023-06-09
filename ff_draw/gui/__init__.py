@@ -303,7 +303,7 @@ class Drawing:
             gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, res.width, res.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, res.tobytes())
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-            self._game_icon_texture_cache[to_load_id] = texture
+            self._game_icon_texture_cache[to_load_id] = texture, (res.width, res.height)
 
     def _load_game_icon_res(self):
         while True:
@@ -331,7 +331,10 @@ class Drawing:
         if isinstance(res, Exception): raise res
         return res
 
-    def imgui_game_icon(self, icon_id, width, height, *args):
+    def imgui_game_icon(self, icon_id, width=None, height=None, *args):
         res = self.gl_game_icon_texture(icon_id)
         if res is None: return None  # todo: load default icon
-        return imgui.image(res, width, height, *args)
+        texture, (_width, _height) = res
+        if width is None: width = _width
+        if height is None: height = _height
+        return imgui.image(texture, width, height, *args)
