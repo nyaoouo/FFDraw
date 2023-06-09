@@ -66,7 +66,7 @@ class MarkingController:
 
     def head_mark_target(self, mark_type: int | HeadMarkType):
         if isinstance(mark_type, HeadMarkType): mark_type = mark_type.value
-        res = ny_mem.read_uint64(self.handle, self.address + mark_type * 8)
+        res = ny_mem.read_uint64(self.handle, self.address + (mark_type - 1) * 8)
         if res == 0xe0000000: return 0
         return res
 
