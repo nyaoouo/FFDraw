@@ -218,8 +218,9 @@ class GameImage:
             try:
                 texture_path = map_path(self.main.sq_pack, map_id, size)
             except Exception as e:
-                return self._image(e, width, height, exc_handling, *args)
-            res = self.get_game_texture(texture_path)
+                res = e
+            else:
+                res = self.get_game_texture(texture_path)
             if res is not None: self._game_map_cache[map_id] = res
         else:
             res = self._game_map_cache[map_id]
