@@ -7,7 +7,6 @@ import urllib.parse
 import glfw
 import glm
 import imgui
-import requests
 from . import proxy_test
 from .default_style import set_style, pop_style, text_tip, set_default_color, set_color
 from .i18n import *
@@ -332,9 +331,9 @@ class FFDPanel:
                 imgui.pop_style_color(3)
 
                 imgui.same_line()
-                imgui.push_style_color(imgui.COLOR_BUTTON, 0,0,0,0)
-                imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, 0,0,0,0)
-                imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, 0,0,0,0)
+                imgui.push_style_color(imgui.COLOR_BUTTON, 0, 0, 0, 0)
+                imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, 0, 0, 0, 0)
+                imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, 0, 0, 0, 0)
                 imgui.push_style_color(imgui.COLOR_TEXT, *self.style_color['color_main_up_up'])
                 if imgui.button(button_name, button_w - 30, button_h):
                     self.current_page = name
