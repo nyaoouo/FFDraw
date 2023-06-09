@@ -38,6 +38,7 @@ spinner = Image.open(io.BytesIO(zlib.decompress(base64.b64decode(
 ))))
 spinner_frames = 100
 spinner_dur = 3
+place_holder_cache_key = '__game_icon_place_holder'
 
 
 class GameIcon:
@@ -64,9 +65,9 @@ class GameIcon:
     def imgui_image_place_holder(self, width: int = None, height: int = None):
         if width is None: width = 64
         if height is None: height = 64
-        imgui.image(self.placeholder_texture(
-            int((time.time() % spinner_dur) / spinner_dur * spinner_frames)
-        ), width, height)
+        if (k := self.main.gui.frame_cache.get(place_holder_cache_key)) is None:
+            self.main.gui.frame_cache[place_holder_cache_key] = k = self.placeholder_texture(int((time.time() % spinner_dur) / spinner_dur * spinner_frames))
+        imgui.image(k, width, height)
 
     def load_game_icon_texture(self):
         while True:

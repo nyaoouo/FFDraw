@@ -98,6 +98,7 @@ class Drawing:
         self.game_icon = game_icon.GameIcon(self)
         self.draw_work_queue = queue.Queue()
         self.draw_update_call = set()
+        self.frame_cache = {}
 
         self.game_hwnd = main.mem.hwnd
 
@@ -128,6 +129,7 @@ class Drawing:
         return cb
 
     def _process_single_frame(self):
+        self.frame_cache.clear()
         self._label_counter = 0
         if self.cfg.get('font_path') != self.font_path:
             fonts = imgui.get_io().fonts
