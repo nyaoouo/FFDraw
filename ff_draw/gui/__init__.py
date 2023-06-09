@@ -320,7 +320,7 @@ class Drawing:
                 else:
                     self._game_icon_res_queue.put((to_load_id, res))
 
-    def imgui_game_icon(self, icon_id, width, height, *args):
+    def gl_game_icon_texture(self, icon_id):
         if icon_id not in self._game_icon_texture_cache:
             self._game_icon_texture_cache[icon_id] = None
             self._game_icon_to_load_queue.put(icon_id)
@@ -329,5 +329,9 @@ class Drawing:
                 self._load_game_icon_thread.start()
         res = self._game_icon_texture_cache[icon_id]
         if isinstance(res, Exception): raise res
+        return res
+
+    def imgui_game_icon(self, icon_id, width, height, *args):
+        res = self.gl_game_icon_texture(icon_id)
         if res is None: return None  # todo: load default icon
         return imgui.image(res, width, height, *args)
