@@ -77,7 +77,7 @@ def process_L8_UNorm(src: bytes, width: int, height: int):
 
 
 def process_DXT1(src: bytes, width: int, height: int):
-    return Image.open(io.BytesIO(struct.pack(
+    return get_pil_img().open(io.BytesIO(struct.pack(
         '<4sLLLL56xLL4s20xL16x',
         b'DDS ', 124, 0x1007, height, width,
         32, 0x04, b'DXT1', 0x1000
@@ -85,7 +85,7 @@ def process_DXT1(src: bytes, width: int, height: int):
 
 
 def process_DXT3(src: bytes, width: int, height: int):
-    return Image.open(io.BytesIO(struct.pack(
+    return get_pil_img().open(io.BytesIO(struct.pack(
         '<4sLLLL56xLL4s20xL16x',
         b'DDS ', 124, 0x1007, height, width,
         32, 0x04, b'DXT3', 0x1000
@@ -93,7 +93,7 @@ def process_DXT3(src: bytes, width: int, height: int):
 
 
 def process_DXT5(src: bytes, width: int, height: int):
-    return Image.open(io.BytesIO(struct.pack(
+    return get_pil_img().open(io.BytesIO(struct.pack(
         '<4sLLLL56xLL4s20xL16x',
         b'DDS ', 124, 0x1007, height, width,
         32, 0x04, b'DXT5', 0x1000
