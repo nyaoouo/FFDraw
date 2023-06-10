@@ -34,7 +34,8 @@ class DrawWindow:
         glfw.make_context_current(self.window)
         imgui.set_current_context(self.imgui_ctx)
         imgui.new_frame()
-        imgui.push_font(self.mgr.imgui_font)
+        if self.mgr.imgui_font:
+            imgui.push_font(self.mgr.imgui_font)
         gl.glClearColor(0, 0, 0, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
         gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
@@ -55,7 +56,8 @@ class DrawWindow:
             gl.glClearColor(0, 0, 0, 0)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-        imgui.pop_font()
+        if self.mgr.imgui_font:
+            imgui.pop_font()
         imgui.end_frame()
         imgui.render()
         self.imgui_renderer.render(imgui.get_draw_data())
