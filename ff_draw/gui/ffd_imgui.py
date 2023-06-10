@@ -106,8 +106,7 @@ nput2glfw[nput_f1 + 11] = glfw.KEY_F12
 
 
 class OpenglPynputRenderer(ProgrammablePipelineRenderer):
-    def __init__(self, window, shared_font_atlas=None):
-        self.ctx = imgui.create_context(shared_font_atlas)
+    def __init__(self, window):
         super(OpenglPynputRenderer, self).__init__()
         self.window = window
         self.call_queue = queue.Queue()
@@ -194,8 +193,6 @@ class OpenglPynputRenderer(ProgrammablePipelineRenderer):
         self.io.display_size = width, height
 
     def process_inputs(self, is_drawing=True):
-        glfw.make_context_current(self.window)
-        imgui.set_current_context(self.ctx)
         self.io = io = imgui.get_io()
 
         while not self.call_queue.empty():
@@ -227,23 +224,3 @@ class OpenglPynputRenderer(ProgrammablePipelineRenderer):
 
         self._gui_time = current_time
 
-    def render(self, draw_data):
-        super(OpenglPynputRenderer, self).render(draw_data)
-        glfw.swap_buffers(self.window)
-
-
-class FFDGlfwRenderer(GlfwRenderer):
-    def __init__(self, window, shared_font_atlas=None):
-        self.ctx = imgui.create_context(shared_font_atlas)
-        super(FFDGlfwRenderer, self).__init__(window)
-
-    def _map_keys(self): ...
-
-    def process_inputs(self, is_drawing=True):
-        glfw.make_context_current(self.window)
-        imgui.set_current_context(self.ctx)
-        super(FFDGlfwRenderer, self).process_inputs()
-
-    def render(self, draw_data):
-        super(FFDGlfwRenderer, self).render(draw_data)
-        glfw.swap_buffers(self.window)

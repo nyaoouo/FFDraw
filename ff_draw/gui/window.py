@@ -4,10 +4,7 @@ import OpenGL.GL as gl
 
 
 def set_window_cover(window, hwnd):
-    try:
-        x1, y1, x2, y2 = GetClientRect(hwnd)
-    except Exception:
-        raise SystemExit()
+    x1, y1, x2, y2 = GetClientRect(hwnd)
     glfw.set_window_pos(window, *ClientToScreen(hwnd, (x1, y1)))
     x_size = abs(x2 - x1)
     y_size = abs(y2 - y1)
@@ -15,7 +12,7 @@ def set_window_cover(window, hwnd):
     gl.glViewport(0, 0, x_size, y_size)
 
 
-def init_window(title: str, past_through=False, parent=None,game_hwnd = None):
+def init_window(title: str, past_through=False, parent=None, game_hwnd=None):
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_COMPAT_PROFILE)
