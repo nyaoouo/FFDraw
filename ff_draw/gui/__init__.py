@@ -14,9 +14,7 @@ os.environ["PATH"] += os.pathsep + res_path
 import glm
 import glfw
 import imgui
-import OpenGL.GL as gl
-from win32gui import GetForegroundWindow
-from . import window, view, text, panel as m_panel, default_style, game_image
+from . import window, view, text, panel as m_panel, default_style, game_image, game_window_manager
 from .utils import common_shader, models
 
 if typing.TYPE_CHECKING:
@@ -75,11 +73,7 @@ class DrawTimeMgr:
 
 class Drawing:
     logger = logging.getLogger('Gui/Drawing')
-    window_draw = None
-    window_panel = None
     panel: m_panel.FFDPanel = None
-    imgui_draw_renderer: 'ffd_imgui.OpenglPynputRenderer' = None
-    imgui_panel_renderer: 'ffd_imgui.FFDGlfwRenderer' = None
 
     def __init__(self, main: "FFDraw"):
         self.main = main
@@ -96,129 +90,48 @@ class Drawing:
         self.font_size = self.cfg.setdefault('font_size', default_style.stlye_font_size)
         self._label_counter = 0
         self.game_image = game_image.GameImage(self)
-        self.draw_work_queue = queue.Queue()
         self.draw_update_call = set()
         self.frame_cache = {}
 
         self.game_hwnd = main.mem.hwnd
+        self.window_manager = game_window_manager.FFDWindowManager(self, self.font_size, None, self.font_path)
 
     def _init_everything_in_work_process(self):
         if not glfw.init():
             raise Exception("glfw can not be initialized")
         self.work_thread = threading.get_ident()
-
         self.logger.debug('imgui is enabled')
-        from . import ffd_imgui
-        self.window_panel = window.init_window('panel_window', False, None, None)
-        self.imgui_panel_renderer = ffd_imgui.FFDGlfwRenderer(self.window_panel)
-        fonts = imgui.get_io().fonts
-        try:
-            self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size, None, fonts.get_glyph_ranges_chinese_full())
-        except Exception as e:
-            self.logger.error('load font failed, chinese wont be shown:', exc_info=e)
-            self.font = None
-        self.imgui_panel_renderer.refresh_font_texture()
+        panel_window = self.window_manager._new_window('FFDraw', None)
         self.panel = m_panel.FFDPanel(self)
-        self.window_draw = window.init_window('draw_window', True, self.window_panel, self.game_hwnd)
-        self.imgui_draw_renderer = ffd_imgui.OpenglPynputRenderer(self.window_draw, fonts)
+        panel_window.draw_func = self.panel.draw
+        panel_window.before_window_draw = self.panel.push_style
+        panel_window.after_window_draw = self.panel.pop_style
+        self.window_manager.draw_window = game_window_manager.DrawWindow(self.window_manager,self.game_hwnd)
         self.program = common_shader.get_common_shader()
         self.models = models.Models()
 
-    def async_call(self, func, *args, _in_draw=True, **kwargs):
-        self.draw_work_queue.put((func, args, kwargs, cb := ResEvent()))
-        return cb
-
-    def _process_single_frame(self):
+    def _update(self):
         self.frame_cache.clear()
         self._label_counter = 0
-        if self.cfg.get('font_path') != self.font_path:
-            fonts = imgui.get_io().fonts
-            try:
-                self.font = fonts.add_font_from_file_ttf(self.font_path, self.font_size, None, fonts.get_glyph_ranges_chinese_full())
-            except Exception as e:
-                self.logger.error('load font failed, chinese wont be shown:', exc_info=e)
-                self.font = None
-            self.imgui_panel_renderer.refresh_font_texture()
-            self.font_path = self.cfg['font_path']
-        glfw.poll_events()
-        self.game_image.load_game_texture()
-        self.imgui_panel_renderer.process_inputs(glfw.get_window_attrib(self.window_panel, glfw.FOCUSED))
-        imgui.new_frame()
-        if self.font: imgui.push_font(self.font)
-        self.panel.draw()
-        if self.font: imgui.pop_font()
-        imgui.end_frame()
-        imgui.render()
-
-        gl.glClearColor(0, 0, 0, 0)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-        gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
-        self.imgui_panel_renderer.render(imgui.get_draw_data())
-
-        process_draw = self.always_draw or GetForegroundWindow() == self.game_hwnd
-        self.imgui_draw_renderer.process_inputs(process_draw)
         self._view = view.View()
         self._view.projection_view, self._view.screen_size = self.main.mem.load_screen()
-
-        imgui.new_frame()
-        if self.font: imgui.push_font(self.font)
-
-        gl.glClearColor(0, 0, 0, 0)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-        gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
-
-        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-        gl.glEnable(gl.GL_BLEND)
         self.timer.update()
+        self.game_image.load_game_texture()
+        return self.window_manager.update()
 
-        while not self.draw_work_queue.empty():
-            try:
-                f, a, k, cb = self.draw_work_queue.get(False)
-            except queue.Empty:
-                break
-            try:
-                cb.set(f(*a, **k))
-            except Exception as e:
-                self.logger.error('error in frame call', exc_info=e)
-
-        if process_draw:
-            window.set_window_cover(self.window_draw, self.game_hwnd)
-            for draw_func in self.draw_update_call.copy():
-                try:
-                    draw_func(self.main)
-                except Exception as e:
-                    self.logger.error(f"draw_func error, func will be remove:", exc_info=e)
-                    self.draw_update_call.remove(draw_func)
-                    raise
-        else:
-            gl.glClearColor(0, 0, 0, 0)
-            gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-
-        if self.font: imgui.pop_font()
-        imgui.end_frame()
-        imgui.render()
-        self.imgui_draw_renderer.render(imgui.get_draw_data())
-
-    def process_single_frame(self):
+    def update(self):
         try:
-            self._process_single_frame()
+            return self._update()
         except Exception as e:
             self.logger.critical('error in frame rendering', exc_info=e)
-            glfw.set_window_should_close(self.window_panel, True)
-            glfw.set_window_should_close(self.window_draw, True)
+            self.window_manager.terminate()
+            return False
 
     def start(self):
         try:
             self._init_everything_in_work_process()
-            glfw.swap_interval(1)
-            while not (
-                    glfw.window_should_close(self.window_panel) or
-                    glfw.window_should_close(self.window_draw)
-            ):
-                self.process_single_frame()
-            self.work_thread = None
-            self.imgui_draw_renderer.shutdown()
-            self.imgui_panel_renderer.shutdown()
+            while self.update():
+                pass
             glfw.terminate()
         except Exception as e:
             self.logger.error('error in main thread', exc_info=e)

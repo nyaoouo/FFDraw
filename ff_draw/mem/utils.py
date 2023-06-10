@@ -37,6 +37,7 @@ class direct_mem_property:
         except Exception:
             return
 
+
 def get_hwnd(pid):
     _p_hwnds = []
 
@@ -47,10 +48,15 @@ def get_hwnd(pid):
             str_buffer = (ctypes.c_char * 512)()
             ctypes.windll.user32.GetClassNameA(hwnd, str_buffer, 512)
             if str_buffer.value == b'FFXIVGAME': _p_hwnds.append(hwnd)
+            return False
+        return True
 
     _c_filter_func = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM)(_filter_func)
     ctypes.windll.user32.EnumWindows(_c_filter_func, 0)
-    return _p_hwnds[0] if _p_hwnds else None
+    if _p_hwnds:
+        return _p_hwnds[0]
+    else:
+        raise ValueError('no hwnd found')
 
 
 def get_game_version_info(file_name):

@@ -6,6 +6,8 @@ import OpenGL.GL as gl
 import glfw
 import glm
 import imgui
+
+from nylib.utils import ResEvent, safe
 # from imgui.integrations.glfw import GlfwRenderer
 from .glfw_fix import GlfwRenderer
 
@@ -28,6 +30,9 @@ class Window:
             init_height=980,
             title=None,
             on_want_close=None,
+            before_window_draw=None,
+            after_window_draw=None,
+            closable=True,
     ):
         self.mgr = mgr
         self.guid = guid
@@ -38,6 +43,10 @@ class Window:
         self._init_width = init_width
         self._init_height = init_height
         self.on_want_close = on_want_close
+        self.before_window_draw = before_window_draw
+        self.after_window_draw = after_window_draw
+        self.closable = closable
+        self.imgui_window_flag = 0
 
         if not glfw.init():
             raise Exception("glfw can not be initialized")
@@ -46,7 +55,12 @@ class Window:
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_COMPAT_PROFILE)
         glfw.window_hint(glfw.TRANSPARENT_FRAMEBUFFER, glfw.TRUE)
         glfw.window_hint(glfw.DECORATED, glfw.FALSE)
-        self.window = glfw.create_window(init_width + x_pad * 2, init_height + y_pad * 2, self._title, None, None)
+        window_width = init_width + x_pad * 2
+        window_height = init_height + y_pad * 2
+        self.window = glfw.create_window(window_width, window_height, self._title, None, None)
+        screen = glfw.get_video_mode(glfw.get_primary_monitor())[0]
+        glfw.set_window_pos(self.window, (screen.width - window_width) // 2, (screen.height - window_height) // 2)
+
         glfw.make_context_current(self.window)
         try:
             shared_font_atlas = imgui.get_io().fonts
@@ -56,6 +70,7 @@ class Window:
         imgui.set_current_context(self.imgui_ctx)
         self.imgui_renderer = GlfwRenderer(self.window)
         if self.mgr.init_imgui():
+            glfw.swap_interval(1)
             self.imgui_renderer.refresh_font_texture()
 
     def update(self):
@@ -74,11 +89,11 @@ class Window:
         imgui.new_frame()
         imgui.push_font(self.mgr.imgui_font)
 
-        window_flag = 0
         win_pad = glm.vec2(self._x_pad, self._y_pad)
         imgui.set_next_window_position(*win_pad, imgui.FIRST_USE_EVER)
         imgui.set_next_window_size(self._init_width, self._init_height, imgui.FIRST_USE_EVER)
-        do_draw, is_show = imgui.begin(self._title + '###' + self.guid, True, window_flag)
+        self.before_window_draw and self.before_window_draw(self)
+        do_draw, is_show = imgui.begin(self._title + '###' + self.guid, self.closable, self.imgui_window_flag)
         if is_show:
             win_size = glm.vec2(*imgui.get_window_size()) + (win_pad * 2)
             glfw.set_window_size(self.window, *map(int, win_size))
@@ -92,6 +107,7 @@ class Window:
             glfw.set_window_should_close(self.window, True)
 
         imgui.end()
+        self.after_window_draw and self.after_window_draw(self)
         imgui.pop_font()
         imgui.end_frame()
         imgui.render()
@@ -113,34 +129,55 @@ class Window:
 
     def close(self):
         self.mgr.ensure_thread()
-        glfw.set_window_should_close(self.window, True)
+        if self.on_want_close is None or self.on_want_close(self):
+            glfw.set_window_should_close(self.window, True)
+
 
 class WindowManager:
     imgui_font: typing.Any
 
-    def __init__(self, font_size=16, ini_file_name: bytes | None = b'imgui.ini'):
-        self.ident = threading.get_ident()
+    def __init__(self, font_size=16, ini_file_name: bytes | None = b'imgui.ini', default_font_path: str = None):
+        self.ident = -1
         self.font_size = font_size * os_scale
         self._ini_file_name = ini_file_name
+        self._default_font_path = default_font_path
         self.any_window_select = False
         self.windows = {}
         self.calls_before_draw = []
 
     def ensure_thread(self):
-        if self.ident != threading.get_ident():
+        if self.ident == -1:
+            self.ident = threading.get_ident()
+        elif self.ident != threading.get_ident():
             raise RuntimeError('current thread is not the main thread')
 
     def init_imgui(self):
         self.ensure_thread()
         if hasattr(self, 'imgui_font'): return False
         imgui_io = imgui.get_io()
-        if os.path.exists(p := os.path.join(os.environ.get('SystemDrive','/') + os.sep, 'Windows', 'Fonts', 'msyh.ttc')):
+        if self._default_font_path and os.path.exists(self._default_font_path):
             fonts = imgui_io.fonts
-            self.imgui_font = fonts.add_font_from_file_ttf(p, self.font_size, None, fonts.get_glyph_ranges_chinese_full())
+            self.imgui_font = fonts.add_font_from_file_ttf(self._default_font_path, self.font_size, None, fonts.get_glyph_ranges_chinese_full())
         else:
             self.imgui_font = None
         imgui_io.ini_file_name = self._ini_file_name
         return True
+
+    def _new_window(
+            self,
+            guid: str,
+            draw_func, x_pad=10,
+            y_pad=10,
+            init_width=1024,
+            init_height=980,
+            title=None,
+            on_want_close=None,
+            before_window_draw=None,
+            after_window_draw=None,
+    ):
+        assert guid not in self.windows, f'window {guid} already exists'
+        self.windows[guid] = window = Window(self, guid, draw_func, x_pad, y_pad, init_width, init_height, title, on_want_close, before_window_draw, after_window_draw)
+        return window
 
     def new_window(
             self,
@@ -150,20 +187,20 @@ class WindowManager:
             init_width=1024,
             init_height=980,
             title=None,
-            on_want_close=None
+            on_want_close=None,
+            before_window_draw=None,
+            after_window_draw=None,
     ):
-        self.ensure_thread()
-        assert guid not in self.windows, f'window {guid} already exists'
-        window = Window(self, guid, draw_func, x_pad, y_pad, init_width, init_height, title, on_want_close)
-        self.windows[guid] = window
-        return window
+        res = ResEvent()
+        self.calls_before_draw.append(lambda: res.set(self._new_window(guid, draw_func, x_pad, y_pad, init_width, init_height, title, on_want_close, before_window_draw, after_window_draw)))
+        return res
 
     def update(self):
         self.ensure_thread()
-        if not self.windows: return False
-        glfw.poll_events()
         while self.calls_before_draw:
             self.calls_before_draw.pop()()
+        if not self.windows: return False
+        glfw.poll_events()
         for title, window in list(self.windows.items()):
             if glfw.window_should_close(window.window):
                 glfw.destroy_window(window.window)
@@ -174,10 +211,18 @@ class WindowManager:
 
     def run(self):
         self.ensure_thread()
-        assert self.windows, 'at least one window is required'
-        glfw.swap_interval(1)
         while self.update():
             pass
+
+    def terminate(self):
+        self.ensure_thread()
+        for window in self.windows.values():
+            safe(window.imgui_renderer.shutdown)
+            safe(imgui.set_current_context, window.imgui_ctx)
+            safe(imgui.destroy_context, window.imgui_ctx)
+            safe(glfw.destroy_window, window.window)
+        self.windows.clear()
+        glfw.terminate()
 
 
 def main():
@@ -213,7 +258,7 @@ def main():
             if imgui.button('click me'):
                 v = self.counter
                 self.counter += 1
-                self.mgr.calls_before_draw.append(lambda: self.mgr.new_window(f'window_{v}', SubWindow(v)))
+                self.mgr.new_window(f'window_{v}', SubWindow(v))
 
     mgr.new_window('main', MainWindow(mgr))
     mgr.run()

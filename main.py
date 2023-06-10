@@ -4,13 +4,11 @@ import os
 import pathlib
 import sys
 import time
-
 exc_path = pathlib.Path(sys.executable if getattr(sys, 'frozen', False) else __file__).absolute().parent
 os.environ['ExcPath'] = str(exc_path)
 
 from nylib.logging import install
 from nylib.utils.win32.process import enable_privilege, pid_by_executable, is_admin, runas
-
 
 def find_game_pid():
     is_log = False
@@ -31,15 +29,18 @@ def find_game_pid():
 
 def main():
     multiprocessing.freeze_support()
+
     try:
         from ff_draw.main import FFDraw
         install(file_name='AppData/log/ff_draw.log', archive_zip='AppData/log/archive_log.zip')
-        logging.debug(f'current Pid:%s')
         if not is_admin():
             runas()
             exit()
+
         enable_privilege()
-        instance = FFDraw(find_game_pid())
+        game_pid= find_game_pid()
+        logging.debug(f'current Pid:{os.getpid()} game Pid:{game_pid}')
+        instance = FFDraw(game_pid)
         instance.start_sniffer()
         instance.start_gui_thread()
         instance.start_http_server()

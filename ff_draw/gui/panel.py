@@ -22,8 +22,6 @@ class FFDPanel:
 
     def __init__(self, gui: 'Drawing'):
         self.main = gui.main
-        self.renderer = gui.imgui_panel_renderer
-        self.window = gui.window_panel
         self.is_expand = True
         self.is_show = True
         self.current_page = ''
@@ -283,26 +281,32 @@ class FFDPanel:
                 parser.compile_config.setdefault('print_debug', {})['enable'] = parser.print_compile
                 self.main.save_config()
 
-    def draw(self):
-        if not self.is_show:
-            glfw.iconify_window(self.window)
-            self.is_show = True
-            return
-        if glfw.get_window_attrib(self.window, glfw.ICONIFIED):
-            return
-        window_flag = 0
-        if not self.is_expand: window_flag |= imgui.WINDOW_NO_MOVE
-        set_style(self.style_color)  # 设置gui风格
-        imgui.set_next_window_size(1280, 720, imgui.FIRST_USE_EVER)
-        self.is_expand, self.is_show = imgui.begin('FFDraw', True, window_flag)
-        glfw.set_window_size(self.window, *map(int, imgui.get_window_size()))
-        if not self.is_expand:
-            pop_style()
-            return imgui.end()
-        win_pos = glm.vec2(*imgui.get_window_position())
-        if any(win_pos):
-            glfw.set_window_pos(self.window, *map(int, glm.vec2(*glfw.get_window_pos(self.window)) + win_pos))
-        imgui.set_window_position(0, 0)
+    def push_style(self, _):
+        return set_style(self.style_color)
+
+    def pop_style(self, _):
+        return pop_style()
+
+    def draw(self, _):
+        # if not self.is_show:
+        #     glfw.iconify_window(self.window)
+        #     self.is_show = True
+        #     return
+        # if glfw.get_window_attrib(self.window, glfw.ICONIFIED):
+        #     return
+        # window_flag = 0
+        # if not self.is_expand: window_flag |= imgui.WINDOW_NO_MOVE
+        # set_style(self.style_color)  # 设置gui风格
+        # imgui.set_next_window_size(1280, 720, imgui.FIRST_USE_EVER)
+        # self.is_expand, self.is_show = imgui.begin('FFDraw', True, window_flag)
+        # glfw.set_window_size(self.window, *map(int, imgui.get_window_size()))
+        # if not self.is_expand:
+        #     pop_style()
+        #     return imgui.end()
+        # win_pos = glm.vec2(*imgui.get_window_position())
+        # if any(win_pos):
+        #     glfw.set_window_pos(self.window, *map(int, glm.vec2(*glfw.get_window_pos(self.window)) + win_pos))
+        # imgui.set_window_position(0, 0)
 
         # panel窗口绘制
         imgui.set_cursor_pos_y(50)
@@ -362,5 +366,5 @@ class FFDPanel:
             self.logger.error('error in tab drawing', exc_info=e)
         imgui.end_child()
 
-        imgui.end()
-        pop_style()
+        # imgui.end()
+        # pop_style()
