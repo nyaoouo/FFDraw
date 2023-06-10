@@ -33,6 +33,7 @@ class Window:
             before_window_draw=None,
             after_window_draw=None,
             closable=True,
+            float_state=1,  # 0: not float, 1: selectable float, 2: float
     ):
         self.mgr = mgr
         self.guid = guid
@@ -47,6 +48,7 @@ class Window:
         self.after_window_draw = after_window_draw
         self.closable = closable
         self.imgui_window_flag = 0
+        self.float_state = float_state
 
         if not glfw.init():
             raise Exception("glfw can not be initialized")
@@ -87,13 +89,26 @@ class Window:
         self.imgui_renderer.process_inputs()
 
         imgui.new_frame()
-        imgui.push_font(self.mgr.imgui_font)
+        if self.mgr.imgui_font:
+            imgui.push_font(self.mgr.imgui_font)
 
         win_pad = glm.vec2(self._x_pad, self._y_pad)
         imgui.set_next_window_position(*win_pad, imgui.FIRST_USE_EVER)
         imgui.set_next_window_size(self._init_width, self._init_height, imgui.FIRST_USE_EVER)
         self.before_window_draw and self.before_window_draw(self)
-        do_draw, is_show = imgui.begin(self._title + '###' + self.guid, self.closable, self.imgui_window_flag)
+
+        title = self._title
+        if is_floating := glfw.get_window_attrib(self.window, glfw.FLOATING):
+            if self.float_state == 0:
+                glfw.set_window_attrib(self.window, glfw.FLOATING, False)
+            title = title + ' [Float]'
+        else:
+            if self.float_state == 2:
+                glfw.set_window_attrib(self.window, glfw.FLOATING, True)
+
+        do_draw, is_show = imgui.begin(title + '###' + self.guid, self.closable, self.imgui_window_flag)
+        if self.float_state == 1 and imgui.is_item_hovered() and imgui.is_mouse_clicked(1):
+            glfw.set_window_attrib(self.window, glfw.FLOATING, not is_floating)
         if is_show:
             win_size = glm.vec2(*imgui.get_window_size()) + (win_pad * 2)
             glfw.set_window_size(self.window, *map(int, win_size))
@@ -108,7 +123,8 @@ class Window:
 
         imgui.end()
         self.after_window_draw and self.after_window_draw(self)
-        imgui.pop_font()
+        if self.mgr.imgui_font:
+            imgui.pop_font()
         imgui.end_frame()
         imgui.render()
 
@@ -174,9 +190,18 @@ class WindowManager:
             on_want_close=None,
             before_window_draw=None,
             after_window_draw=None,
+            closable=True,
+            float_state=1,
     ):
         assert guid not in self.windows, f'window {guid} already exists'
-        self.windows[guid] = window = Window(self, guid, draw_func, x_pad, y_pad, init_width, init_height, title, on_want_close, before_window_draw, after_window_draw)
+        self.windows[guid] = window = Window(
+            self,
+            guid, draw_func,
+            x_pad, y_pad, init_width, init_height,
+            title,
+            on_want_close, before_window_draw, after_window_draw,
+            closable, float_state
+        )
         return window
 
     def new_window(
@@ -190,9 +215,17 @@ class WindowManager:
             on_want_close=None,
             before_window_draw=None,
             after_window_draw=None,
+            closable=True,
+            float_state=1,
     ):
         res = ResEvent()
-        self.calls_before_draw.append(lambda: res.set(self._new_window(guid, draw_func, x_pad, y_pad, init_width, init_height, title, on_want_close, before_window_draw, after_window_draw)))
+        self.calls_before_draw.append(lambda: res.set(self._new_window(
+            guid, draw_func,
+            x_pad, y_pad, init_width, init_height,
+            title,
+            on_want_close, before_window_draw, after_window_draw,
+            closable, float_state
+        )))
         return res
 
     def update(self):
