@@ -106,6 +106,7 @@ class Drawing:
         panel_window.draw_func = self.panel.draw
         panel_window.before_window_draw = self.panel.push_style
         panel_window.after_window_draw = self.panel.pop_style
+        panel_window.on_want_close = self.panel.on_want_close
         self.window_manager.draw_window = game_window_manager.DrawWindow(self.window_manager,self.game_hwnd)
         self.program = common_shader.get_common_shader()
         self.models = models.Models()

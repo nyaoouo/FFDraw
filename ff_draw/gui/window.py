@@ -23,6 +23,9 @@ def init_window(title: str, past_through=False, parent=None, game_hwnd=None):
         glfw.window_hint(glfw.MOUSE_PASSTHROUGH, glfw.TRUE)
 
     window = glfw.create_window(1024, 980, title, None, parent)
+    if past_through:
+        glfw.window_hint(glfw.FLOATING, glfw.FALSE)
+        glfw.window_hint(glfw.MOUSE_PASSTHROUGH, glfw.FALSE)
     glfw.make_context_current(window)
     if not window:
         glfw.terminate()

@@ -45,6 +45,9 @@ class FFDPanel:
         self.font_size = self.main.config['gui']['font_size']
         imgui.get_style().alpha = self.style_color['alpha']
 
+    def on_want_close(self, w):
+        glfw.iconify_window(w.window)
+
     def ffd_page(self):
         with imgui.begin_tab_bar("tabBar") as tab_bar:
             if tab_bar.opened:
