@@ -3,6 +3,9 @@ import time
 
 import imgui
 
+from nylib.utils.imgui.window_mgr import Window
+
+from ff_draw.gui.default_style import set_style, pop_style
 from ff_draw.plugins import FFDrawPlugin
 from ff_draw.sniffer.utils.message import NetworkMessage, ActorControlMessage
 from ff_draw.sniffer.message_structs import zone_server, actor_control, ZoneServer, ActorControlId
@@ -283,6 +286,28 @@ ColumnName = {
 }
 
 
+class DpsWindow:
+    def __init__(self, main: 'Dps'):
+        self.main = main
+        self.window = None
+
+    def on_want_close(self, w: Window):
+        self.main.window = None
+        self.window = None
+        return True
+
+    def before_draw_window(self, w: Window):
+        if self.window is None:
+            self.window = w
+        set_style(self.main.main.gui.panel.style_color)
+
+    def after_draw_window(self, w: Window):
+        pop_style()
+
+    def draw(self, w: Window):
+        self.main.draw_table()
+
+
 class Dps(FFDrawPlugin):
     monitor: Monitor = None
     _member_ids = []
@@ -309,6 +334,8 @@ class Dps(FFDrawPlugin):
 
         self.update_cols_getter()
         self.update_sort_by_key()
+
+        self.window = None
 
     def on_unload(self):
         self.main.sniffer.on_action_effect.remove(self.on_effect)
@@ -511,7 +538,7 @@ class Dps(FFDrawPlugin):
         else:
             self._member_ids = []
 
-    def draw_panel(self):
+    def draw_table(self):
         changed, self.separate_owner = imgui.checkbox('Separate Owner', self.separate_owner)
         if changed:
             self.data['separate_owner'] = self.separate_owner
@@ -536,3 +563,23 @@ class Dps(FFDrawPlugin):
                 imgui.text(getter(actor_id))
                 imgui.next_column()
         imgui.columns(1)
+
+    def draw_panel(self):
+        changed, new_val = imgui.checkbox('sub_window', self.window is not None)
+        if changed:
+            if new_val:
+                self.window = DpsWindow(self)
+                self.main.gui.window_manager.new_window(
+                    'dps window',
+                    self.window.draw,
+                    before_window_draw=self.window.before_draw_window,
+                    after_window_draw=self.window.after_draw_window,
+                    on_want_close=self.window.on_want_close,
+                )
+            else:
+                try:
+                    self.window.window.close()
+                except:
+                    pass
+        if self.window is None:
+            self.draw_table()
