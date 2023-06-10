@@ -341,6 +341,10 @@ class Dps(FFDrawPlugin):
         self.main.sniffer.on_action_effect.remove(self.on_effect)
         self.main.sniffer.on_actor_control[ActorControlId.StatusEffect].remove(self.on_actor_control_status_effect)
         self.main.sniffer.on_actor_control[ActorControlId.Death].remove(self.on_actor_control_death)
+        try:
+            self.window.window.close()
+        except:
+            pass
 
     def update_sort_by_key(self):
         if self.sort_by == DisplayColumn.Dps.value:
