@@ -25,5 +25,47 @@ def get_python_base_address(handle, auto_inject=False):
         return base
 
 
-def exec_shell_code(handle, shell_code: bytes, auto_inject=False):
-    return process.remote_call(handle, get_python_base_address(handle, auto_inject) + pyfunc_offset(b'PyRun_SimpleString'), shell_code)
+def dict_new(handle, auto_inject=False):
+    return process.remote_call(handle, get_python_base_address(handle, auto_inject) + pyfunc_offset(b'PyDict_New'))
+
+
+def decref(handle, pyobj):  # TODO: need impl
+    pass
+
+
+def exec_shell_code(handle, shell_code: bytes, p_dict=None, auto_inject=False):
+    # return process.remote_call(handle, get_python_base_address(handle, auto_inject) + pyfunc_offset(b'PyRun_SimpleString'), shell_code)
+    py_base = get_python_base_address(handle, auto_inject)
+    need_decref = False
+    if p_dict is None:
+        p_dict = dict_new(handle, auto_inject)
+        need_decref = True
+    res = process.remote_call(handle, py_base + pyfunc_offset(b'PyRun_String'), shell_code, 0x101, p_dict, p_dict)
+    if not res:
+        error_occurred = process.remote_call(handle, py_base + pyfunc_offset(b'PyErr_Occurred'))
+        if error_occurred:
+            type_name = memory.read_string(handle, memory.read_address(handle, error_occurred + 0x18))
+            with memory.Namespace(handle=handle) as ns:
+                p_data = ns.store(b'\0' * 0x18)
+                process.remote_call(handle, py_base + pyfunc_offset(b'PyErr_Fetch'), p_data, p_data + 0x8, p_data + 0x10)
+                exc_val = memory.read_uint64(handle, p_data + 0x8)
+                desc = None
+                if exc_val:
+                    py_str = process.remote_call(handle, py_base + pyfunc_offset(b'PyObject_Str'), exc_val)
+                    str_size = ns.take(8)
+                    p_str = process.remote_call(handle, py_base + pyfunc_offset(b'PyUnicode_AsUTF8AndSize'), py_str, str_size)
+                    if py_str:
+                        desc = memory.read_string(handle, p_str, memory.read_uint64(handle, str_size))
+                        decref(handle, py_str)
+                    decref(handle, exc_val)
+                decref(handle, error_occurred)
+            if desc:
+                raise RuntimeError(f"Exception in shell: {type_name}: {desc}")
+            else:
+                raise RuntimeError(f"Exception in shell: {type_name}")
+        else:
+            raise RuntimeError(f"Exception in shell but no error occurred")
+    else:
+        decref(handle, res)
+    if need_decref:
+        decref(handle, p_dict)
