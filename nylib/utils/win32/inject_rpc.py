@@ -79,7 +79,7 @@ except:
         f.write(traceback.format_exc())
 '''
         compile(shell_code, 's', 'exec')
-        res = injection.exec_shell_code(self.process_handle, shell_code.encode('utf-8'), True)
+        res = injection.exec_shell_code(self.process_handle, shell_code.encode('utf-8'),auto_inject= True)
         if self.exc_file.exists():
             self.logger.error('error occurred in injection:\n' + self.exc_file.read_text('utf-8'))
             self.exc_file.unlink(missing_ok=True)
