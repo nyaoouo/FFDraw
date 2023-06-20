@@ -1,5 +1,7 @@
 import functools
 import sys
+import gzip
+import base64
 from . import process, memory
 from .winapi import kernel32, structure
 from .process import CURRENT_PROCESS_HANDLER
@@ -42,11 +44,12 @@ def exec_shell_code(handle, shell_code: bytes, p_dict=None, auto_inject=False):
         need_decref = True
     res = process.remote_call(handle, py_base + pyfunc_offset(b'PyRun_String'), shell_code, 0x101, p_dict, p_dict)
     if not res:
+        code_b64 = base64.b64encode(gzip.compress(shell_code)).decode()
         error_occurred = process.remote_call(handle, py_base + pyfunc_offset(b'PyErr_Occurred'))
         if error_occurred:
             type_name = memory.read_string(handle, memory.read_address(handle, error_occurred + 0x18))
             with memory.Namespace(handle=handle) as ns:
-                p_data = ns.store(b'\0' * 0x18)
+                p_data = ns.take(0x18)
                 process.remote_call(handle, py_base + pyfunc_offset(b'PyErr_Fetch'), p_data, p_data + 0x8, p_data + 0x10)
                 exc_val = memory.read_uint64(handle, p_data + 0x8)
                 desc = None
@@ -60,11 +63,11 @@ def exec_shell_code(handle, shell_code: bytes, p_dict=None, auto_inject=False):
                     decref(handle, exc_val)
                 decref(handle, error_occurred)
             if desc:
-                raise RuntimeError(f"Exception in shell: {type_name}: {desc}")
+                raise RuntimeError(f"Exception in shell: {type_name}: {desc}\ncode: {code_b64}")
             else:
-                raise RuntimeError(f"Exception in shell: {type_name}")
+                raise RuntimeError(f"Exception in shell: {type_name}\ncode: {code_b64}")
         else:
-            raise RuntimeError(f"Exception in shell but no error occurred")
+            raise RuntimeError(f"Exception in shell but no error occurred\ncode: {code_b64}")
     else:
         decref(handle, res)
     if need_decref:
