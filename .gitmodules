@@ -1,3 +1,3 @@
-[submodule "nylib"]
-	path = nylib
-	url = D:\\projects\\NyLib
+[submodule "NyLib"]
+	path = NyLib
+	url = https://github.com/nyaoouo/NyLib.git

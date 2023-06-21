@@ -7,8 +7,14 @@ import time
 exc_path = pathlib.Path(sys.executable if getattr(sys, 'frozen', False) else __file__).absolute().parent
 os.environ['ExcPath'] = str(exc_path)
 
-from nylib.logging import install
-from nylib.utils.win32.process import enable_privilege, pid_by_executable, is_admin, runas
+try:
+    from nylib.logging import install
+    from nylib.utils.win32.process import enable_privilege, pid_by_executable, is_admin, runas
+except ImportError:
+    sys.path.append(str(exc_path/'NyLib'))
+    from nylib.logging import install
+    from nylib.utils.win32.process import enable_privilege, pid_by_executable, is_admin, runas
+
 
 def find_game_pid():
     is_log = False
