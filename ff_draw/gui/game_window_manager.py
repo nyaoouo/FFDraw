@@ -43,6 +43,10 @@ class DrawWindow:
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
         gl.glEnable(gl.GL_BLEND)
 
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+        pv = gui.get_view().projection_view
+        gl.glLoadMatrixf(pv.to_list())
+
         if gui.always_draw or win32gui.GetForegroundWindow() == self.game_hwnd:
             window.set_window_cover(self.window, self.game_hwnd)
             for draw_func in gui.draw_update_call.copy():
@@ -79,7 +83,9 @@ class FFDWindowManager(WindowManager):
 
     def update(self):
         if super().update():
+            self.current_window = self.draw_window
             self.draw_window.update()
+            self.current_window = None
             return True
         else:
             self.draw_window.close()

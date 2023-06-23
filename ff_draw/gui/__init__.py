@@ -89,12 +89,23 @@ class Drawing:
         self.font_path = self.cfg.setdefault('font_path', r'res\PingFang.ttf')
         self.font_size = self.cfg.setdefault('font_size', default_style.stlye_font_size)
         self._label_counter = 0
-        self.game_image = game_image.GameImage(self)
+        self._game_image = {}  # game_image.GameImage(self)
         self.draw_update_call = set()
         self.frame_cache = {}
 
         self.game_hwnd = main.mem.hwnd
         self.window_manager = game_window_manager.FFDWindowManager(self, self.font_size, None, self.font_path)
+
+    @property
+    def game_image(self) -> game_image.GameImage:
+        assert (current_window := self.window_manager.current_window), 'current_window is None'
+        if isinstance(current_window, game_window_manager.DrawWindow):
+            key = 0
+        else:
+            key = current_window.guid
+        if key not in self._game_image:
+            self._game_image[key] = game_image.GameImage(self)
+        return self._game_image[key]
 
     def _init_everything_in_work_process(self):
         if not glfw.init():
@@ -107,7 +118,7 @@ class Drawing:
         panel_window.before_window_draw = self.panel.push_style
         panel_window.after_window_draw = self.panel.pop_style
         panel_window.on_want_close = self.panel.on_want_close
-        self.window_manager.draw_window = game_window_manager.DrawWindow(self.window_manager,self.game_hwnd)
+        self.window_manager.draw_window = game_window_manager.DrawWindow(self.window_manager, self.game_hwnd)
         self.program = common_shader.get_common_shader()
         self.models = models.Models()
 
@@ -117,7 +128,11 @@ class Drawing:
         self._view = view.View()
         self._view.projection_view, self._view.screen_size = self.main.mem.load_screen()
         self.timer.update()
-        self.game_image.load_game_texture()
+        for k, i in tuple(self._game_image.items()):
+            if isinstance(k, int) or k in self.window_manager.windows:
+                i.load_game_texture()
+            else:
+                del self._game_image[k]
         return self.window_manager.update()
 
     def update(self):
