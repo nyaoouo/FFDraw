@@ -214,6 +214,7 @@ class TriggerGroup:
         self._on_cast_map = {}
         self._on_effect_map = {}
         self._on_add_status = {}
+        self._on_add_status_by_action = {}
         self._on_set_channel = {}
         self._on_cancel_channel = {}
         self._on_npc_spawn = {}
@@ -319,6 +320,16 @@ class TriggerGroup:
     def on_add_status(self, *status_id):
         self.hook_map.set(main.sniffer.on_actor_control[ActorControlId.AddStatus], self._recv_on_add_status)
         return self._add_set(self._on_add_status, status_id or pair_all)
+
+    # endregion
+    # region on_add_status
+    def _recv_on_add_status_by_action(self, msg: AddStatusByActionMessage):
+        for c in self._on_add_status_by_action.get(msg.status_id, ()): call_safe(c, msg)
+        for c in self._on_add_status_by_action.get(None, ()):  call_safe(c, msg)  # pair all
+
+    def on_add_status_by_action(self, *status_id):
+        self.hook_map.set(main.sniffer.on_add_status_by_action, self._recv_on_add_status_by_action)
+        return self._add_set(self._on_add_status_by_action, status_id or pair_all)
 
     # endregion
     # region on_npc_spawn

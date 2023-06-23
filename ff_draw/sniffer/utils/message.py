@@ -79,6 +79,16 @@ class ActorControlMessage(Generic[T]):
 
 @dataclasses.dataclass
 class PlayActionTimelineMessage(Generic[T]):
-    raw_msg: NetworkMessage|ActorControlMessage
+    raw_msg: NetworkMessage | ActorControlMessage
     id: int
     timeline_id: int
+
+
+@dataclasses.dataclass
+class AddStatusByActionMessage:
+    raw_msg: NetworkMessage | ActorControlMessage
+    source_id: int
+    target_id: int
+    status_id: int
+    param: int
+    time: float
