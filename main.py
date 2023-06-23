@@ -48,8 +48,8 @@ def main():
         logging.debug(f'current Pid:{os.getpid()} game Pid:{game_pid}')
         instance = FFDraw(game_pid)
         instance.start_sniffer()
-        instance.start_gui_thread()
         instance.start_http_server()
+        instance.start_gui_thread()
     except Exception as e:
         logging.critical('critical error occurred', exc_info=e)
         os.system('pause')
