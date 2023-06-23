@@ -121,6 +121,13 @@ class GameImage:
                 break
             self._game_texture_cache[texture_path] = img2tex(res), (res.width, res.height)
 
+    def assert_frame_load(self):
+        fc = self.main.gui.frame_cache
+        if '__is_game_img_load__' in fc: return
+        self.load_game_texture()
+        fc['__is_game_img_load__'] = True
+
+
     def load_game_res(self):
         while True:
             try:
@@ -137,6 +144,7 @@ class GameImage:
                     self._game_res_queue.put((texture_path, res))
 
     def get_game_texture(self, texture_path):
+        self.assert_frame_load()
         if texture_path not in self._game_texture_cache:
             self._game_texture_cache[texture_path] = None
             self._game_to_load_queue.put(texture_path)

@@ -91,10 +91,14 @@ class Drawing:
         self._label_counter = 0
         self._game_image = {}  # game_image.GameImage(self)
         self.draw_update_call = set()
-        self.frame_cache = {}
+        self._frame_cache = {}
 
         self.game_hwnd = main.mem.hwnd
         self.window_manager = game_window_manager.FFDWindowManager(self, self.font_size, None, self.font_path)
+
+    @property
+    def frame_cache(self):
+        return self._frame_cache.setdefault(self.window_manager.current_window.guid, {})
 
     @property
     def game_image(self) -> game_image.GameImage:
@@ -123,15 +127,13 @@ class Drawing:
         self.models = models.Models()
 
     def _update(self):
-        self.frame_cache.clear()
+        self._frame_cache.clear()
         self._label_counter = 0
         self._view = view.View()
         self._view.projection_view, self._view.screen_size = self.main.mem.load_screen()
         self.timer.update()
         for k, i in tuple(self._game_image.items()):
-            if isinstance(k, int) or k in self.window_manager.windows:
-                i.load_game_texture()
-            else:
+            if not isinstance(k, int) and k not in self.window_manager.windows:
                 del self._game_image[k]
         return self.window_manager.update()
 
