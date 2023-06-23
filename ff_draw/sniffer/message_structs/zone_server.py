@@ -1,4 +1,5 @@
 import os
+import typing
 from ctypes import *
 
 import glm
@@ -236,6 +237,10 @@ class EffectResult(Structure):
     _size_ = 0X60
     count: 'fctypes.c_uint8' = eval('0X0')
     results: 'fctypes.array(_EffectResult, 16)' = eval('0X4')
+
+    def __iter__(self) -> typing.Iterator[_EffectResult]:
+        for i in range(self.count):
+            yield self.results[i]
 
 
 @type_map.set(ZoneServer.MapEffect)

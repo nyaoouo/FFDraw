@@ -32,8 +32,25 @@ class SnifferExtra:
         sniffer.on_zone_server_message[enums.ZoneServer.AoeEffect32].append(sniffer.on_action_effect)
         sniffer.on_zone_server_message[enums.ZoneServer.RsvString].append(self.on_rsv_string)
         sniffer.on_zone_server_message[enums.ZoneServer.StartActionTimelineMulti].append(self.on_play_action_timeline_muliti)
+        sniffer.on_zone_server_message[enums.ZoneServer.EffectResult].append(self.on_effect_result)
+        sniffer.on_zone_server_message[enums.ZoneServer.EffectResult4].append(self.on_effect_result)
+        sniffer.on_zone_server_message[enums.ZoneServer.EffectResult8].append(self.on_effect_result)
+        sniffer.on_zone_server_message[enums.ZoneServer.EffectResult16].append(self.on_effect_result)
         sniffer.on_actor_control[enums.ActorControlId.PlayActionTimeLine].append(self.on_actor_control_play_action_timeline)
         sniffer.on_actor_control[enums.ActorControlId.EventDirector].append(self.on_actor_control_event_director)
+
+    def on_effect_result(self, msg: message.NetworkMessage[zone_server.EffectResult]):
+        for eff in msg.message:
+            for i in range(eff.status_count):
+                status = eff.status[i]
+                self.sniffer.on_add_status_by_action(message.AddStatusByActionMessage(
+                    raw_msg=msg,
+                    source_id=msg.header.source_id,
+                    target_id=eff.target_id,
+                    status_id=status.status_id,
+                    param=status.param,
+                    time=status.time,
+                ))
 
     def on_actor_control_event_director(self, msg: message.ActorControlMessage[actor_control.EventDirector]):
         if msg.param.director_id in RESTART_EVENT_DIRECTOR:

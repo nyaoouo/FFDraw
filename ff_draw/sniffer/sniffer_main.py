@@ -77,6 +77,7 @@ class Sniffer:
         self.on_zone_client_message = KeyRoute(lambda m: m.proto_no)
         self.on_actor_control = KeyRoute(lambda m: m.id)
         self.on_action_effect = BroadcastHook()
+        self.on_add_status_by_action = BroadcastHook()
         self.on_play_action_timeline = BroadcastHook()
         self.on_reset = BroadcastHook()
 
