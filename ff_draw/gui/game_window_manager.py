@@ -13,6 +13,7 @@ if typing.TYPE_CHECKING:
 
 
 class DrawWindow:
+    guid = -1
     def __init__(self, mgr: 'FFDWindowManager', game_hwnd):
         self.mgr = mgr
         self.game_hwnd = game_hwnd

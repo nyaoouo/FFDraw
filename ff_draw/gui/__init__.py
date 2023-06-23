@@ -103,10 +103,7 @@ class Drawing:
     @property
     def game_image(self) -> game_image.GameImage:
         assert (current_window := self.window_manager.current_window), 'current_window is None'
-        if isinstance(current_window, game_window_manager.DrawWindow):
-            key = 0
-        else:
-            key = current_window.guid
+        key = current_window.guid
         if key not in self._game_image:
             self._game_image[key] = game_image.GameImage(self)
         return self._game_image[key]
