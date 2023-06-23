@@ -121,8 +121,10 @@ class FFDraw:
 
     def start_gui_thread(self):
         assert not self.gui_thread
-        self.gui_thread = threading.Thread(target=self.gui.start, daemon=True)
-        self.gui_thread.start()
+        self.gui_thread = threading.current_thread()
+        self.gui.start()
+        # self.gui_thread = threading.Thread(target=self.gui.start, daemon=True)
+        # self.gui_thread.start()
 
     def start_sniffer(self):
         self.sniffer.start()
@@ -205,4 +207,8 @@ class FFDraw:
             })
             for route in list(app.router.routes()):
                 cors.add(route)
-        aiohttp.web.run_app(app, host=host or self.http_host, port=port or self.http_port)
+        # aiohttp.web.run_app(app, host=host or self.http_host, port=port or self.http_port)
+        threading.Thread(target=aiohttp.web.run_app, args=(app,), kwargs={
+            'host': host or self.http_host,
+            'port': port or self.http_port,
+        }, daemon=True).start()
