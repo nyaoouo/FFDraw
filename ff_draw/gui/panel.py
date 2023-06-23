@@ -273,6 +273,10 @@ class FFDPanel:
             if clicked:
                 gui.cfg['always_draw'] = gui.always_draw
                 self.main.save_config()
+            if gui.window_manager.draw_window:
+                w = gui.window_manager.draw_window.window
+                clicked, new_val = imgui.checkbox(i18n(Window_Float), glfw.get_window_attrib(w, glfw.FLOATING))
+                if clicked: glfw.set_window_attrib(w, glfw.FLOATING, glfw.TRUE if new_val else glfw.FALSE)
 
         if imgui.collapsing_header(i18n(Sniffer) + '###tab_setting_div_sniffer', None, flag)[0]:
             self.main.sniffer.render_panel()
