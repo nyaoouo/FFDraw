@@ -5,6 +5,8 @@ def hook_sniff(cb):
     import ctypes
     import struct
     import traceback
+    import logging
+    logger = logging.getLogger('hook_sniff')
     mv_from_mem = ctypes.pythonapi.PyMemoryView_FromMemory
     mv_from_mem.argtypes = (ctypes.c_void_p, ctypes.c_ssize_t, ctypes.c_int)
     mv_from_mem.restype = ctypes.py_object
@@ -61,6 +63,7 @@ def hook_sniff(cb):
     chat_send = create_hook(chat_send_addr, ctypes.c_char, [ctypes.c_int64, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_char])(on_send(False)).install_and_enable()
     zone_send = create_hook(zone_send_addr, ctypes.c_char, [ctypes.c_int64, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_char])(on_send(True)).install_and_enable()
     replay_recv = create_hook(replay_recv_addr, ctypes.c_int64, [ctypes.c_int64])(replay_recv).install_and_enable()
+    logger.info('hook_sniff installed')
     return chat_recv, zone_recv, chat_send, zone_send, replay_recv
 
 

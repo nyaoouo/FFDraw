@@ -167,7 +167,7 @@ class XivMem:
         os.environ['FFXIV_GAME_VERSION'] = '.'.join(map(str, self.game_version))
         os.environ['FFXIV_GAME_BUILD_DATE'] = self.game_build_date
         self.scanner = CachedSigScanner(self, PE(file_name, fast_load=True), self.base_module.lpBaseOfDll)
-        ny_mem.write_ubyte(self.handle,self.scanner.find_address('74 ? 83 E8 ? 89 83 ? ? ? ?'), 0xeb)
+        ny_mem.write_ubyte(self.handle, self.scanner.find_address('74 ? 83 E8 ? 89 83 ? ? ? ?'), 0xeb)
 
         self.screen_address = self.scanner.find_point('48 ? ? * * * * e8 ? ? ? ? 42 ? ? ? 39 05')[0] + 0x1b4
         self.replay_flag_address = self.scanner.find_point('84 1d * * * * 74 ? 80 3d')[0]
@@ -189,6 +189,8 @@ class XivMem:
         if getattr(sys, 'frozen', False):
             self.inject_handle.add_path(os.path.join(os.environ['ExcPath'], 'res', 'lib.zip'))
         self.inject_handle.wait_inject()
+        self.inject_handle.reg_std_out(lambda _,s: print(s,end=''))
+        self.inject_handle.reg_std_err(lambda _,s: print(s,end=''))
         self.add_game_main_func, self.remove_game_main_func, self.call_once_game_main = hook_main_update.install(self)
         self.do_text_command = do_text_command.DoTextCommand(self)
 
