@@ -20,13 +20,12 @@ def on_game_update_hook():
                 funcs.pop(k, None)
         while True:
             try:
-                res: ResEvent
-                res, code = once_func.get_nowait()
+                _res, code = once_func.get_nowait()
                 try:
                     exec(code, name_space := {'inject_server': inject_server})
-                    res.set(name_space.get('res', None))
+                    _res.set(name_space.get('res', None))
                 except Exception as e:
-                    res.set_exception(e)
+                    _res.set_exception(e)
             except queue.Empty:
                 break
         return res
