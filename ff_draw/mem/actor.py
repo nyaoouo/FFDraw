@@ -40,6 +40,13 @@ class StatusManager:
             if status_id == status_id_ and (not source_id or source_id_ == source_id):
                 yield status_id_, param, remain, source_id_
 
+    def __contains__(self, item):
+        if isinstance(item, int):
+            return self.has_status(item)
+        elif isinstance(item, tuple):
+            return self.has_status(*item)
+        return False
+
     def has_status(self, status_id: int, source_id=0):
         for _ in self._iter_filter(status_id, source_id):
             return True
