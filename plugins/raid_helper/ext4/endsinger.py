@@ -28,7 +28,7 @@ class Timer:
         return delta
 
 
-map_ex = raid_utils.MapTrigger(998)
+map_ex = raid_utils.MapTrigger.get(998)
 is_enable = map_ex.add_value(raid_utils.BoolCheckBox('default/enable', True))
 map_ex.decorators.append(lambda f: (lambda *args, **kwargs: f(*args, **kwargs) if is_enable.value else None))
 

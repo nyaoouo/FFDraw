@@ -117,7 +117,7 @@ for _a in _light_actions:
 for _a in _dark_actions:
     omen_color[_a] = dark_violet_surface, dark_violet_line
 
-pBs = raid_utils.MapTrigger(1152)
+pBs = raid_utils.MapTrigger.get(1152)
 center = glm.vec3(100, 0, 100)
 logger = logging.getLogger('raid_helper/pBs')
 
