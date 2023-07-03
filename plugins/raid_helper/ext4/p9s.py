@@ -20,7 +20,7 @@ special_actions[33145] = 0
 
 delay_until[33121] = 4
 
-p9s = raid_utils.MapTrigger(1148)
+p9s = raid_utils.MapTrigger.get(1148)
 
 center = glm.vec3(100, 0, 100)
 

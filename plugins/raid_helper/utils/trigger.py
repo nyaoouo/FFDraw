@@ -1,4 +1,6 @@
 import functools
+import inspect
+import logging
 import threading
 import time
 import typing
@@ -435,10 +437,17 @@ class TriggerGroup:
         return dec
 
 
+_warn_logger = logging.getLogger("raidhelper/trigger")
+
+
 class MapTrigger(TriggerGroup):
     triggers: 'dict[int,MapTrigger]' = {}
 
     def __init__(self, territory_id: int):
+        stack = inspect.stack()[1]
+        if not (stack.function == "get" and stack.frame.f_locals.get("cls") is self.__class__ and stack.frame.f_globals is globals()):
+            call_from = f"{stack.filename}:{stack.lineno}"
+            _warn_logger.warning(f"MapTrigger({territory_id}) called from {call_from}, use MapTrigger.get({territory_id}) instead")
         assert territory_id not in MapTrigger.triggers
         MapTrigger.triggers[territory_id] = self
         self.territory_id = territory_id

@@ -19,7 +19,7 @@ delay_until[33881] = 4
 delay_until[33882] = 4
 delay_until[33883] = 4
 
-map_ex = raid_utils.MapTrigger(1141)
+map_ex = raid_utils.MapTrigger.get(1141)
 
 is_enable = map_ex.add_value(raid_utils.BoolCheckBox('default/enable', True))
 map_ex.decorators.append(lambda f: (lambda *args, **kwargs: f(*args, **kwargs) if is_enable.value else None))

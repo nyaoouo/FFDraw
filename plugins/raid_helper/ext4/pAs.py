@@ -11,7 +11,7 @@ special_actions[33430] = raid_utils.fan_shape(20)
 special_actions[33415] = raid_utils.donut_shape(3, 8)
 special_actions[33447] = raid_utils.donut_shape(12, 40)
 
-pAs = raid_utils.MapTrigger(1150)
+pAs = raid_utils.MapTrigger.get(1150)
 
 center = glm.vec3(100, 0, 100)
 
