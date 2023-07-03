@@ -24,7 +24,7 @@ def check(session: requests.Session, select_host='github'):
     try:
         is_latest = _check(session, select_host)
     except Exception as e:
-        logger.error('check update fail, please check network connection or change update source', exc_info=e)
+        logger.warning('check update fail, please check network connection or change update source', exc_info=e)
 
 
 def _check(session: requests.Session, select_host='github'):
