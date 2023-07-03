@@ -81,6 +81,7 @@ class RaidHelper(FFDrawPlugin):
 
         # simple cast
         self.simple_cast_cfg = self.data.setdefault('simple_cast', {})
+        self.enable_simple_cast = self.simple_cast_cfg.setdefault('enable_simple_cast', True)
         self.show_friend = self.simple_cast_cfg.setdefault('show_friend', True)
         self.print_history = self.simple_cast_cfg.setdefault('print_history', False)
 
@@ -136,6 +137,10 @@ class RaidHelper(FFDrawPlugin):
     def draw_panel(self):
         imgui.text(f'has tts: {"tts/TTS" in self.main.plugins}')
         if imgui.tree_node('simple cast'):
+            clicked, self.enable_simple_cast = imgui.checkbox("enable_simple_cast", self.enable_simple_cast)
+            if clicked:
+                self.simple_cast_cfg['enable_simple_cast'] = self.enable_simple_cast
+                self.storage.save()
             clicked, self.show_friend = imgui.checkbox("show_friend", self.show_friend)
             if clicked:
                 self.simple_cast_cfg['show_friend'] = self.show_friend
@@ -204,6 +209,7 @@ class RaidHelper(FFDrawPlugin):
         return self.main.sq_pack.sheets.battalion_sheet[self.get_battalion_key(a1, battalion_mode)][self.get_battalion_key(a2, battalion_mode)]
 
     def on_simple_cast(self, msg: NetworkMessage[ActorCast]):
+        if not self.enable_simple_cast: return
         data = msg.message
         if data.action_kind != 1: return
         source_id = msg.header.source_id
