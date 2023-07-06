@@ -22,6 +22,10 @@ def img2tex(img: Image.Image) -> int:
     gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, img.width, img.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, img.tobytes())
     gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
     gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+    gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_BORDER)  # transparent
+    gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_BORDER)
+    gl.glTexParameterfv(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_BORDER_COLOR, (0, 0, 0, 0))
+
     return texture
 
 
@@ -84,7 +88,8 @@ class DefaultIcons:
         if (tex := fc.get(self.spinner_cache_key)) is None:
             idx = int((time.time() % self.spinner_dur) / self.spinner_dur * self.spinner_frames)
             if self._placeholder_texture[idx] is None:
-                self._placeholder_texture[idx] = tex = img2tex(self.spinner_icon.rotate(idx * -360 / self.spinner_frames))
+                self._placeholder_texture[idx] = tex = img2tex(
+                    self.spinner_icon.rotate(idx * -360 / self.spinner_frames))
             else:
                 tex = self._placeholder_texture[idx]
             fc[self.spinner_cache_key] = tex
@@ -127,7 +132,6 @@ class GameImage:
         self.load_game_texture()
         fc['__is_game_img_load__'] = True
 
-
     def load_game_res(self):
         while True:
             try:
@@ -166,7 +170,7 @@ class GameImage:
                 gl.glDeleteTextures(v[0])
         self._game_icon_cache.clear()
 
-    def _image(self, res, width=None, height=None, exc_handling=2, *args):
+    def _image(self, res, width=None, height=None, exc_handling=2, **kwargs):
         if res is None:
             self.default_icons.image_place_holder(width, height)
             return 1
@@ -180,10 +184,10 @@ class GameImage:
         texture, (_width, _height) = res
         if width is None: width = _width
         if height is None: height = _height
-        imgui.image(texture, width, height, *args)
+        imgui.image(texture, width, height, **kwargs)
         return 0
 
-    def image(self, texture_path, width=None, height=None, exc_handling=2, *args):
+    def image(self, texture_path, width=None, height=None, exc_handling=2, **kwargs):
         """
         :param texture_path: texture path
         :param width: image width, None for auto
@@ -192,9 +196,9 @@ class GameImage:
         :param args: imgui.image remain args
         :return: 0 for success, 1 for loading, 2 for load failed
         """
-        return self._image(self.get_game_texture(texture_path), width, height, exc_handling, *args)
+        return self._image(self.get_game_texture(texture_path), width, height, exc_handling, **kwargs)
 
-    def icon_image(self, icon_id, width=None, height=None, hq_icon=True, exc_handling=2, *args):
+    def icon_image(self, icon_id, width=None, height=None, hq_icon=True, exc_handling=2, **kwargs):
         """
         :param icon_id: icon id
         :param width: image width, None for auto
@@ -210,9 +214,9 @@ class GameImage:
             if res is not None: self._game_icon_cache[icon_id] = res
         else:
             res = self._game_icon_cache[icon_id]
-        return self._image(res, width, height, exc_handling, *args)
+        return self._image(res, width, height, exc_handling, **kwargs)
 
-    def map_image(self, map_id, width=None, height=None, size='m', exc_handling=2, *args):
+    def map_image(self, map_id, width=None, height=None, size='m', exc_handling=2, **kwargs):
         """
         :param map_id: map id
         :param width: image width, None for auto
@@ -232,4 +236,4 @@ class GameImage:
             if res is not None: self._game_map_cache[map_id] = res
         else:
             res = self._game_map_cache[map_id]
-        return self._image(res, width, height, exc_handling, *args)
+        return self._image(res, width, height, exc_handling, **kwargs)
