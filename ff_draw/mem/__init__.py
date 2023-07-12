@@ -15,7 +15,7 @@ from nylib.utils.win32.inject_rpc import Handle, pywin32_dll_place
 from nylib.utils.imgui import ctx as imgui_ctx
 from . import utils, actor, party, network_target, packet_fix, marking, territory_info, event_module, quest_info, storage
 from . import move_controller
-from . import hook_main_update, do_text_command, utf8string
+from . import hook_main_update, do_text_command, utf8string, hook_chatlog
 
 if typing.TYPE_CHECKING:
     from ff_draw.main import FFDraw
@@ -138,7 +138,7 @@ class CachedSigScanner(StaticPatternSearcher):
 
 
 class XivMem:
-    instance:'XivMem' = None
+    instance: 'XivMem' = None
 
     def __init__(self, main: 'FFDraw', pid: int):
         assert XivMem.instance is None
@@ -181,6 +181,7 @@ class XivMem:
         self.inject_handle.reg_std_err(lambda _, s: print(s, end=''))
         self.add_game_main_func, self.remove_game_main_func, self.call_once_game_main = hook_main_update.install(self)
         self.do_text_command = do_text_command.DoTextCommand(self)
+        self.on_print_chat_log = hook_chatlog.OnPrintChatLog(self)
 
     def call_native_once_game_main(self, func_ptr, res_type, arg_types, args):
         return self.call_once_game_main(f'from ctypes import *\nres=CFUNCTYPE({res_type},{",".join(arg_types)})({func_ptr})({",".join(repr(a) for a in args)})')
