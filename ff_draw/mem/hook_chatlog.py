@@ -1,3 +1,4 @@
+import time
 import typing
 
 from fpt4.utils import se_string
@@ -64,7 +65,7 @@ class OnPrintChatLog(KeyRoute):
             data[0],
             se_string.SeString.from_buffer(bytearray(data[1].rstrip(b'\0'))),
             se_string.SeString.from_buffer(bytearray(data[2].rstrip(b'\0'))),
-            data[3],
+            data[3] or time.time(),
             data[4],
         )))
         mem.inject_handle.run(f'print_log_addr = {print_log_addr}\n' + shell)
