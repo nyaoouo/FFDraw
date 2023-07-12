@@ -12,7 +12,9 @@ from nylib.utils.win32 import memory as ny_mem, process as ny_proc
 from nylib.pefile import PE
 from nylib.pattern import StaticPatternSearcher
 from nylib.utils.win32.inject_rpc import Handle, pywin32_dll_place
+from nylib.utils.imgui import ctx as imgui_ctx
 from . import utils, actor, party, network_target, packet_fix, marking, territory_info, event_module, quest_info, storage
+from . import move_controller
 from . import hook_main_update, do_text_command, utf8string
 
 if typing.TYPE_CHECKING:
@@ -63,42 +65,22 @@ class XivMemPanel:
         else:
             imgui.text(f'me: N/A')
 
-        if imgui.tree_node('EventModule'):
-            if imgui.tree_node('ContentInfo'):
-                try:
-                    cinfo = mem.event_module.content_info
-                    imgui.text(f'handler_id: {cinfo.handler_id:#X}')
-                    imgui.text(f'content_id: {cinfo.content_id:#X}')
-                    imgui.text(f'title: {cinfo.title}')
-                    imgui.text(f'text1: {cinfo.text1}')
-                    imgui.text(f'text2: {cinfo.text2}')
-                    imgui.text('todo_list')
-                    if imgui.tree_node('Todo List'):
-                        try:
-                            for todo in cinfo.todo_list:
-                                if not todo.is_valid: break
-                                imgui.text(f'[{todo.is_finished}]{todo.desc}')
-                        except Exception as e:
-                            imgui.text('N/A - ' + str(e))
-                        imgui.tree_pop()
-                except Exception as e:
-                    imgui.text('N/A - ' + str(e))
-                imgui.tree_pop()
-            imgui.tree_pop()
-        if imgui.tree_node(f'QuestInfo'):
-            quest_sheet = self.main.sq_pack.sheets.quest_sheet
-            try:
-                for quest in mem.quest_info.quests():
-                    try:
-                        quest_data = quest_sheet[quest.id | 0x10000]
-                    except KeyError:
-                        imgui.text(f'N/A#{quest.id}[{quest.seq}]')
-                    else:
-                        imgui.text(f'{quest_data.text}#{quest.id}[{quest.seq}]')
-            except Exception as e:
-                imgui.text('N/A - ' + str(e))
+        with imgui_ctx.TreeNode('Debug') as n, n:
+            with imgui_ctx.TreeNode('Party') as n, n:
+                mem.party.render_debug()
+            with imgui_ctx.TreeNode('MarkingController') as n, n:
+                mem.marking.render_debug()
+            with imgui_ctx.TreeNode('TerritoryInfo') as n, n:
+                mem.territory_info.render_debug()
+            with imgui_ctx.TreeNode('EventModule') as n, n:
+                mem.event_module.render_debug()
+            with imgui_ctx.TreeNode('QuestInfo') as n, n:
+                mem.quest_info.render_debug()
+            with imgui_ctx.TreeNode('Storage') as n, n:
+                mem.storage.render_debug()
+            with imgui_ctx.TreeNode('MoveController') as n, n:
+                mem.move_controller.render_debug()
 
-            imgui.tree_pop()
         if not self.is_dev:
             io = imgui.get_io()
             if io.key_ctrl and io.key_shift and io.key_alt and io.keys_down[glfw.KEY_D]:
@@ -156,7 +138,11 @@ class CachedSigScanner(StaticPatternSearcher):
 
 
 class XivMem:
+    instance:'XivMem' = None
+
     def __init__(self, main: 'FFDraw', pid: int):
+        assert XivMem.instance is None
+        XivMem.instance = self
         self.main = main
         self.pid = pid
         self.handle = ny_proc.open_process(pid)
@@ -181,6 +167,8 @@ class XivMem:
         self.event_module = event_module.EventModule(self)
         self.quest_info = quest_info.QuestInfo(self)
         self.storage = storage.StorageManager(self)
+        self.move_controller = move_controller.MoveController(self)
+
         self.panel = XivMemPanel(self)
         utf8string.Utf8String.init_cls(self)
 
@@ -189,8 +177,8 @@ class XivMem:
         if getattr(sys, 'frozen', False):
             self.inject_handle.add_path(os.path.join(os.environ['ExcPath'], 'res', 'lib.zip'))
         self.inject_handle.wait_inject()
-        self.inject_handle.reg_std_out(lambda _,s: print(s,end=''))
-        self.inject_handle.reg_std_err(lambda _,s: print(s,end=''))
+        self.inject_handle.reg_std_out(lambda _, s: print(s, end=''))
+        self.inject_handle.reg_std_err(lambda _, s: print(s, end=''))
         self.add_game_main_func, self.remove_game_main_func, self.call_once_game_main = hook_main_update.install(self)
         self.do_text_command = do_text_command.DoTextCommand(self)
 

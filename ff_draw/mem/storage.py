@@ -1,5 +1,9 @@
 import ctypes
 import typing
+
+import imgui
+
+from nylib.utils.imgui import ctx as imgui_ctx
 from nylib.utils.win32 import memory as ny_mem
 from .utils import direct_mem_property
 
@@ -52,6 +56,10 @@ class Item:
             if (t := self.materia_type(i)) != 0:
                 yield t, self.materia_grade(i)
 
+    def render_debug(self):
+        imgui.text(f'item_id: {self.item_id}')
+        imgui.text(f'quantity: {self.quantity}')
+
 
 class Storage:
     class offsets:
@@ -89,6 +97,13 @@ class Storage:
         if (p_items := self.p_items) == 0: return 0
         return sum(1 for i in range(self.max_count) if Item(self.handle, p_items + i * 0x38).item_id)
 
+    def render_debug(self):
+        if (p_items := self.p_items) == 0: return
+        for i in range(self.max_count):
+            if (item := Item(self.handle, p_items + i * 0x38)).item_id:
+                with imgui_ctx.TreeNode(f'Item-{i}') as n, n:
+                    item.render_debug()
+
 
 class StorageManager:
     def __init__(self, main: 'XivMem'):
@@ -109,3 +124,8 @@ class StorageManager:
         if (p_storage := self.p_storage) == 0: return
         for i in range(74):
             yield Storage(self.handle, p_storage + i * 0x18)
+
+    def render_debug(self):
+        for storage in self:
+            with imgui_ctx.TreeNode(f'Storage-{storage.storage_id}') as n, n:
+                storage.render_debug()

@@ -1,4 +1,7 @@
 import typing
+
+import imgui
+
 from nylib.utils.win32 import memory as ny_mem
 
 if typing.TYPE_CHECKING:
@@ -31,3 +34,11 @@ class TerritoryInfo:
     @property
     def weather_is_content(self):
         return ny_mem.read_ubyte(self.handle, self.p_weather + 0x14) == 1
+
+    def render_debug(self):
+        imgui.text(f'territory_id: {self.territory_id}')
+        imgui.text(f'layer_id: {self.layer_id}')
+        imgui.text(f'map_id: {self.map_id}')
+        imgui.text(f'weather_id: {self.weather_id}')
+        imgui.text(f'weather_is_content: {self.weather_is_content}')
+

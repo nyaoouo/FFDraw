@@ -1,6 +1,9 @@
 import enum
 import typing
 import glm
+import imgui
+
+from nylib.utils.imgui import ctx as imgui_ctx
 from nylib.utils.win32 import memory as ny_mem
 
 if typing.TYPE_CHECKING:
@@ -100,3 +103,16 @@ res=CFUNCTYPE(c_uint8,c_void_p,c_uint,c_void_p)({self.fp_request_way_mark})({sel
     def request_clear_all_way_mark(self):
         res = self.main.call_native_once_game_main(self.fp_request_clear_all_way_mark, 'c_uint8', ('c_void_p',), (self.address,))
         assert res == 0, f'Failed to request clear all way mark: {res=}'
+
+    def render_debug(self):
+        with imgui_ctx.TreeNode('Head Mark') as n, n:
+            for head_mark_type in HeadMarkType:
+                t_id = self.head_mark_target(head_mark_type)
+                imgui.text(f'{head_mark_type.name}: {t_id:x}')
+        with imgui_ctx.TreeNode('Way Mark') as n, n:
+            for way_mark_type in WayMarkType:
+                if (way_mark := self.way_mark(way_mark_type)).is_enable:
+                    pos = way_mark.pos
+                    imgui.text(f'{way_mark_type.name}: {pos.x:.2f}, {pos.y:.2f}, {pos.z:.2f}')
+                else:
+                    imgui.text(f'{way_mark_type.name}: -')

@@ -1,5 +1,9 @@
 import ctypes
 import typing
+
+import imgui
+
+from nylib.utils.imgui import ctx as imgui_ctx
 from nylib.utils.win32 import memory as ny_mem
 from .utils import direct_mem_property, read_utf8_string, StdVector
 
@@ -88,6 +92,23 @@ class ContentInfo:
         if not (addr := self.address): raise AttributeError('ContentInfo not found')
         return StdVector(self.handle, addr + self.offsets.todo_list, ContentTodo, 0x160)
 
+    def render_debug(self):
+        try:
+            imgui.text(f'handler_id: {self.handler_id:#X}')
+            imgui.text(f'content_id: {self.content_id:#X}')
+            imgui.text(f'title: {self.title}')
+            imgui.text(f'text1: {self.text1}')
+            imgui.text(f'text2: {self.text2}')
+            with imgui_ctx.TreeNode('todo_list') as n, n:
+                try:
+                    for todo in self.todo_list:
+                        if not todo.is_valid: break
+                        imgui.text(f'[{todo.is_finished}]{todo.desc}')
+                except Exception as e:
+                    imgui.text('N/A - ' + str(e))
+        except Exception as e:
+            imgui.text('N/A - ' + str(e))
+
 
 class EventModule:
     def __init__(self, main: 'XivMem'):
@@ -100,3 +121,8 @@ class EventModule:
     @property
     def _p_event(self):
         return ny_mem.read_address(self.handle, self._a_p_event)
+
+    def render_debug(self):
+        with imgui_ctx.TreeNode('ContentInfo') as n, n:
+            self.content_info.render_debug()
+

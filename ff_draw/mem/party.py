@@ -1,6 +1,9 @@
 import ctypes
 import typing
 import glm
+import imgui
+
+from nylib.utils.imgui import ctx as imgui_ctx
 from nylib.utils.win32 import memory as ny_mem
 from .actor import StatusManager
 from .utils import direct_mem_property
@@ -47,9 +50,23 @@ class Member:
     def status(self):
         return StatusManager(self.handle, self.address + self.offsets.status)
 
-    # @property # has bug, status manager in party is not the same as actor
-    # def actor(self):
-    #     return self.status.actor
+    @property
+    def actor(self):
+        # has bug, status manager in party is not the same as actor
+        # return self.status.actor
+        from . import XivMem
+        return XivMem.instance.actor_table.get_actor_by_id(self.id)
+
+    def render_debug(self):
+        imgui.text(f'entity_id: {self.id:#x}')
+        imgui.text(f'character_id: {self.character_id:#x}')
+        imgui.text(f'hp: {self.current_hp}/{self.max_hp}')
+        imgui.text(f'mp: {self.current_mp}/10000')
+        imgui.text(f'job: {self.class_job}')
+        imgui.text(f'level: {self.level}')
+        imgui.text(f'shield: {self.shield}')
+        pos = self.pos
+        imgui.text(f'pos: {pos.x:.2f}, {pos.y:.2f}, {pos.z:.2f}')
 
 
 class PartyOffset:
@@ -73,6 +90,11 @@ class Party:
     def party_size(self):
         return ny_mem.read_byte(self.handle, self.address + self.offsets.party_size)
 
+    def render_debug(self):
+        for i in range(self.party_size):
+            with imgui_ctx.TreeNode(f'Member - {i}') as n, n:
+                self.members[i].render_debug()
+
 
 class PartyManager:
     def __init__(self, main: 'XivMem'):
@@ -85,3 +107,6 @@ class PartyManager:
     @property
     def party_list(self):
         return self.replay_party if self.main.is_in_replay else self.real_party
+
+    def render_debug(self):
+        self.party_list.render_debug()
