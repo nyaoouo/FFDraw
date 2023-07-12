@@ -60,8 +60,6 @@ res = try_hook()
 
 
 def install(mem):
-    from ff_draw.main import FFDraw
-
     on_game_update_addr = mem.scanner.find_address("48 89 5c 24 ? 57 48 ? ? ? 48 ? ? e8 ? ? ? ? 48 ? ? ? ? ? ? 48 ? ? 0f 84")
     logger = logging.getLogger('hook_main_update')
 
