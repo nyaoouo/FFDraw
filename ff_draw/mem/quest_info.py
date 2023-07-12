@@ -1,5 +1,8 @@
 import ctypes
 import typing
+
+import imgui
+
 from nylib.utils.win32 import memory as ny_mem
 from .utils import direct_mem_property
 
@@ -46,3 +49,16 @@ class QuestInfo:
 
     def is_quest_completed(self, quest_id):
         return ny_mem.read_ubyte(self.handle, self.p_info + 0x2E0 + (quest_id // 8)) & (0x80 >> (quest_id % 8)) != 0
+
+    def render_debug(self):
+        quest_sheet = self.main.main.sq_pack.sheets.quest_sheet
+        try:
+            for quest in self.quests():
+                try:
+                    quest_data = quest_sheet[quest.id | 0x10000]
+                except KeyError:
+                    imgui.text(f'N/A#{quest.id}[{quest.seq}]')
+                else:
+                    imgui.text(f'{quest_data.text}#{quest.id}[{quest.seq}]')
+        except Exception as e:
+            imgui.text('N/A - ' + str(e))
