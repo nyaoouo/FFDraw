@@ -235,9 +235,11 @@ class Models:
                 raise ValueError("Degree must be between 0 and 360")
             arc_percent = degree / 360
             start_angle = math.pi * (.5 - arc_percent)
+            arc_step = math.ceil(arc_percent * circle_steps)
+            arc_rad = math.radians(degree)
             vertices = [0, 0, 0]
-            for i in range(circle_steps):
-                angle = start_angle + 2 * math.pi * i / circle_steps * arc_percent
+            for i in range(arc_step + 1):
+                angle = start_angle + arc_rad * i / arc_step
                 vertices.extend([math.cos(angle), 0, math.sin(angle)])
             self.sector_cache[degree] = type(f'Sector_{degree}', (BaseModel3d,), {
                 '_surface_vertices': vertices,
