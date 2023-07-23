@@ -178,6 +178,16 @@ class Select(TValue):
         imgui.pop_id()
 
 
+class ClickButton(TValue):
+    def __init__(self, label, func):
+        super(ClickButton, self).__init__(label + ':click', label.rsplit('/', 1)[-1], None)
+        self.func = func
+
+    def do_render(self):
+        if imgui.button(self.label):
+            self.func()
+
+
 pair_all = (None,)
 
 

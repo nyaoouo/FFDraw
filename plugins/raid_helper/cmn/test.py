@@ -40,3 +40,29 @@ def on_any_effect_draw_test(msg: NetworkMessage[zone_server.ActionEffect]):
     if (me := raid_utils.main.mem.actor_table.me) is None: return
     if (target := raid_utils.main.mem.actor_table.get_actor_by_id(me.target_id)) is None: return
     raid_utils.draw_distance_line(me, target, duration=20, min_distance=10, max_distance=15)
+
+
+def draw_circle():
+    if me := raid_utils.get_me():
+        raid_utils.draw_circle(radius=6, pos=me, duration=5)
+
+
+def draw_donut():
+    if me := raid_utils.get_me():
+        raid_utils.draw_circle(radius=6, inner_radius=3, pos=me, duration=5)
+
+
+def draw_fan():
+    if me := raid_utils.get_me():
+        raid_utils.draw_fan(radius=6, degree=60, pos=me, duration=5)
+
+
+def draw_rect():
+    if me := raid_utils.get_me():
+        raid_utils.draw_rect(width=4, length=10, pos=me, duration=5)
+
+
+raid_utils.common_trigger.add_value(raid_utils.ClickButton('test/draw_circle', draw_circle))
+raid_utils.common_trigger.add_value(raid_utils.ClickButton('test/draw_donut', draw_donut))
+raid_utils.common_trigger.add_value(raid_utils.ClickButton('test/draw_fan', draw_fan))
+raid_utils.common_trigger.add_value(raid_utils.ClickButton('test/draw_rect', draw_rect))
