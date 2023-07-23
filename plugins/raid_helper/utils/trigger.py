@@ -181,7 +181,7 @@ class Select(TValue):
 class ClickButton(TValue):
     def __init__(self, label, func):
         super(ClickButton, self).__init__(label + ':click', label.rsplit('/', 1)[-1], None)
-        self.func = func
+        self.func = new_thread(func)
 
     def do_render(self):
         if imgui.button(self.label):
