@@ -91,6 +91,7 @@ class ActorOffsets:
     class_job = 0x1E0
     level = 0x1E1
     model_attr = 0x1E4
+    mount_id = 0x668
     pc_target_id = 0xC80
     b_npc_target_id = 0x1A88
     current_world = 0x1AF4
@@ -103,6 +104,7 @@ class ActorOffsets640(ActorOffsets):
     class_job = 0x1E2
     level = 0x1E3
     model_attr = 0x1E6
+    mount_id = 0x678
     pc_target_id = 0xCB0
     b_npc_target_id = 0x1AB8
     current_world = 0x1B1C
@@ -151,6 +153,7 @@ class Actor:
     class_job = direct_mem_property(ctypes.c_byte)
     level = direct_mem_property(ctypes.c_byte)
     model_attr = direct_mem_property(ctypes.c_byte)
+    mount_id = direct_mem_property(ctypes.c_ushort)
     current_world = direct_mem_property(ctypes.c_ushort)
     home_world = direct_mem_property(ctypes.c_ushort)
     shield = direct_mem_property(ctypes.c_ubyte)
