@@ -17,10 +17,6 @@ if typing.TYPE_CHECKING:
 main_page = 'FFDraw'
 
 gl_src_alpha_types = [
-    'GL_SRC_COLOR',
-    'GL_DST_COLOR',
-    'GL_ONE_MINUS_SRC_COLOR',
-    'GL_ONE_MINUS_DST_COLOR',
     'GL_SRC_ALPHA',
     'GL_DST_ALPHA',
     'GL_ONE_MINUS_SRC_ALPHA',
