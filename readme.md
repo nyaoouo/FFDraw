@@ -2,23 +2,22 @@
 
 > 安装路径请不要有中文日文，必须纯英文
 
-### 小白懒人包版本
+### 小白懒人包版本 (非作者维护，相关问题请到[作者repo](https://github.com/gogofishman/FFDraw)进行反馈)
 
 - [下载](https://github.com/gogofishman/FFDraw/releases)
 - 适用人群：python环境我不会装啊，exe怎么报错啊，py文件怎么启动啊，怎么更新啊我去
 - 双击`run.bat`，会自动在当前文件夹安装FFD，同时搭建python环境，并启动FFD
 - 什么？你不会填网络代理端口？兄弟还是当绿玩吧，与科技无缘
 
+### python 版本(建议)
 
-
-### python 版本
-
-* 需求 `python3.10` 或以上的`x64版本`作为运行环境
+* 需求 `python3.11` 的 `x64版本`作为运行环境
 * 下载专案后在专案目录运行 `python -m pip install -r requirements.txt` 安装依赖
+* 建议使用`venv` 或 `virtualenv` 等虚拟环境以隔离依赖
 * 如果遇到安装依赖问题请自行搜索 `pip换源` 相关
 * 执行 `main.py`
 
-### exe 版本
+### exe 版本(不建议)
 
 * 去 [release](https://github.com/nyaoouo/FFDraw/releases/latest) 下载带exe的发布
 * 双击 `FFDraw.exe` 运行
@@ -35,8 +34,6 @@
 * 关于跨域：设置 `web_server/enable_cors`，另外如果你不打算给链接设置ssl， chrome 请在 [chrome://flags/](chrome://flags/) 中设置 `Block insecure private network requests`
   为 `disable` [(ref)](https://developer.chrome.com/articles/cors-rfc1918-feedback/#chrome%27s-plans-to-enable-cors-rfc1918)
 
-
-
 ## 插件库
 
 [插件库](doc/插件库.md)
@@ -45,16 +42,12 @@
 - 通常在插件没有特殊说明的情况下，可以在`"自定义插件路径"`中添加第三方插件的本地路径（更推荐），或者将插件文件夹放进 `plugins` 文件夹中
 - 插件作者提交自己的插件请在插件库的md文件中提交仓库链接
 
-
-
 ## 第三方插件绘制
 
 [端口绘制参数](doc/Development/第三方科技绘制.md)
 
 - 对于想采用第三方科技通过端口使用ffd绘制的朋友可以点击这里查看文档
 - 适用场景：使用ACT的trn或cactbot来绘制ffd图形
-
-
 
 ## 插件开发
 
