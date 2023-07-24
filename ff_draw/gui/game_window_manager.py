@@ -14,6 +14,7 @@ if typing.TYPE_CHECKING:
 
 class DrawWindow:
     guid = -1
+
     def __init__(self, mgr: 'FFDWindowManager', game_hwnd):
         self.mgr = mgr
         self.game_hwnd = game_hwnd
@@ -41,7 +42,7 @@ class DrawWindow:
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
         gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
 
-        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, getattr(gl, self.mgr.gui.gl_src_alpha, gl.GL_ONE_MINUS_SRC_ALPHA))
         gl.glEnable(gl.GL_BLEND)
 
         gl.glMatrixMode(gl.GL_MODELVIEW)
