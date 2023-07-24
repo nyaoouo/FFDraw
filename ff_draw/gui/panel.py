@@ -150,6 +150,7 @@ class FFDPanel:
                 for item in gl_src_alpha_types:
                     if imgui.selectable(item)[1]:
                         self.main.gui.gl_src_alpha = item
+                        self.main.gui.cfg['gl_src_alpha'] = item
                         self.main.save_config()
                 imgui.end_combo()
 
