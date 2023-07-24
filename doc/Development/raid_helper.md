@@ -113,6 +113,7 @@ from raid_helper.utils import *
 > map_ex = raid_utils.MapTrigger.get(1096)
 > 
 > @map_ex.on_cast(31998)
+> 
 > def on_cast_xxxx(msg: NetworkMessage[zone_server.ActorCast]):
 
 ---
@@ -167,6 +168,11 @@ from raid_helper.utils import *
 * 详细：[mapeffect](https://github.com/nyaoouo/FFDraw/blob/e7032fddabf5fbfc1451e6f8153f9e65c147bbe4/plugins/raid_helper/utils/trigger.py#L419)
 
 
+## 具体的触发器参考可以参考头子写的副本绘制
 
+例如：[火天王绘制实例](https://github.com/nyaoouo/FFDraw/blob/be64042094e8da138bdf9ed12ba3f55b0a36d393/plugins/raid_helper/ext4/mount_ordeals.py)
+
+
+## 待编辑补充ing.....
 
 
