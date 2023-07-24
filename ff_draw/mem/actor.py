@@ -68,6 +68,39 @@ class StatusManager:
         return 0
 
 
+class CastInfo:
+    class offsets:
+        is_casting = 0x0
+        interruptible = 0x1
+        action_type = 0x2
+        action_id = 0x4
+        cast_target_id = 0x10
+        cast_location = 0x20
+        current_cast_time = 0x34
+        total_cast_time = 0x38
+        used_action_id = 0x40
+        used_action_type = 0x44
+
+    def __init__(self, handle, address):
+        self.handle = handle
+        self.address = address
+
+    is_casting = direct_mem_property(ctypes.c_uint8)
+    interruptible = direct_mem_property(ctypes.c_uint8)
+    action_type = direct_mem_property(ctypes.c_uint16)
+    action_id = direct_mem_property(ctypes.c_uint32)
+    cast_target_id = direct_mem_property(ctypes.c_uint32)
+
+    @property
+    def cast_location(self):
+        return glm.vec3.from_bytes(bytes(ny_mem.read_bytes(self.handle, self.address + self.offsets.cast_location, 0xc)))
+
+    current_cast_time = direct_mem_property(ctypes.c_float)
+    total_cast_time = direct_mem_property(ctypes.c_float)
+    used_action_id = direct_mem_property(ctypes.c_uint32)
+    used_action_type = direct_mem_property(ctypes.c_uint16)
+
+
 class ActorOffsets:
     name = 0x30
     id = 0x74
@@ -98,6 +131,7 @@ class ActorOffsets:
     home_world = 0x1AF6
     shield = 0x1B17
     status = 0x1B60
+    cast_info = 0x1CF0
 
 
 class ActorOffsets640(ActorOffsets):
@@ -111,6 +145,7 @@ class ActorOffsets640(ActorOffsets):
     home_world = 0x1B1E
     shield = 0x1ED
     status = 0x1B80
+    cast_info = 0x1D10
 
 
 class Actor:
@@ -192,6 +227,10 @@ class Actor:
     @property
     def status(self):
         return StatusManager(self.handle, self.address + self.offsets.status)
+
+    @property
+    def cast_info(self):
+        return CastInfo(self.handle, self.address + self.offsets.cast_info)
 
 
 class ActorTable:
