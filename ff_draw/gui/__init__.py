@@ -88,6 +88,7 @@ class Drawing:
         self.always_draw = self.cfg.setdefault('always_draw', False)
         self.font_path = self.cfg.setdefault('font_path', r'res\PingFang.ttf')
         self.font_size = self.cfg.setdefault('font_size', default_style.stlye_font_size)
+        self.gl_src_alpha = self.cfg.setdefault('gl_src_alpha', 'GL_ONE_MINUS_SRC_ALPHA')
         self._label_counter = 0
         self._game_image = {}  # game_image.GameImage(self)
         self.draw_update_call = set()
