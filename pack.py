@@ -30,10 +30,14 @@ with zipfile.ZipFile(p / 'ffd_cn_release.zip', 'w') as zf_cn, zipfile.ZipFile(p 
     for f in subprocess.check_output("git ls-files", shell=True).decode('utf-8').splitlines():
         zf.write(f, 'FFDraw/' + f, compresslevel=9, compress_type=zipfile.ZIP_DEFLATED)
         zf_cn.write(f, 'FFDraw/' + f, compresslevel=9, compress_type=zipfile.ZIP_DEFLATED)
+    cwd = os.getcwd()
+    for _line in subprocess.check_output("git config --file .gitmodules --get-regexp path", shell=True).decode('utf-8').splitlines():
+        _, path, *__ = _line.split(' ')
+        os.chdir(os.path.join(cwd, path))
+        for _f in subprocess.check_output("git ls-files", shell=True).decode('utf-8').splitlines():
+            f = os.path.join(cwd, path, _f)
+            zf.write(f, 'FFDraw/' + path + '/' + _f, compresslevel=9, compress_type=zipfile.ZIP_DEFLATED)
+            zf_cn.write(f, 'FFDraw/' + path + '/' + _f, compresslevel=9, compress_type=zipfile.ZIP_DEFLATED)
+    os.chdir(cwd)
 
-import tkinter as tk
-import tkinter.messagebox as msg_box
-
-tk.Tk().withdraw()
-if msg_box.askyesno(None, 'open directory?'):
-    subprocess.Popen(f'explorer "{p}"')
+print(os.path.abspath(p))
