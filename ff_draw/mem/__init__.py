@@ -14,7 +14,7 @@ from nylib.pattern import StaticPatternSearcher
 from nylib.utils.win32.inject_rpc import Handle, pywin32_dll_place
 from nylib.utils.imgui import ctx as imgui_ctx
 from . import utils, actor, party, network_target, packet_fix, marking, territory_info, event_module, quest_info, storage
-from . import move_controller
+from . import move_controller, hate_list
 from . import hook_main_update, do_text_command, utf8string, hook_chatlog
 
 if typing.TYPE_CHECKING:
@@ -80,6 +80,8 @@ class XivMemPanel:
                 mem.storage.render_debug()
             with imgui_ctx.TreeNode('MoveController') as n, n:
                 mem.move_controller.render_debug()
+            with imgui_ctx.TreeNode('HateList') as n, n:
+                mem.hate_list.render_debug()
 
         if not self.is_dev:
             io = imgui.get_io()
@@ -168,6 +170,7 @@ class XivMem:
         self.quest_info = quest_info.QuestInfo(self)
         self.storage = storage.StorageManager(self)
         self.move_controller = move_controller.MoveController(self)
+        self.hate_list = hate_list.HateList(self)
 
         self.panel = XivMemPanel(self)
         utf8string.Utf8String.init_cls(self)
