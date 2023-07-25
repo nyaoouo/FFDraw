@@ -98,8 +98,10 @@ class MarkPreset(FFDrawPlugin):
         except:
             raise ValueError('invalid preset json')
         self.presets.setdefault(0, {})[data['Name']] = data
-        map_id = data['MapID']
-        teri_id = self.main.sq_pack.sheets.map_sheet[map_id].territory_type.key if map_id != 0 else 0
+        # map_id = data['MapID']
+        # teri_id = self.main.sq_pack.sheets.map_sheet[map_id].territory_type.key if map_id != 0 else 0
+        teri_id = 0  # TODO: fxxk up
+        data['MapID'] = 0
         _dir = self.storage.path / 'presets' / str(teri_id)
         _dir.mkdir(parents=True, exist_ok=True)
         assert not (_file := _dir / f'{data["Name"]}.json').exists(), 'preset name already exists'
@@ -143,7 +145,7 @@ class MarkPreset(FFDrawPlugin):
                     self.main.logger.error(f'apply preset error: {e}')
             imgui.same_line()
             if imgui.button(f'delete##{name}'):
-                self.presets[tid].pop(name)
+                self.presets[tid].pop(name, None)
                 (_dir / f'{name}.json').unlink()
             imgui.same_line()
             if imgui.button(f'open##{name}'):
@@ -200,6 +202,7 @@ class MarkPreset(FFDrawPlugin):
                     self.render_presets(tid)
 
         imgui.new_line()
+        imgui.text('import preset wont set map id, you need to apply and resave it to set map id')
         imgui.text('import preset:')
         imgui.same_line()
         if imgui.button('import from clipboard'):

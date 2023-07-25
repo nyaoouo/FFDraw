@@ -16,6 +16,14 @@ if typing.TYPE_CHECKING:
     from . import Drawing
 main_page = 'FFDraw'
 
+gl_src_alpha_types = [
+    'GL_SRC_ALPHA',
+    'GL_DST_ALPHA',
+    'GL_ONE_MINUS_SRC_ALPHA',
+    'GL_ONE_MINUS_DST_ALPHA',
+    'GL_SRC_ALPHA_SATURATE',
+]
+
 
 class FFDPanel:
     logger = logging.getLogger('Panel')
@@ -134,6 +142,14 @@ class FFDPanel:
             text_tip(i18n(Font_changes_tooltip))
 
         if imgui.collapsing_header(i18n(Omen_draw))[0]:
+            if imgui.begin_combo('gl_src_alpha', self.main.gui.gl_src_alpha):
+                for item in gl_src_alpha_types:
+                    if imgui.selectable(item)[1]:
+                        self.main.gui.gl_src_alpha = item
+                        self.main.gui.cfg['gl_src_alpha'] = item
+                        self.main.save_config()
+                imgui.end_combo()
+
             imgui.columns(3)
             imgui.set_column_width(0, 150)
             imgui.set_column_width(1, 600)
