@@ -26,6 +26,7 @@ class AOZContent(DataRow):
     type: List[int_t] = ListData(ir((2, 3, 4)), RowData)
     data: List[int_t] = ListData(ir((3, 3, 4)), RowData)
     map: List[int_t] = ListData(ir((4, 3, 4)), RowData)
+    briefing_object: List[int_t] = ListData(ir((5, 3, 4)), RowData)
     content_entry_key: 'ContentEntry' = RowForeign(14, 'ContentEntry')
     ui_index: int_t = RowData(15)
     reward_gil: int_t = RowData(16)
@@ -72,6 +73,8 @@ class AOZContentBriefingBNpc(DataRow):
 class AOZContentBriefingObject(DataRow):
     _sign = b'AOZContentBriefingObject|eJzLywMAAUwA3Q=='
     sheet_name = 'AOZContentBriefingObject'
+    icon: int_t = RowData(0)
+    pos: int_t = RowData(1)
 
 
 class AOZReport(DataRow):
@@ -343,6 +346,7 @@ class ActionTimeline(DataRow):
     resident_pap: bool_t = RowData(18)
     pause: bool_t = RowData(19)
     random_start_frame: int_t = RowData(20)
+    style_change: int_t = RowData(21)
 
 
 class ActionTimeline(DataRow):
@@ -1935,6 +1939,7 @@ class CollectablesShopItem(DataRow):
     masterpiece_item: 'Item' = RowForeign(0, 'Item')
     item_group: 'CollectablesShopItemGroup' = RowForeign(1, 'CollectablesShopItemGroup')
     class_job_level: int_t = RowData(2)
+    disclosure_quest: int_t = RowData(3)
     masterpiece_level: int_t = RowData(4)
     star_num: int_t = RowData(5)
     refine_step: int_t = RowData(6)
@@ -2470,6 +2475,7 @@ class ContentRoulette(DataRow):
     clear_reward_c: int_t = RowData(19)
     clear_reward_pvp_exp: int_t = RowData(20)
     clear_reward_wolf_mark: int_t = RowData(21)
+    clear_reward_pvp_series_exp: int_t = RowData(22)
     sortkey: int_t = RowData(23)
     accept_class_job_category: int_t = RowData(24)
     member_type: 'ContentMemberType' = RowForeign(25, 'ContentMemberType')
@@ -4171,6 +4177,13 @@ class FishingBaitParameter(DataRow):
 class FishingNoteInfo(DataRow):
     _sign = b'FishingNoteInfo|eJzLywMDAAwPAwM='
     sheet_name = 'FishingNoteInfo'
+    aquarium_size: int_t = RowData(0)
+    aquarium_water: int_t = RowData(1)
+    weather_condition: int_t = RowData(2)
+    time_condition: int_t = RowData(3)
+    special_condition: int_t = RowData(4)
+    masterpiece: int_t = RowData(5)
+    item_id: int_t = RowData(6)
 
 
 class FishingRecordType(DataRow):
@@ -5692,6 +5705,7 @@ class HousingYardObject(DataRow):
     unplace_text: int_t = RowData(11)
     unplace_lumber_text: int_t = RowData(12)
     is_anyone_access: bool_t = RowData(13)
+    is_place_minionaire: bool_t = RowData(14)
 
 
 class HousingYardObject(DataRow):
@@ -6722,6 +6736,15 @@ class MJIFunction(DataRow):
 class MJIGardenscaping(DataRow):
     _sign = b'MJIGardenscaping|eJzLy4MCABNfA98='
     sheet_name = 'MJIGardenscaping'
+    place_max_num: int_t = RowData(0)
+    open_condition_progress: int_t = RowData(1)
+    open_condition_village_development: int_t = RowData(2)
+    place_cost_item: int_t = RowData(3)
+    place_cost_item_num: int_t = RowData(4)
+    register_cost_item: int_t = RowData(5)
+    register_cost_item_num: int_t = RowData(6)
+    stain_cost_item: int_t = RowData(7)
+    stain_cost_item_num: int_t = RowData(8)
 
 
 class MJIGathering(DataRow):
@@ -6741,6 +6764,7 @@ class MJIGatheringItem(DataRow):
     marker_x: int_t = RowData(3)
     marker_z: int_t = RowData(4)
     marker_radius: int_t = RowData(5)
+    marker_map_type: int_t = RowData(6)
 
 
 class MJIGatheringItem(DataRow):
@@ -6763,6 +6787,7 @@ class MJIGatheringObject(DataRow):
     map_icon: 'Icon' = IconRow(1)
     icon_flag: int_t = RowData(2)
     name_e_obj: 'EObjName' = RowForeign(3, 'EObjName')
+    visible_progress: int_t = RowData(4)
 
 
 class MJIGatheringObject(DataRow):
@@ -6865,6 +6890,7 @@ class MJIMinionPopAreas(DataRow):
     marker_pos_x: int_t = RowData(1)
     marker_pos_z: int_t = RowData(2)
     area_name: int_t = RowData(3)
+    is_target_place_area: bool_t = RowData(4)
 
 
 class MJIMinionPopAreas(DataRow):
@@ -6879,6 +6905,14 @@ class MJIMinionPopAreas(DataRow):
 class MJIName(DataRow):
     _sign = b'MJIName|eJwrzivOAwEAD8YDew=='
     sheet_name = 'MJIName'
+    text_sgl: str_t = RowData(0)
+    text_sgg: int_t = RowData(1)
+    text_plr: str_t = RowData(2)
+    text_plg: int_t = RowData(3)
+    text_vow: int_t = RowData(4)
+    text_cnt: int_t = RowData(5)
+    text_gen: int_t = RowData(6)
+    text_def_: int_t = RowData(7)
 
 
 class MJIProgress(DataRow):
@@ -6986,6 +7020,8 @@ class MJIVillageDevelopment(DataRow):
     open_collision_layout_id: int_t = RowData(10)
     open_obstacle_sg: 'Behavior' = RowForeign(11, 'Behavior')
     open_obstacle_layout_id: int_t = RowData(12)
+    craftworks_built_max: int_t = RowData(13)
+    stockyard_built_max: int_t = RowData(14)
 
 
 class MJIVillageDevelopment(DataRow):
@@ -7048,6 +7084,7 @@ class MacroIcon(DataRow):
     sheet_name = 'MacroIcon'
     _display = 'icon'
     icon: 'Icon' = IconRow(0)
+    sort_id: int_t = RowData(1)
 
 
 class MacroIcon(DataRow):
@@ -7089,6 +7126,12 @@ class MandervilleWeaponEnhance(DataRow):
     _sign = b'MandervilleWeaponEnhance|eJzLy0MFADqABuE='
     sheet_name = 'MandervilleWeaponEnhance'
     type: int_t = RowData(0)
+    materia: List[int_t] = ListData(ir((1, 4, 3)), RowData)
+    primary_grade: List[int_t] = ListData(ir((2, 4, 3)), RowData)
+    secondary_grade: List[int_t] = ListData(ir((3, 4, 3)), RowData)
+    readjust_cost_item: int_t = RowData(13)
+    readjust_cost_stack: int_t = RowData(14)
+    ui_icon: int_t = RowData(15)
 
 
 class Maneuvers(DataRow):
@@ -7222,6 +7265,7 @@ class Marker(DataRow):
     _sign = b'Marker|eJzLyysGAAKcAVA='
     sheet_name = 'Marker'
     icon: 'Icon' = IconRow(0)
+    sort_id: int_t = RowData(1)
     text: str_t = RowData(2)
 
 
@@ -7328,6 +7372,7 @@ class MiniGameRA(DataRow):
     bgm: 'BGM' = RowForeign(3, 'BGM')
     bgm_change_type: int_t = RowData(4)
     enable_life: bool_t = RowData(5)
+    enable_skip: bool_t = RowData(6)
     max_life: int_t = RowData(7)
     show_status: bool_t = RowData(8)
     show_score: bool_t = RowData(9)
@@ -7393,26 +7438,60 @@ class MiniGameTurnBreakConst(DataRow):
 class MiniGameTurnBreakEnemy(DataRow):
     _sign = b'MiniGameTurnBreakEnemy|eJzLy8vLS8uDgDQoyEMFAAkODsM='
     sheet_name = 'MiniGameTurnBreakEnemy'
+    hp: int_t = RowData(0)
+    attack: int_t = RowData(1)
+    move: int_t = RowData(2)
+    move_param: int_t = RowData(3)
+    boss: bool_t = RowData(4)
+    sp_drop: int_t = RowData(5)
+    bp_drop: int_t = RowData(6)
+    score: int_t = RowData(7)
+    image: int_t = RowData(8)
+    width: int_t = RowData(9)
+    height: int_t = RowData(10)
+    status: int_t = RowData(11)
+    gambit_bofore_move: List[bool_t] = ListData(ir((12, 4, 1)), RowData)
+    gambit_after_move: List[bool_t] = ListData(ir((16, 4, 1)), RowData)
+    gambit_action: List[int_t] = ListData(ir((20, 4, 1)), RowData)
+    gambit_cond: List[int_t] = ListData(ir((24, 4, 1)), RowData)
+    gambit_cond_param: List[int_t] = ListData(ir((28, 4, 1)), RowData)
+    pop_timeline: int_t = RowData(32)
+    idling_timeline: int_t = RowData(33)
+    dead_timeline: int_t = RowData(34)
 
 
 class MiniGameTurnBreakPop(DataRow):
     _sign = b'MiniGameTurnBreakPop|eJzLy8vLAwAEUAG5'
     sheet_name = 'MiniGameTurnBreakPop'
+    turn: int_t = RowData(0)
+    address: int_t = RowData(1)
+    offset: int_t = RowData(2)
+    enemy: int_t = RowData(3)
 
 
 class MiniGameTurnBreakPopOffset(DataRow):
     _sign = b'MiniGameTurnBreakPopOffset|eJzLy4MAAA+AA3E='
     sheet_name = 'MiniGameTurnBreakPopOffset'
+    offset: List[int_t] = ListData(ir((0, 8, 1)), RowData)
 
 
 class MiniGameTurnBreakStage(DataRow):
     _sign = b'MiniGameTurnBreakStage|eJzLy4MBABesBE0='
     sheet_name = 'MiniGameTurnBreakStage'
+    sp_drop_every_turn: int_t = RowData(0)
+    reward_score: int_t = RowData(1)
+    skill: List[int_t] = ListData(ir((2, 8, 1)), RowData)
 
 
 class MiniGameTurnBreakStatus(DataRow):
     _sign = b'MiniGameTurnBreakStatus|eJzLy0vLKy4GAAj7Apc='
     sheet_name = 'MiniGameTurnBreakStatus'
+    param: int_t = RowData(0)
+    effect_turn: int_t = RowData(1)
+    is_buff: bool_t = RowData(2)
+    image: int_t = RowData(3)
+    text_name: str_t = RowData(4)
+    text_help: str_t = RowData(5)
 
 
 class MinionRace(DataRow):
@@ -7896,6 +7975,8 @@ class OnlineStatus(DataRow):
     hide_content: bool_t = RowData(2)
     list_order: int_t = RowData(3)
     icon: 'Icon' = IconRow(4)
+    addon: int_t = RowData(5)
+    text: str_t = RowData(6)
 
 
 class OnlineStatus(DataRow):
@@ -8613,6 +8694,7 @@ class Quest(DataRow):
     quality: int_t = RowData(1520)
     sort: int_t = RowData(1521)
     zombie: bool_t = RowData(1522)
+    hide_title: bool_t = RowData(1523)
 
 
 class Quest(DataRow):
@@ -8842,6 +8924,9 @@ class QuestEquipModel(DataRow):
 class QuestEventAreaEntranceInfo(DataRow):
     _sign = b'QuestEventAreaEntranceInfo|eJzLy8sDAAKXAUs='
     sheet_name = 'QuestEventAreaEntranceInfo'
+    quest: int_t = RowData(0)
+    sequence: int_t = RowData(1)
+    pop_range: int_t = RowData(2)
 
 
 class QuestHideReward(DataRow):
@@ -8856,6 +8941,7 @@ class QuestLinkMarker(DataRow):
     map: int_t = RowData(0)
     target_layout: int_t = RowData(1)
     link_map: int_t = RowData(2)
+    link_key: int_t = RowData(3)
     is_public: bool_t = RowData(4)
 
 
@@ -8871,6 +8957,7 @@ class QuestLinkMarker(DataRow):
 class QuestLinkMarkerIcon(DataRow):
     _sign = b'QuestLinkMarkerIcon|eJzLAwAAbwBv'
     sheet_name = 'QuestLinkMarkerIcon'
+    link_icon: int_t = RowData(0)
 
 
 class QuestLinkMarkerSet(DataRow):
@@ -8880,6 +8967,8 @@ class QuestLinkMarkerSet(DataRow):
     quest: int_t = RowData(1)
     sequence_begin: int_t = RowData(2)
     sequence_end: int_t = RowData(3)
+    is_offer: bool_t = RowData(4)
+    disable_lock: bool_t = RowData(5)
 
 
 class QuestLinkMarkerSet(DataRow):
@@ -10031,6 +10120,7 @@ class Stain(DataRow):
     category: int_t = RowData(1)
     sort_id: int_t = RowData(2)
     text_name: str_t = RowData(3)
+    text_color_name: str_t = RowData(4)
     metal: bool_t = RowData(5)
     furniture: bool_t = RowData(6)
 
@@ -10460,6 +10550,7 @@ class TofuObject(DataRow):
     edit_param: List[int_t] = ListData(ir((8, 5, 1)), RowData)
     is_flip_h: bool_t = RowData(13)
     is_flip_v: bool_t = RowData(14)
+    is_color: bool_t = RowData(15)
 
 
 class TofuObject(DataRow):
@@ -10490,16 +10581,31 @@ class TofuObjectCategory(DataRow):
 class TofuPreset(DataRow):
     _sign = b'TofuPreset|eJzLK85Ly4MDAC0VBgI='
     sheet_name = 'TofuPreset'
+    sort: int_t = RowData(0)
+    name: str_t = RowData(1)
+    category: int_t = RowData(2)
+    is_use: bool_t = RowData(3)
+    object: List[int_t] = ListData(ir((4, 10, 1)), RowData)
 
 
 class TofuPresetCategory(DataRow):
     _sign = b'TofuPresetCategory|eJwrTksDAAKOAUA='
     sheet_name = 'TofuPresetCategory'
+    name: str_t = RowData(0)
+    is_use: bool_t = RowData(1)
+    ui_select: bool_t = RowData(2)
 
 
 class TofuPresetObject(DataRow):
     _sign = b'TofuPresetObject|eJzLywOCtDQAC/cC8w=='
     sheet_name = 'TofuPresetObject'
+    object: int_t = RowData(0)
+    pos_x: int_t = RowData(1)
+    pos_y: int_t = RowData(2)
+    scale: int_t = RowData(3)
+    rot: int_t = RowData(4)
+    is_flip_h: bool_t = RowData(5)
+    is_flip_v: bool_t = RowData(6)
 
 
 class TomestoneConvert(DataRow):

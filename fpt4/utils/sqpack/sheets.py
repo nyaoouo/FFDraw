@@ -3,15 +3,61 @@ from functools import cached_property
 from .exd.row import SubDataRow
 from .exd.sheet import Sheet
 from .exd import define
+from .utils import EventType
 
 if TYPE_CHECKING:
     from . import SqPack
+
+event_handler_map = {
+    EventType.Quest.value: lambda self, handler_id: self.quest_sheet[handler_id],
+    EventType.Warp.value: lambda self, handler_id: self.warp_sheet[handler_id],
+    EventType.GatheringPoint.value: lambda self, handler_id: self.gathering_point_sheet[handler_id & 0xffff],
+    EventType.GilShop.value: lambda self, handler_id: self.gil_shop_sheet[handler_id],
+    EventType.Aetheryte.value: lambda self, handler_id: self.aetheryte_sheet[handler_id & 0xffff],
+    EventType.GuildleveAssignment.value: lambda self, handler_id: self.guildleve_assignment_sheet[handler_id],
+    EventType.DefaultTalk.value: lambda self, handler_id: self.default_talk_sheet[handler_id],
+    EventType.CustomTalk.value: lambda self, handler_id: self.custom_talk_sheet[handler_id],
+    EventType.Array.value: lambda self, handler_id: self.array_event_handler_sheet[handler_id],
+    EventType.CraftLeve.value: lambda self, handler_id: self.craft_leve_sheet[handler_id],
+    EventType.GimmickAccessor.value: lambda self, handler_id: self.gimmick_accessor_sheet[handler_id & 0xffff],
+    EventType.GimmickBill.value: lambda self, handler_id: self.gimmick_bill_sheet[handler_id & 0xffff],
+    EventType.GimmickRect.value: lambda self, handler_id: self.gimmick_rect_sheet[handler_id & 0xffff],
+    EventType.ChocoboTaxiStand.value: lambda self, handler_id: self.chocobo_taxi_stand_sheet[handler_id],
+    EventType.Opening.value: lambda self, handler_id: self.opening_sheet[handler_id],
+    EventType.GCShop.value: lambda self, handler_id: self.gc_shop_sheet[handler_id],
+    EventType.GuildOrderGuide.value: lambda self, handler_id: self.guild_order_guide_sheet[handler_id],
+    EventType.GuildOrderOfficer.value: lambda self, handler_id: self.guild_order_officer_sheet[handler_id],
+    EventType.Story.value: lambda self, handler_id: self.story_sheet[handler_id],
+    EventType.SpecialShop.value: lambda self, handler_id: self.special_shop_sheet[handler_id],
+    EventType.InstanceContentGuide.value: lambda self, handler_id: self.instance_content_guide_sheet[handler_id],
+    EventType.HousingAethernet.value: lambda self, handler_id: self.housing_aethernet_sheet[handler_id],
+    EventType.SwitchTalk.value: lambda self, handler_id: self.switch_talk_sheet[handler_id],
+    EventType.Adventure.value: lambda self, handler_id: self.adventure_sheet[handler_id],
+    EventType.TripleTriad.value: lambda self, handler_id: self.triple_triad_sheet[handler_id],
+    EventType.GoldSaucerArcadeMachine.value: lambda self, handler_id: self.gold_saucer_arcade_machine_sheet[handler_id],
+    EventType.FccShop.value: lambda self, handler_id: self.fcc_shop_sheet[handler_id],
+    EventType.AetherCurrent.value: lambda self, handler_id: self.aether_current_sheet[handler_id],
+    EventType.ContentEntry.value: lambda self, handler_id: self.content_entry_sheet[handler_id],
+    EventType.DpsChallengeOfficer.value: lambda self, handler_id: self.dps_challenge_officer_sheet[handler_id],
+    EventType.TopicSelect.value: lambda self, handler_id: self.topic_select_sheet[handler_id],
+    EventType.LotteryExchangeShop.value: lambda self, handler_id: self.lottery_exchange_shop_sheet[handler_id],
+    EventType.DisposalShop.value: lambda self, handler_id: self.disposal_shop_sheet[handler_id],
+    EventType.PreHandler.value: lambda self, handler_id: self.pre_handler_sheet[handler_id],
+    EventType.Description.value: lambda self, handler_id: self.description_sheet[handler_id],
+    EventType.InclusionShop.value: lambda self, handler_id: self.inclusion_shop_sheet[handler_id],
+    EventType.CollectablesShop.value: lambda self, handler_id: self.collectables_shop_sheet[handler_id],
+    EventType.EventPathMove.value: lambda self, handler_id: self.event_path_move_sheet[handler_id],
+}
 
 
 class Sheets:
     def __init__(self, pack: 'SqPack'):
         self.pack = pack
         self.get_sheet = pack.exd.get_sheet
+
+    def get_event_handler_row(self, handler_id):
+        if (handler_type := handler_id >> 16) in event_handler_map:
+            return event_handler_map[handler_type](self, handler_id)
 
     @cached_property
     def aoz_arrangement_sheet(self) -> Sheet[SubDataRow[define.AOZArrangement]]:
@@ -28,6 +74,10 @@ class Sheets:
     @cached_property
     def aoz_content_briefing_b_npc_sheet(self) -> Sheet[define.AOZContentBriefingBNpc]:
         return self.get_sheet(define.AOZContentBriefingBNpc)
+
+    @cached_property
+    def aoz_content_briefing_object_sheet(self) -> Sheet[SubDataRow[define.AOZContentBriefingObject]]:
+        return self.get_sheet(define.AOZContentBriefingObject)
 
     @cached_property
     def aoz_report_sheet(self) -> Sheet[define.AOZReport]:
@@ -344,30 +394,6 @@ class Sheets:
     @cached_property
     def bgm_system_define_sheet(self) -> Sheet[define.BGMSystemDefine]:
         return self.get_sheet(define.BGMSystemDefine)
-
-    @cached_property
-    def bkje_obj_sheet(self) -> Sheet[define.BKJEObj]:
-        return self.get_sheet(define.BKJEObj)
-
-    @cached_property
-    def bkj_livestock_sheet(self) -> Sheet[define.BKJLivestock]:
-        return self.get_sheet(define.BKJLivestock)
-
-    @cached_property
-    def bkj_pouch_sheet(self) -> Sheet[define.BKJPouch]:
-        return self.get_sheet(define.BKJPouch)
-
-    @cached_property
-    def bkj_seed_sheet(self) -> Sheet[define.BKJSeed]:
-        return self.get_sheet(define.BKJSeed)
-
-    @cached_property
-    def bkj_shipment_sheet(self) -> Sheet[define.BKJShipment]:
-        return self.get_sheet(define.BKJShipment)
-
-    @cached_property
-    def bkj_specialty_goods_sheet(self) -> Sheet[define.BKJSpecialtyGoods]:
-        return self.get_sheet(define.BKJSpecialtyGoods)
 
     @cached_property
     def b_npc_announce_icon_sheet(self) -> Sheet[define.BNpcAnnounceIcon]:
@@ -962,6 +988,10 @@ class Sheets:
         return self.get_sheet(define.CustomTalk)
 
     @cached_property
+    def custom_talk_define_client_sheet(self) -> Sheet[SubDataRow[define.CustomTalkDefineClient]]:
+        return self.get_sheet(define.CustomTalkDefineClient)
+
+    @cached_property
     def custom_talk_nest_handlers_sheet(self) -> Sheet[SubDataRow[define.CustomTalkNestHandlers]]:
         return self.get_sheet(define.CustomTalkNestHandlers)
 
@@ -1048,6 +1078,10 @@ class Sheets:
     @cached_property
     def deep_dungeon_danger_sheet(self) -> Sheet[define.DeepDungeonDanger]:
         return self.get_sheet(define.DeepDungeonDanger)
+
+    @cached_property
+    def deep_dungeon_demiclone_sheet(self) -> Sheet[define.DeepDungeonDemiclone]:
+        return self.get_sheet(define.DeepDungeonDemiclone)
 
     @cached_property
     def deep_dungeon_equipment_sheet(self) -> Sheet[define.DeepDungeonEquipment]:
@@ -1302,6 +1336,10 @@ class Sheets:
         return self.get_sheet(define.EventIconPriority)
 
     @cached_property
+    def event_icon_priority_pair_sheet(self) -> Sheet[define.EventIconPriorityPair]:
+        return self.get_sheet(define.EventIconPriorityPair)
+
+    @cached_property
     def event_icon_type_sheet(self) -> Sheet[define.EventIconType]:
         return self.get_sheet(define.EventIconType)
 
@@ -1466,6 +1504,14 @@ class Sheets:
         return self.get_sheet(define.FishParameterReverse)
 
     @cached_property
+    def fishing_bait_parameter_sheet(self) -> Sheet[define.FishingBaitParameter]:
+        return self.get_sheet(define.FishingBaitParameter)
+
+    @cached_property
+    def fishing_note_info_sheet(self) -> Sheet[define.FishingNoteInfo]:
+        return self.get_sheet(define.FishingNoteInfo)
+
+    @cached_property
     def fishing_record_type_sheet(self) -> Sheet[define.FishingRecordType]:
         return self.get_sheet(define.FishingRecordType)
 
@@ -1508,10 +1554,6 @@ class Sheets:
     @cached_property
     def frontline03_sheet(self) -> Sheet[define.Frontline03]:
         return self.get_sheet(define.Frontline03)
-
-    @cached_property
-    def frontline04_sheet(self) -> Sheet[define.Frontline04]:
-        return self.get_sheet(define.Frontline04)
 
     @cached_property
     def furniture_catalog_category_sheet(self) -> Sheet[define.FurnitureCatalogCategory]:
@@ -1620,6 +1662,14 @@ class Sheets:
     @cached_property
     def gardening_seed_sheet(self) -> Sheet[define.GardeningSeed]:
         return self.get_sheet(define.GardeningSeed)
+
+    @cached_property
+    def gatherer_crafter_tool_sheet(self) -> Sheet[define.GathererCrafterTool]:
+        return self.get_sheet(define.GathererCrafterTool)
+
+    @cached_property
+    def gatherer_reduction_reward_sheet(self) -> Sheet[SubDataRow[define.GathererReductionReward]]:
+        return self.get_sheet(define.GathererReductionReward)
 
     @cached_property
     def gathering_condition_sheet(self) -> Sheet[define.GatheringCondition]:
@@ -2414,6 +2464,10 @@ class Sheets:
         return self.get_sheet(define.MJIFunction)
 
     @cached_property
+    def mji_gardenscaping_sheet(self) -> Sheet[define.MJIGardenscaping]:
+        return self.get_sheet(define.MJIGardenscaping)
+
+    @cached_property
     def mji_gathering_sheet(self) -> Sheet[define.MJIGathering]:
         return self.get_sheet(define.MJIGathering)
 
@@ -2460,6 +2514,10 @@ class Sheets:
     @cached_property
     def mji_minion_pop_areas_sheet(self) -> Sheet[define.MJIMinionPopAreas]:
         return self.get_sheet(define.MJIMinionPopAreas)
+
+    @cached_property
+    def mji_name_sheet(self) -> Sheet[define.MJIName]:
+        return self.get_sheet(define.MJIName)
 
     @cached_property
     def mji_progress_sheet(self) -> Sheet[define.MJIProgress]:
@@ -2530,6 +2588,10 @@ class Sheets:
         return self.get_sheet(define.MainCommandCategory)
 
     @cached_property
+    def manderville_weapon_enhance_sheet(self) -> Sheet[define.MandervilleWeaponEnhance]:
+        return self.get_sheet(define.MandervilleWeaponEnhance)
+
+    @cached_property
     def maneuvers_sheet(self) -> Sheet[define.Maneuvers]:
         return self.get_sheet(define.Maneuvers)
 
@@ -2556,6 +2618,10 @@ class Sheets:
     @cached_property
     def map_marker_region_sheet(self) -> Sheet[define.MapMarkerRegion]:
         return self.get_sheet(define.MapMarkerRegion)
+
+    @cached_property
+    def map_replace_sheet(self) -> Sheet[SubDataRow[define.MapReplace]]:
+        return self.get_sheet(define.MapReplace)
 
     @cached_property
     def map_symbol_sheet(self) -> Sheet[define.MapSymbol]:
@@ -2616,6 +2682,34 @@ class Sheets:
     @cached_property
     def mini_game_ra_notes_sheet(self) -> Sheet[SubDataRow[define.MiniGameRANotes]]:
         return self.get_sheet(define.MiniGameRANotes)
+
+    @cached_property
+    def mini_game_turn_break_action_sheet(self) -> Sheet[define.MiniGameTurnBreakAction]:
+        return self.get_sheet(define.MiniGameTurnBreakAction)
+
+    @cached_property
+    def mini_game_turn_break_const_sheet(self) -> Sheet[define.MiniGameTurnBreakConst]:
+        return self.get_sheet(define.MiniGameTurnBreakConst)
+
+    @cached_property
+    def mini_game_turn_break_enemy_sheet(self) -> Sheet[define.MiniGameTurnBreakEnemy]:
+        return self.get_sheet(define.MiniGameTurnBreakEnemy)
+
+    @cached_property
+    def mini_game_turn_break_pop_sheet(self) -> Sheet[SubDataRow[define.MiniGameTurnBreakPop]]:
+        return self.get_sheet(define.MiniGameTurnBreakPop)
+
+    @cached_property
+    def mini_game_turn_break_pop_offset_sheet(self) -> Sheet[define.MiniGameTurnBreakPopOffset]:
+        return self.get_sheet(define.MiniGameTurnBreakPopOffset)
+
+    @cached_property
+    def mini_game_turn_break_stage_sheet(self) -> Sheet[define.MiniGameTurnBreakStage]:
+        return self.get_sheet(define.MiniGameTurnBreakStage)
+
+    @cached_property
+    def mini_game_turn_break_status_sheet(self) -> Sheet[define.MiniGameTurnBreakStatus]:
+        return self.get_sheet(define.MiniGameTurnBreakStatus)
 
     @cached_property
     def minion_race_sheet(self) -> Sheet[define.MinionRace]:
@@ -2744,6 +2838,18 @@ class Sheets:
     @cached_property
     def movie_subtitle_voyage_sheet(self) -> Sheet[define.MovieSubtitleVoyage]:
         return self.get_sheet(define.MovieSubtitleVoyage)
+
+    @cached_property
+    def multiple_help_sheet(self) -> Sheet[define.MultipleHelp]:
+        return self.get_sheet(define.MultipleHelp)
+
+    @cached_property
+    def multiple_help_page_sheet(self) -> Sheet[SubDataRow[define.MultipleHelpPage]]:
+        return self.get_sheet(define.MultipleHelpPage)
+
+    @cached_property
+    def multiple_help_string_sheet(self) -> Sheet[define.MultipleHelpString]:
+        return self.get_sheet(define.MultipleHelpString)
 
     @cached_property
     def notebook_division_sheet(self) -> Sheet[define.NotebookDivision]:
@@ -2950,6 +3056,10 @@ class Sheets:
         return self.get_sheet(define.PresetCameraAdjust)
 
     @cached_property
+    def previewable_items_sheet(self) -> Sheet[define.PreviewableItems]:
+        return self.get_sheet(define.PreviewableItems)
+
+    @cached_property
     def public_content_sheet(self) -> Sheet[define.PublicContent]:
         return self.get_sheet(define.PublicContent)
 
@@ -2972,6 +3082,10 @@ class Sheets:
     @cached_property
     def pvp_action_sort_sheet(self) -> Sheet[SubDataRow[define.PvPActionSort]]:
         return self.get_sheet(define.PvPActionSort)
+
+    @cached_property
+    def pvp_base_param_value_sheet(self) -> Sheet[define.PvPBaseParamValue]:
+        return self.get_sheet(define.PvPBaseParamValue)
 
     @cached_property
     def pvp_initial_select_action_trait_sheet(self) -> Sheet[define.PvPInitialSelectActionTrait]:
@@ -3046,6 +3160,10 @@ class Sheets:
         return self.get_sheet(define.QuestCustomTodo)
 
     @cached_property
+    def quest_define_client_sheet(self) -> Sheet[SubDataRow[define.QuestDefineClient]]:
+        return self.get_sheet(define.QuestDefineClient)
+
+    @cached_property
     def quest_derived_class_sheet(self) -> Sheet[define.QuestDerivedClass]:
         return self.get_sheet(define.QuestDerivedClass)
 
@@ -3066,8 +3184,24 @@ class Sheets:
         return self.get_sheet(define.QuestEquipModel)
 
     @cached_property
+    def quest_event_area_entrance_info_sheet(self) -> Sheet[SubDataRow[define.QuestEventAreaEntranceInfo]]:
+        return self.get_sheet(define.QuestEventAreaEntranceInfo)
+
+    @cached_property
     def quest_hide_reward_sheet(self) -> Sheet[define.QuestHideReward]:
         return self.get_sheet(define.QuestHideReward)
+
+    @cached_property
+    def quest_link_marker_sheet(self) -> Sheet[SubDataRow[define.QuestLinkMarker]]:
+        return self.get_sheet(define.QuestLinkMarker)
+
+    @cached_property
+    def quest_link_marker_icon_sheet(self) -> Sheet[define.QuestLinkMarkerIcon]:
+        return self.get_sheet(define.QuestLinkMarkerIcon)
+
+    @cached_property
+    def quest_link_marker_set_sheet(self) -> Sheet[define.QuestLinkMarkerSet]:
+        return self.get_sheet(define.QuestLinkMarkerSet)
 
     @cached_property
     def quest_recomplete_sheet(self) -> Sheet[define.QuestRecomplete]:
@@ -3104,6 +3238,10 @@ class Sheets:
     @cached_property
     def quest_reward_other_sheet(self) -> Sheet[define.QuestRewardOther]:
         return self.get_sheet(define.QuestRewardOther)
+
+    @cached_property
+    def quest_select_title_sheet(self) -> Sheet[define.QuestSelectTitle]:
+        return self.get_sheet(define.QuestSelectTitle)
 
     @cached_property
     def quest_set_define_sheet(self) -> Sheet[SubDataRow[define.QuestSetDefine]]:
@@ -3314,6 +3452,10 @@ class Sheets:
         return self.get_sheet(define.SatisfactionArbitration)
 
     @cached_property
+    def satisfaction_bonus_guarantee_sheet(self) -> Sheet[define.SatisfactionBonusGuarantee]:
+        return self.get_sheet(define.SatisfactionBonusGuarantee)
+
+    @cached_property
     def satisfaction_npc_sheet(self) -> Sheet[define.SatisfactionNpc]:
         return self.get_sheet(define.SatisfactionNpc)
 
@@ -3368,6 +3510,10 @@ class Sheets:
     @cached_property
     def sharlayan_craft_works_supply_sheet(self) -> Sheet[define.SharlayanCraftWorksSupply]:
         return self.get_sheet(define.SharlayanCraftWorksSupply)
+
+    @cached_property
+    def shell_fixed_from_command_sheet(self) -> Sheet[define.ShellFixedFromCommand]:
+        return self.get_sheet(define.ShellFixedFromCommand)
 
     @cached_property
     def skirmish_sheet(self) -> Sheet[define.Skirmish]:
@@ -3578,6 +3724,30 @@ class Sheets:
         return self.get_sheet(define.Title)
 
     @cached_property
+    def tofu_edit_param_sheet(self) -> Sheet[define.TofuEditParam]:
+        return self.get_sheet(define.TofuEditParam)
+
+    @cached_property
+    def tofu_object_sheet(self) -> Sheet[define.TofuObject]:
+        return self.get_sheet(define.TofuObject)
+
+    @cached_property
+    def tofu_object_category_sheet(self) -> Sheet[define.TofuObjectCategory]:
+        return self.get_sheet(define.TofuObjectCategory)
+
+    @cached_property
+    def tofu_preset_sheet(self) -> Sheet[define.TofuPreset]:
+        return self.get_sheet(define.TofuPreset)
+
+    @cached_property
+    def tofu_preset_category_sheet(self) -> Sheet[define.TofuPresetCategory]:
+        return self.get_sheet(define.TofuPresetCategory)
+
+    @cached_property
+    def tofu_preset_object_sheet(self) -> Sheet[define.TofuPresetObject]:
+        return self.get_sheet(define.TofuPresetObject)
+
+    @cached_property
     def tomestone_convert_sheet(self) -> Sheet[define.TomestoneConvert]:
         return self.get_sheet(define.TomestoneConvert)
 
@@ -3746,7 +3916,7 @@ class Sheets:
         return self.get_sheet(define.VVDRouteData)
 
     @cached_property
-    def vvd_variant_action_sheet(self) -> Sheet[define.VVDVariantAction]:
+    def vvd_variant_action_sheet(self) -> Sheet[SubDataRow[define.VVDVariantAction]]:
         return self.get_sheet(define.VVDVariantAction)
 
     @cached_property

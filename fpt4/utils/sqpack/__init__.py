@@ -13,6 +13,9 @@ _cached_sqpack = {}
 
 class SqPack:
     def __init__(self, game_path: str | Path, default_language: Language = Language.en):
+        from fpt4.utils import se_string
+        if se_string.sq_pack is None:
+            se_string.sq_pack = self
         self.game_path = game_path if isinstance(game_path, Path) else Path(game_path)
         self.pack = PackManager(self.game_path / 'sqpack')
         self.exd = ExdManager(self.pack, default_language=default_language)

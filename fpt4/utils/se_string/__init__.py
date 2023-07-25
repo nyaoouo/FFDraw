@@ -1,8 +1,15 @@
 import enum
 import json
 import struct
+import typing
+from nylib.utils import KeyRoute
 
 from .define import MacroType, MACRODEFPARAM
+
+if typing.TYPE_CHECKING:
+    from ..sqpack import SqPack
+
+sq_pack: 'SqPack|None' = None
 
 # region utils
 
@@ -126,17 +133,178 @@ class Macro(list):
         return self.macro_code.name if isinstance(self.macro_code, MacroType) else str(self.macro_code)
 
     def __repr__(self):
-        if self:
-            args = ', '.join(map(to_string, self))
-            return f'<{self.name} ({args})>'
-        else:
-            return f'<{self.name}>'
+        return encode_macro(self)
 
     def __add__(self, other):
         if isinstance(other, SeString):
             return SeString(self, *other)
         else:
             return SeString(self, other)
+
+
+_encode_macro_map = {}
+add_encode_macro = lambda macro_type: lambda func: _encode_macro_map.__setitem__(macro_type, func)
+default_encode_macro = lambda macro: f"<{macro.name} ({', '.join(map(to_string, macro))})>" if macro else f'<{macro.name}>'
+encode_macro = lambda macro: _encode_macro_map.get(macro.macro_code, default_encode_macro)(macro)
+
+_special_fixed = [None for _ in range(12)]
+add_special_fixed = lambda special_type: lambda func: _special_fixed.__setitem__(special_type - 1, func)
+
+
+@add_special_fixed(1)
+def encode_special_fixed_name(args):
+    world_id, name, *_ = args
+    if not world_id: return str(name)
+    try:
+        world_str = sq_pack.sheets.world_sheet[world_id].display_name
+    except KeyError:
+        world_str = world_id
+    return f'{name}@{world_str}'
+
+
+@add_special_fixed(2)
+def encode_special_fixed_job(args):
+    job_id, level, *_ = args
+    try:
+        job = sq_pack.sheets.class_job_sheet[job_id].text_name
+    except KeyError:
+        job = f'JOB({job_id})'
+    return f'{job}-lv{level}'
+
+
+def map_to_game_coord(pos, scale, offset):
+    return (pos - 1 - 2050 / scale) / (41 / 2048) - offset
+
+
+@add_special_fixed(3)
+def encode_special_fixed_pos(args):
+    t_id, map_id, x, z, y, *_ = args
+    try:
+        territory = sq_pack.sheets.territory_type_sheet[t_id]
+    except KeyError:
+        territory = f'TERRITORY({t_id})'
+    else:
+        territory = f'{territory.region.text_sgl} - {territory.sub_region.text_sgl} - {territory.area.text_sgl}'
+    try:
+        map_ = sq_pack.sheets.map_sheet[map_id]
+    except KeyError:
+        map_s = f'MAP({map_id})'
+    else:
+        map_s = map_.floor_name_ui.text_sgl
+        if map_s: map_s = f'[{map_s}]'
+    y = 'inv' if y == -30000 else f'{y:.2f}'
+    return f'{territory}{map_s} ({x / 1000:.2f}, {y}, {z / 1000:.2f})'
+
+
+@add_special_fixed(4)
+def encode_special_fixed_item(args):
+    item_id, *_ = args  # item_id, param, rarity, _, _, display name
+    if item_id >= 2000000:
+        try:
+            item = f"{sq_pack.sheets.event_item_sheet[item_id].text_ui_name}#{item_id}"
+        except KeyError:
+            item = f'EITEM({item_id})'
+    else:
+        if hq := item_id >= 1000000:
+            item_id -= 1000000
+        if collectable := item_id >= 500000:
+            item_id -= 500000
+        try:
+            item = f"{sq_pack.sheets.item_sheet[item_id].text_ui_name}#{item_id}"
+        except KeyError:
+            item = f'ITEM({item_id})'
+        if collectable:
+            item += "[Collectable]"
+        if hq:
+            item += "[HQ]"
+    return item
+
+
+@add_special_fixed(5)
+def encode_special_fixed_se(args):
+    return f'SE#{args[0]}'
+
+
+@add_special_fixed(6)
+def encode_special_fixed_obj(args):
+    name_id = args[0]
+    try:
+        return f"NpcName#{sq_pack.sheets.b_npc_name_sheet[name_id].singular}"
+    except KeyError:
+        return f'NpcName#{name_id}'
+
+
+@add_special_fixed(8)
+def encode_special_fixed_recast(args):
+    sec = args[0]
+    return f'Recast#{sec}s'
+
+
+mentor_name = ['None', 'beginner', 'returner', 'big mentor', 'pve mentor', 'live mentor', 'pvp mentor', 'need update']
+
+
+@add_special_fixed(9)
+def encode_special_fixed_mentor(args):
+    return f'Mentor#{mentor_name[args[0]]}'
+
+
+@add_special_fixed(10)
+def encode_special_fixed_status(args):
+    status_id = args[0]
+    try:
+        return f'Status#{sq_pack.sheets.status_sheet[status_id][0]}#{status_id}'
+    except KeyError:
+        return f'Status#{status_id}#{status_id}'
+
+
+@add_special_fixed(11)
+def encode_special_fixed_finder(args):
+    id1, id2, id3, is_world, *_ = args
+    finder_id = id3 << 48 | id2 << 24 | id1
+    if is_world:
+        return f'LocalWorldFinder#{finder_id:X}'
+    else:
+        return f'CrossWorldFinder#{finder_id:X}'
+
+
+@add_special_fixed(12)
+def encode_special_fixed_quest(args):
+    quest_id = args[0]
+    try:
+        return f'Quest#{sq_pack.sheets.quest_sheet[0x10000 | quest_id][0]}'
+    except KeyError:
+        return f'Quest#{quest_id}'
+
+
+@add_encode_macro(MacroType.FIXED)
+def encode_fixed(macro: Macro):
+    if sq_pack is None: return default_encode_macro(macro)
+    if not hasattr(sq_pack, '__completion_group_cache__'):
+        cache = {}
+        completion_sheet = sq_pack.sheets.completion_sheet
+        for row in completion_sheet:
+            lt = str(row.lookup_table)
+            if lt and lt[0] != '@':
+                cache[row.group] = sq_pack.exd.get_sheet_raw(lt.split('[', 1)[0])
+        setattr(sq_pack, '__completion_group_cache__', cache)
+    else:
+        cache = getattr(sq_pack, '__completion_group_cache__')
+    group, key, *args = macro
+    if group == 200:
+        try:
+            if 1 <= key <= 12 and (encoder := _special_fixed[key - 1]):
+                return f"<{macro.name} ({encoder(args)})>"
+        except:
+            pass
+        return default_encode_macro(macro)
+    if sheet := cache.get(group + 1):
+        try:
+            row = sheet[key]
+        except KeyError:
+            return f"<{macro.name} ({sheet.name}#{key})>"
+        else:
+            return f"<{macro.name} ({sheet.name}#{row[0]})>"
+    return f"<{macro.name} ({sq_pack.sheets.completion_sheet[key].text})>"
 
 
 class SeString(list):

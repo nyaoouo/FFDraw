@@ -1,5 +1,6 @@
 import base64
 import struct
+import typing
 import zlib
 from threading import Lock
 from typing import TYPE_CHECKING, Dict, TypeVar, Generic, Callable
@@ -122,7 +123,7 @@ class LangSheet(Generic[_T]):
             for row_id in _block_sheet.row_offset_map.keys(): self.row_to_block_sheet_map[row_id] = _block_sheet
         return self.range_to_block_sheet_map[block_range]
 
-    def iter_rows(self, condition: Callable[[_T], bool] = None):
+    def iter_rows(self, condition: Callable[[_T], bool] = None) -> typing.Iterable[_T]:
         self.check_is_all_block_initialized()
         if condition is None:
             for k in self.row_to_block_sheet_map.keys():
@@ -196,7 +197,7 @@ class Sheet(Generic[_T]):
     def get_row(self, row_id: int, user_lang: 'Language' = None, default=dummy) -> _T:
         return self.get_lang_sheet(user_lang).get_row(row_id, default)
 
-    def iter_rows(self, condition: Callable[[_T], bool] = None, user_lang: 'Language' = None):
+    def iter_rows(self, condition: Callable[[_T], bool] = None, user_lang: 'Language' = None) -> typing.Iterable[_T]:
         return self.get_lang_sheet(user_lang).iter_rows(condition)
 
     def first(self, condition: Callable[[_T], bool], user_lang: 'Language' = None, default: _T2 = None) -> _T | _T2:

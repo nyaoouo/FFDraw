@@ -114,11 +114,11 @@ class Index:
         self.pack = pack
         if isinstance(path_or_stream, (str, Path)):
             with open(path_or_stream, 'rb') as stream:
-                self._build(stream)
+                self._load(stream)
         else:
-            self._build(path_or_stream)
+            self._load(path_or_stream)
 
-    def _build(self, stream: IO):
+    def _load(self, stream: IO):
         start_pos = stream.tell()
         self.version_info = VersionInfo.from_buffer_copy(stream.read(VersionInfo._size_))
         assert self.version_info.magic_str == b'SqPack', Exception('version_info magic_str not pair')

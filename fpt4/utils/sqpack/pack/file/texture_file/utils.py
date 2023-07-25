@@ -2,7 +2,7 @@ import ctypes
 import struct
 
 from nylib.struct import fctypes, set_fields_from_annotations, Enum
-from nylib.utils import serialize_data
+from nylib.utils.serialize import struct_to_dict
 from ..utils import FileCommonHeader
 
 
@@ -39,7 +39,7 @@ class Attribute(ctypes.Structure):
     def _serialize_(self):
         return {
             'value': struct.unpack('<I', self)[0],
-            'flags': tuple(k for k, v in serialize_data(self).items() if v),
+            'flags': tuple(k for k, v in struct_to_dict(self).items() if v),
         }
 
 
