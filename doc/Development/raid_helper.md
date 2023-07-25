@@ -50,8 +50,7 @@ from raid_helper.utils import *
 * 描述：添加一个两个实体之间的直线
 * 参数：
 
-
-	> pos1: typing.Callable[[], glm.vec3] | glm.vec3 | Actor,
+	    pos1: typing.Callable[[], glm.vec3] | glm.vec3 | Actor,
         pos2: typing.Callable[[], glm.vec3] | glm.vec3 | Actor,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
         surface_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -62,14 +61,13 @@ from raid_helper.utils import *
         max_distance: float = None,
         step_distance: float = 1,
 
-
 ---
 #### 方法名：draw_knock_predict_circle
 * 描述：添加一个击退位置的预测路径（箭头形状）
 * 参数：
 
 
-	> radius: typing.Callable[[], float] | float,
+	    radius: typing.Callable[[], float] | float,
         pos: typing.Callable[[], glm.vec3] | glm.vec3 | Actor,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
         surface_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -84,7 +82,7 @@ from raid_helper.utils import *
 * 描述：添加一个距离衰减的扩散效果
 * 参数：
 
-	>  radius: typing.Callable[[BaseOmen], float] | float,
+	    radius: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
         surface_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -102,7 +100,7 @@ from raid_helper.utils import *
 * 参数：
 
 
-	> radius: typing.Callable[[BaseOmen], float] | float,
+	    radius: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         facing: typing.Callable[[BaseOmen], float] | float | Actor = 0,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -116,10 +114,10 @@ from raid_helper.utils import *
 ---
 #### 方法名：draw_circle
 * 描述：添加一个圆形的绘制
-* 备注：inner_radius表示内径距离，默认为0，想要绘制月环inner_radius填写float。
+* 备注：inner_radius表示内径距离，默认为0，想要绘制月环inner_radius填写数值。
 * 参数：
 
-	>  radius: typing.Callable[[BaseOmen], float] | float,
+	    radius: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
         surface_color: typing.Callable[[BaseOmen], glm.vec4 | str] | glm.vec4 | str = None,
@@ -135,7 +133,7 @@ from raid_helper.utils import *
 * 描述：添加一个矩形的绘制
 * 参数：
 
-	>  width: typing.Callable[[BaseOmen], float] | float,
+	    width: typing.Callable[[BaseOmen], float] | float,
         length: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         facing: typing.Callable[[BaseOmen], float] | float | Actor = None,
@@ -153,7 +151,7 @@ from raid_helper.utils import *
 * 描述：添加一个扇形的绘制
 * 参数：
 
-	> degree: typing.Callable[[BaseOmen], float] | float,
+	    degree: typing.Callable[[BaseOmen], float] | float,
         radius: typing.Callable[[BaseOmen], float] | float,
         pos: typing.Callable[[BaseOmen], glm.vec3] | glm.vec3 | Actor,
         facing: typing.Callable[[BaseOmen], float] | float | Actor = None,
@@ -171,7 +169,7 @@ from raid_helper.utils import *
 * 描述：添加一个直线的绘制
 * 参数：
 
-	>  source: Actor | glm.vec3 | typing.Callable[[BaseOmen], glm.vec3],
+	    source: Actor | glm.vec3 | typing.Callable[[BaseOmen], glm.vec3],
         target: Actor | glm.vec3 | typing.Callable[[BaseOmen], glm.vec3],
         color: glm.vec4,
         width: int = 3,
