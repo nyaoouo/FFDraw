@@ -145,6 +145,13 @@ class NActor(Actor):
         self.__id = actor.id
         self.__name = actor.name
 
+    def hate_target_id(self, idx):
+        if idx == 0:
+            return self.target_id
+        if (t_hl := main.mem.hate_list.target).target_id == self.__id:
+            return t_hl.list[idx].id
+        return 0
+
     def __str__(self):
         return f'{self.__name}#{self.__id:X}'
 
