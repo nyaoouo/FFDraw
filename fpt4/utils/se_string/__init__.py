@@ -1,15 +1,26 @@
 import enum
-import json
 import struct
 import typing
-from nylib.utils import KeyRoute
 
 from .define import MacroType, MACRODEFPARAM
 
 if typing.TYPE_CHECKING:
     from ..sqpack import SqPack
 
-sq_pack: 'SqPack|None' = None
+_sq_pack: 'SqPack|None' = None
+
+
+def get_sq_pack():
+    global _sq_pack
+    if _sq_pack is not None:
+        return _sq_pack
+    try:
+        from fpt4.utils.sqpack import SqPack
+        _sq_pack = SqPack.get()
+    except (ImportError, StopIteration):
+        pass
+    return _sq_pack
+
 
 # region utils
 
@@ -153,6 +164,7 @@ add_special_fixed = lambda special_type: lambda func: _special_fixed.__setitem__
 
 @add_special_fixed(1)
 def encode_special_fixed_name(args):
+    sq_pack = get_sq_pack()
     world_id, name, *_ = args
     if not world_id: return str(name)
     try:
@@ -164,6 +176,7 @@ def encode_special_fixed_name(args):
 
 @add_special_fixed(2)
 def encode_special_fixed_job(args):
+    sq_pack = get_sq_pack()
     job_id, level, *_ = args
     try:
         job = sq_pack.sheets.class_job_sheet[job_id].text_name
@@ -178,6 +191,7 @@ def map_to_game_coord(pos, scale, offset):
 
 @add_special_fixed(3)
 def encode_special_fixed_pos(args):
+    sq_pack = get_sq_pack()
     t_id, map_id, x, z, y, *_ = args
     try:
         territory = sq_pack.sheets.territory_type_sheet[t_id]
@@ -198,6 +212,7 @@ def encode_special_fixed_pos(args):
 
 @add_special_fixed(4)
 def encode_special_fixed_item(args):
+    sq_pack = get_sq_pack()
     item_id, *_ = args  # item_id, param, rarity, _, _, display name
     if item_id >= 2000000:
         try:
@@ -227,6 +242,7 @@ def encode_special_fixed_se(args):
 
 @add_special_fixed(6)
 def encode_special_fixed_obj(args):
+    sq_pack = get_sq_pack()
     name_id = args[0]
     try:
         return f"NpcName#{sq_pack.sheets.b_npc_name_sheet[name_id].singular}"
@@ -250,6 +266,7 @@ def encode_special_fixed_mentor(args):
 
 @add_special_fixed(10)
 def encode_special_fixed_status(args):
+    sq_pack = get_sq_pack()
     status_id = args[0]
     try:
         return f'Status#{sq_pack.sheets.status_sheet[status_id][0]}#{status_id}'
@@ -269,6 +286,7 @@ def encode_special_fixed_finder(args):
 
 @add_special_fixed(12)
 def encode_special_fixed_quest(args):
+    sq_pack = get_sq_pack()
     quest_id = args[0]
     try:
         return f'Quest#{sq_pack.sheets.quest_sheet[0x10000 | quest_id][0]}'
@@ -278,6 +296,7 @@ def encode_special_fixed_quest(args):
 
 @add_encode_macro(MacroType.FIXED)
 def encode_fixed(macro: Macro):
+    sq_pack = get_sq_pack()
     if sq_pack is None: return default_encode_macro(macro)
     if not hasattr(sq_pack, '__completion_group_cache__'):
         cache = {}

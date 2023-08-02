@@ -65,7 +65,7 @@ class FFDraw:
         )).start()
 
         self.mem = mem.XivMem(self, pid)
-        self.sq_pack = SqPack(pathlib.Path(self.mem.base_module.filename.decode(self.path_encoding)).parent)
+        self.sq_pack = SqPack.get(pathlib.Path(self.mem.base_module.filename.decode(self.path_encoding)).parent)
 
         self.gui = gui.Drawing(self)
         self.gui.always_draw = self.config.setdefault('gui', {}).setdefault('always_draw', False)
