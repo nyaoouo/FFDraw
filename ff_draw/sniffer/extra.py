@@ -82,8 +82,9 @@ class SnifferExtra:
             msg.id = enums.ActorControlId(msg.id)
         except ValueError:
             pass
-        if msg.id == enums.ActorControlId.SetLockOn:
-            msg.args[0] += self.sniffer.packet_fix.value
+        # move to packet define to apply fix, like other packets
+        # if msg.id == enums.ActorControlId.SetLockOn:
+        #     msg.args[0] += self.sniffer.packet_fix.value
         if t := actor_control.type_map.get(msg.id):
             if not hasattr(t, '__field_count'):
                 setattr(t, '__field_count', cnt := len(dataclasses.fields(t)))

@@ -7,7 +7,7 @@ import glm
 from nylib.struct import set_fields_from_annotations, fctypes
 from fpt4.utils.se_string import SeString
 from ff_draw.sniffer.utils.simple import pos_web_to_raw, dir_web_to_raw
-from . import TypeMap, ZoneServer
+from . import TypeMap, ZoneServer, ActorControlId
 
 type_map = TypeMap()
 game_version = tuple(map(int, os.environ.get('FFXIV_GAME_VERSION').split('.')))
@@ -139,6 +139,9 @@ class ActorCast(Structure):
         return dir_web_to_raw(self._facing)
 
 
+_actor_control_set_lock_on = ActorControlId.SetLockOn.value
+
+
 @type_map.set(ZoneServer.ActorControl)
 @set_fields_from_annotations
 class ActorControl(Structure):
@@ -148,6 +151,10 @@ class ActorControl(Structure):
     arg1: 'fctypes.c_uint32' = eval('0X8')
     arg2: 'fctypes.c_uint32' = eval('0XC')
     arg3: 'fctypes.c_uint32' = eval('0X10')
+
+    def _pkt_fix(self, v):
+        if self.id == _actor_control_set_lock_on:
+            self.arg0 += v
 
 
 @type_map.set(ZoneServer.ActorControlSelf)
@@ -407,7 +414,7 @@ class PartyMember(Structure):
         level: 'fctypes.c_uint8' = eval('0X4F')
         level_sync: 'fctypes.c_uint8' = eval('0X50')
         platform_type: 'fctypes.c_char' = eval('0X51')
-        status: 'fctypes.array(ZoneProtoDownStatusWork, 30)' = eval('0X54')
+        status: 'fctypes.array(Status, 30)' = eval('0X54')
     else:
         _size_ = 0X1B8
         _name: 'fctypes.array(fctypes.c_char, 32)' = eval('0X0')
@@ -492,3 +499,19 @@ class NpcYell(Structure):
     name_id: 'fctypes.c_uint32' = eval('0X8')
     npc_yell_id: 'fctypes.c_uint16' = eval('0XC')  # NpcYell sheet
     args: 'fctypes.array(fctypes.c_int32, 4)' = eval('0X10')
+
+
+@type_map.set(ZoneServer.PlayerSpawn)
+@set_fields_from_annotations
+class PlayerSpawn(Structure):
+    _size_ = 0x278
+    title_id: 'fctypes.c_uint16' = eval('0X0')
+    playing_action_timeline_id: 'fctypes.c_uint16' = eval('0X2')
+    world_id: 'fctypes.c_uint16' = eval('0X4')
+    home_world_id: 'fctypes.c_uint16' = eval('0X6')
+    gm_level: 'fctypes.c_uint8' = eval('0X8')
+    grand_company: 'fctypes.c_uint8' = eval('0X9')
+    grand_company_level: 'fctypes.c_uint8' = eval('0XA')
+    online_status: 'fctypes.c_uint8' = eval('0XB')
+    pose_emote: 'fctypes.c_uint8' = eval('0XC')
+    create_common: 'CommonSpawn' = eval('0X10')
