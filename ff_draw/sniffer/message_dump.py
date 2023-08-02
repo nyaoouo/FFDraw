@@ -1,18 +1,18 @@
 import json
+import os
 import pathlib
 import struct
 import threading
 import time
 
 from . import enums
-from .message_structs import zone_server, zone_client, chat_server, chat_client
 from .utils import simple
 
 empty_ipc = bytearray(16)
 
 
 class MessageDumper:
-    _ver_ = 0
+    _ver_ = 1
 
     def __init__(self, file_name: pathlib.Path | str, game_build_date: str):
         if isinstance(file_name, str): file_name = pathlib.Path(file_name)
@@ -28,6 +28,7 @@ class MessageDumper:
         return {
             'dumper_version': self._ver_,
             'game_build_date': self.game_build_date,
+            'game_version': os.environ.get('FFXIV_GAME_VERSION', '0.0.0'),
             'start_log_time': int(time.time() * 1000),
         }
 
@@ -49,11 +50,12 @@ class MessageDumper:
             header = json.loads(buf.readline().decode('utf-8'))
             assert isinstance(header, dict) and header['dumper_version'] == cls._ver_
             game_build_date = header['game_build_date']
+            assert os.environ.setdefault('FFXIV_GAME_VERSION',header['game_version']) == header['game_version']
+            from .message_structs import zone_server, zone_client, chat_server, chat_client
             chat_server_pno_map = simple.load_pno_map(pno_dir / 'ChatServerIpc.csv', game_build_date, enums.ChatServer)
             chat_client_pno_map = simple.load_pno_map(pno_dir / 'ChatClientIpc.csv', game_build_date, enums.ChatClient)
             zone_server_pno_map = simple.load_pno_map(pno_dir / 'ZoneServerIpc.csv', game_build_date, enums.ZoneServer)
             zone_client_pno_map = simple.load_pno_map(pno_dir / 'ZoneClientIpc.csv', game_build_date, enums.ZoneClient)
-
             while True:
                 if not (header_bytes := buf.read(24)): break
 
