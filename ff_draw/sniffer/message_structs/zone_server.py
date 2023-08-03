@@ -234,6 +234,10 @@ class _EffectResult(Structure):
     status_count: 'fctypes.c_uint8' = eval('0X15')
     status: 'fctypes.array(EffectResultStatus, 4)' = eval('0X18')
 
+    def iter_status(self) -> typing.Iterator[EffectResultStatus]:
+        for i in range(self.status_count):
+            yield self.status[i]
+
 
 @type_map.set(ZoneServer.EffectResult)
 @type_map.set(ZoneServer.EffectResult4)
