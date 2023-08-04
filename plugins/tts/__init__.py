@@ -58,8 +58,8 @@ class TTS(FFDrawPlugin):
             imgui.end_popup()
         imgui.pop_id()
 
-        if self.use_type != TTSType.System.value:
-            self.tts_impl[self.use_type].render()
+        if impl := self.tts_impl.get(self.use_type):
+            impl.render()
 
         imgui.text('test: ')
         imgui.same_line()
