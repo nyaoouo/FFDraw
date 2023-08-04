@@ -367,9 +367,17 @@ class NetLogger:
         imgui.text('filter:')
         imgui.same_line()
         with imguictx.ItemWidth(-1):
-            _, self.filter = imgui.input_text('##filter_text', self.filter, 256)
-        if imgui.button('apply filter', -1):
+            changed, self.filter = imgui.input_text('##filter_text', self.filter, 256)
+        # if imgui.button('apply filter', -1):
+        if changed:
             self.apply_filter()
+        if self.filter:
+            btn_width = imgui.get_window_width() / 2 - imgui.get_style().window_padding.x
+            if imgui.button('<-', btn_width, 0):
+                self.display_idx = next((i for i in range(self.display_idx - 1, -1, -1) if self.display_data[i].is_select), self.display_idx)
+            imgui.same_line()
+            if imgui.button('->', btn_width, 0):
+                self.display_idx = next((i for i in range(self.display_idx + 1, len(self.display_data)) if self.display_data[i].is_select), self.display_idx)
 
     def render_detail(self):
         if imgui.button('copy', -1):
