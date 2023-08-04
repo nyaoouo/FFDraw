@@ -1,5 +1,6 @@
 import datetime
 
+import glfw
 import imgui
 import nylib.utils.imgui.ctx as imguictx
 from .utils import *
@@ -371,6 +372,10 @@ class NetLogger:
             self.apply_filter()
 
     def render_detail(self):
+        if imgui.button('copy', -1):
+            import pprint
+            s = pprint.pformat(self.display_data[self.select_idx].data_serialized, sort_dicts=False, )
+            glfw.set_clipboard_string(None, s)
         imgui_render_data(self.display_data[self.select_idx].data_serialized)
 
     def render(self):
