@@ -317,3 +317,37 @@ class ActorTable:
     def me(self):
         if a_ptr := ny_mem.read_uint64(self.handle, self.me_ptr):
             return Actor(self.handle, a_ptr)
+
+
+class Targets:
+    def __init__(self, main: 'XivMem'):
+        self.main = main
+        self.handle = main.handle
+        self.address, = self.main.scanner.find_point("48 8B 05 * * * * 48 8D 0D ? ? ? ? FF 50 ? 48 85 DB")
+
+    @property
+    def current(self):
+        if actor_ptr := ny_mem.read_ulonglong(self.handle, self.address + 0x80):
+            return Actor(self.handle, actor_ptr)
+
+    @current.setter
+    def current(self, actor: Actor):
+        ny_mem.write_ulonglong(self.handle, self.address + 0x80, actor.address)
+
+    @property
+    def mouse_over(self):
+        if actor_ptr := ny_mem.read_ulonglong(self.handle, self.address + 0xD0):
+            return Actor(self.handle, actor_ptr)
+
+    @mouse_over.setter
+    def mouse_over(self, actor: Actor):
+        ny_mem.write_ulonglong(self.handle, self.address + 0xD0, actor.address)
+
+    @property
+    def focus(self):
+        if actor_ptr := ny_mem.read_ulonglong(self.handle, self.address + 0xF8):
+            return Actor(self.handle, actor_ptr)
+
+    @focus.setter
+    def focus(self, actor: Actor):
+        ny_mem.write_ulonglong(self.handle, self.address + 0xF8, actor.address)

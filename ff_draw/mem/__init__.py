@@ -161,6 +161,7 @@ class XivMem:
         self.replay_flag_address = self.scanner.find_point('84 1d * * * * 74 ? 80 3d')[0]
         self._a_p_framework = self.scanner.find_point('48 ? ? * * * * 41 39 b1')[0]
         self.actor_table = actor.ActorTable(self)
+        self.targets = actor.Targets(self)
         self.party = party.PartyManager(self)
         self.network_target = network_target.NetworkInfo(self)
         self.packet_fix = packet_fix.PacketFix(self)
