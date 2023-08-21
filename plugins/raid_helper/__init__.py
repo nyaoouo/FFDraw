@@ -221,6 +221,7 @@ class RaidHelper(FFDrawPlugin):
         target = self.main.mem.actor_table.get_actor_by_id(data.target_id) if data.target_id != source_id else None
         effect_width = action.effect_width
         effect_range = action.effect_range
+        if 3 <= action.effect_type <= 5: effect_range += source.radius  # deal fan = 3, laser = 4 , around = 5 with source radius extra
         color = surface_color = line_color = None
         if _color := omen_color.get(action_id):
             _line_color = None
