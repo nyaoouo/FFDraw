@@ -1,4 +1,5 @@
 import datetime
+import re
 
 import glfw
 import imgui
@@ -18,17 +19,23 @@ class _IMessage:
         self.source_id = source_id
         self.key = str(key)
         self.data = data
-        self.timestamp_str = datetime.datetime.fromtimestamp(self.timestamp_ms / 1000).strftime(datetime_str)
+        self.timestamp_str = datetime.datetime.fromtimestamp(self.timestamp_ms / 1000).strftime('%Y-%m-%d %H:%M:%S:%f')[:-3]
         self.data_serialized = data if isinstance(data, (bytes, bytearray)) else serialize_data(data)
         self.source_str = str(self.main.actor_getter(self.source_id))
 
-    def _match(self, key):
-        if not key: return True
-        return key in self.timestamp_str or key in self.source_str.lower() or key in self.key.lower() or key in self.data_str.lower()
-
     def match(self, key):
-        self.is_select = self._match(key)
+        self.is_select = (not key or any(key in s for s in self.str_to_match(True)))
         return self.is_select
+
+    def re_match(self, key: re.Pattern):
+        self.is_select = (not key or any(key.search(s) for s in self.str_to_match(False)))
+        return self.is_select
+
+    def str_to_match(self, lower=False):
+        yield self.timestamp_str
+        yield self.source_str.lower() if lower else self.source_str
+        yield self.key.lower() if lower else self.key
+        yield self.data_str.lower() if lower else self.data_str
 
     def __str__(self):
         return f'{self.timestamp_str}/{self.source_str}/{self.key}/{self.data_str}'
@@ -175,7 +182,9 @@ class NetLogger:
         self.data = []
         self.display_data = []
         self.filter = ''
+        self.filter_use_regex = False
         self._filter = ''
+        self._filter_use_regex = False
         self._only_show_filtered = False
         self._only_show_defined = True
         self._lock_bottom = True
@@ -199,10 +208,24 @@ class NetLogger:
         self.display_data = [d for d in self.data if self._is_display_data(d)]
 
     def apply_filter(self):
-        if self.filter == self._filter: return
+        if self.filter == self._filter and self.filter_use_regex == self._filter_use_regex: return
         self._filter = self.filter
-        lower = self._filter.lower()
-        for d in self.data: d.match(lower)
+        self._filter_use_regex = self.filter_use_regex
+
+        if self.filter_use_regex:
+            if self.filter:
+                try:
+                    regex = re.compile(self.filter)
+                except re.error:
+                    self._update_display_data(False)
+                    return
+            else:
+                regex = None
+            for d in self.data: d.re_match(regex)
+        else:
+            lower = self._filter.lower()
+            for d in self.data: d.match(lower)
+
         self._update_display_data(False)
 
     @property
@@ -364,11 +387,15 @@ class NetLogger:
         changed, new_val = imgui.checkbox('##only_show_defined', self.only_show_defined)
         if changed: self.only_show_defined = new_val
 
+        imgui.text('filter use regex:')
+        imgui.same_line()
+        changed, self.filter_use_regex = imgui.checkbox('##filter_use_regex', self.filter_use_regex)
+        if changed: self.apply_filter()
+
         imgui.text('filter:')
         imgui.same_line()
         with imguictx.ItemWidth(-1):
             changed, self.filter = imgui.input_text('##filter_text', self.filter, 256)
-        # if imgui.button('apply filter', -1):
         if changed:
             self.apply_filter()
         if self.filter:
