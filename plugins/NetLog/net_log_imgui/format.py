@@ -221,9 +221,9 @@ def fmt_actor_control_set_model_attr(source_id: int, data: '_actor_control.SetMo
 @actor_control_fmt.add('SetTargetable')
 def fmt_actor_control_set_targetable(source_id: int, data: '_actor_control.SetTargetable', sq_pack: 'SqPack', actor_getter: typing.Callable[[int], ActorDef], target_id: int):
     if data.is_targetable:
-        return f'{actor_getter(data.target_id)} is now targetable'
+        return f'{actor_getter(source_id)} is now targetable'
     else:
-        return f'{actor_getter(data.target_id)} is now untargetable'
+        return f'{actor_getter(source_id)} is now untargetable'
 
 
 @actor_control_fmt.add('EventDirector')
@@ -244,4 +244,4 @@ def fmt_actor_control_play_action_time_line(source_id: int, data: '_actor_contro
 
 @actor_control_fmt.add('SetActorTimeLine')
 def fmt_actor_control_set_actor_time_line(source_id: int, data: '_actor_control.SetActorTimeLine', sq_pack: 'SqPack', actor_getter: typing.Callable[[int], ActorDef], target_id: int):
-    return f'{actor_getter(data.target_id)} set time line ({data.param1}, {data.param2})'
+    return f'{actor_getter(source_id)} set time line ({data.param1}, {data.param2})'
