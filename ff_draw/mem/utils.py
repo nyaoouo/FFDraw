@@ -2,11 +2,73 @@ import ctypes.wintypes
 import re
 import typing
 
+import glm
+
 from nylib.utils.win32 import memory as ny_mem
 from nylib.utils.win32.exception import WinAPIError
 
 _addr_size = ctypes.sizeof(ctypes.c_void_p)
 _T = typing.TypeVar('_T')
+
+
+class bit_field_property:
+    def __init__(self, offset, size=1):
+        self.byte_off = offset // 8
+        self.bit_off = offset % 8
+        self.mask = (1 << size) - 1
+        self.data_size = (self.bit_off + size + 7) // 8 * 8
+
+    @classmethod
+    def obj_properties(cls, owner):
+        if not (data := getattr(owner, '__bit_field_property__', {})): return
+        yield from data.items()
+
+    def __set_name__(self, owner, name):
+        if not hasattr(owner, '__bit_field_property__'):
+            owner.__bitfields__ = {}
+        owner.__bitfields__[name] = self
+
+    def get_instance_value(self, instance):
+        return getattr(ny_mem, 'read_uint' + str(self.data_size))(instance.handle, instance.address + self.byte_off)
+
+    def __get__(self, instance, owner):
+        return (self.get_instance_value(instance) >> self.bit_off) & self.mask
+
+    def set_instance_value(self, instance, value):
+        getattr(ny_mem, 'write_uint' + str(self.data_size))(instance.handle, instance.address + self.byte_off, value)
+
+    def __set__(self, instance, value):
+        new_val = (self.get_instance_value(instance) & ~(self.mask << self.bit_off)) | ((value & self.mask) << self.bit_off)
+        self.set_instance_value(instance, new_val)
+
+
+class glm_mem_property(typing.Generic[_T]):
+    def __init__(self, t: typing.Type[_T], offset_key=None, default=0):
+        self.t = t
+        self.size = glm.sizeof(t)
+        self.offset_key = offset_key
+        self.default = default
+
+    @classmethod
+    def obj_properties(cls, owner):
+        if not (data := getattr(owner, '__glm_mem_property__', {})): return
+        yield from data.items()
+
+    def __set_name__(self, owner, name):
+        if not self.offset_key:
+            self.offset_key = name
+        if not hasattr(owner, '__glm_mem_property__'):
+            owner.__bitfields__ = {}
+        owner.__bitfields__[name] = self
+
+    def __get__(self, instance, owner) -> _T:
+        if not (addr := instance.address):
+            return self.default
+        return self.t.from_bytes(bytes(ny_mem.read_bytes(instance.handle, addr + getattr(instance.offsets, self.offset_key), self.size)))
+
+    def __set__(self, instance, value: _T):
+        if not (addr := instance.address): return
+        return ny_mem.write_bytes(instance.handle, addr + getattr(instance.offsets, self.offset_key), value.to_bytes())
 
 
 class direct_mem_property:
@@ -15,9 +77,17 @@ class direct_mem_property:
         self.offset_key = offset_key
         self.default = default
 
+    @classmethod
+    def obj_properties(cls, owner):
+        if not (data := getattr(owner, '__direct_mem_property__', {})): return
+        yield from data.items()
+
     def __set_name__(self, owner, name):
         if not self.offset_key:
             self.offset_key = name
+        if not hasattr(owner, '__direct_mem_property__'):
+            owner.__direct_mem_property__ = {}
+        owner.__direct_mem_property__[name] = self
 
     def __get__(self, instance, owner) -> 'float | int | direct_mem_property':
         if instance is None: return self
