@@ -31,11 +31,14 @@ class _IMessage:
         self.is_select = (not key or any(key.search(s) for s in self.str_to_match(False)))
         return self.is_select
 
-    def str_to_match(self, lower=False):
+    def _str_to_match(self, lower=False):
         yield self.timestamp_str
         yield self.source_str.lower() if lower else self.source_str
         yield self.key.lower() if lower else self.key
         yield self.data_str.lower() if lower else self.data_str
+
+    def str_to_match(self, lower=False):
+        return '\t'.join(self._str_to_match(lower))
 
     def __str__(self):
         return f'{self.timestamp_str}/{self.source_str}/{self.key}/{self.data_str}'
