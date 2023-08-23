@@ -331,7 +331,9 @@ class SeString(list):
         super().__init__(args)
 
     @classmethod
-    def from_buffer(cls, buffer: bytearray, encoding='utf-8') -> 'SeString|str|Macro':
+    def from_buffer(cls, buffer: bytearray | bytes, encoding='utf-8') -> 'SeString|str|Macro':
+        if isinstance(buffer, bytes):
+            buffer = bytearray(buffer)
         obj = cls()
         while buffer:
             sep = buffer.find(MacroType.BEGIN.value)
