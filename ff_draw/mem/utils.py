@@ -48,6 +48,7 @@ class glm_mem_property(typing.Generic[_T]):
         self.size = glm.sizeof(t)
         self.offset_key = offset_key
         self.default = default
+        self.owner = None
 
     @classmethod
     def obj_properties(cls, owner):
@@ -55,6 +56,7 @@ class glm_mem_property(typing.Generic[_T]):
         yield from data.items()
 
     def __set_name__(self, owner, name):
+        self.owner = owner
         if not self.offset_key:
             self.offset_key = name
         if not hasattr(owner, '__glm_mem_property__'):
@@ -64,11 +66,11 @@ class glm_mem_property(typing.Generic[_T]):
     def __get__(self, instance, owner) -> _T:
         if not (addr := instance.address):
             return self.default
-        return self.t.from_bytes(bytes(ny_mem.read_bytes(instance.handle, addr + getattr(instance.offsets, self.offset_key), self.size)))
+        return self.t.from_bytes(bytes(ny_mem.read_bytes(instance.handle, addr + getattr(self.owner.offsets, self.offset_key), self.size)))
 
     def __set__(self, instance, value: _T):
         if not (addr := instance.address): return
-        return ny_mem.write_bytes(instance.handle, addr + getattr(instance.offsets, self.offset_key), value.to_bytes())
+        return ny_mem.write_bytes(instance.handle, addr + getattr(self.owner.offsets, self.offset_key), value.to_bytes())
 
 
 class direct_mem_property:
@@ -76,6 +78,7 @@ class direct_mem_property:
         self.type = _type
         self.offset_key = offset_key
         self.default = default
+        self.owner = None
 
     @classmethod
     def obj_properties(cls, owner):
@@ -83,6 +86,7 @@ class direct_mem_property:
         yield from data.items()
 
     def __set_name__(self, owner, name):
+        self.owner = owner
         if not self.offset_key:
             self.offset_key = name
         if not hasattr(owner, '__direct_mem_property__'):
@@ -95,7 +99,7 @@ class direct_mem_property:
         try:
             return ny_mem.read_memory(
                 instance.handle, self.type,
-                addr + getattr(instance.offsets, self.offset_key)).value
+                addr + getattr(self.owner.offsets, self.offset_key)).value
         except WinAPIError:
             return self.default
 
@@ -103,9 +107,47 @@ class direct_mem_property:
         if instance is None: return
         if not (addr := instance.address): return
         try:
-            return ny_mem.write_bytes(instance.handle, addr + getattr(instance.offsets, self.offset_key), bytearray(self.type(value)))
+            return ny_mem.write_bytes(instance.handle, addr + getattr(self.owner.offsets, self.offset_key), bytearray(self.type(value)))
         except Exception:
             return
+
+
+def struct_mem_property(_type: typing.Type[_T], is_pointer=False, pass_self=False, offset_key=None) -> _T | None: ...  # dirty type hinting
+
+
+class struct_mem_property(typing.Generic[_T]):
+    def __init__(self, _type: typing.Type[_T], is_pointer=False, pass_self=False, offset_key=None):
+        self.type = _type
+        self.is_pointer = is_pointer
+        self.pass_self = pass_self
+        self.offset_key = offset_key
+        self.owner = None
+
+    @classmethod
+    def obj_properties(cls, owner):
+        if not (data := getattr(owner, '__struct_mem_property__', {})): return
+        yield from data.items()
+
+    def __set_name__(self, owner, name):
+        self.owner = owner
+        if not self.offset_key:
+            self.offset_key = name
+        if not hasattr(owner, '__struct_mem_property__'):
+            owner.__direct_mem_property__ = {}
+        owner.__direct_mem_property__[name] = self
+
+    def __get__(self, instance, owner) -> _T | None:
+        if instance is None: return self
+        if not (addr := instance.address): return None
+        addr += getattr(self.owner.offsets, self.offset_key)
+        if self.is_pointer and not (addr := ny_mem.read_address(instance.handle, addr)):
+            return None
+        a1 = instance if self.pass_self else instance.handle
+        return self.type(a1, addr)
+
+    def __set__(self, instance, value):
+        if instance is None: return
+        raise Exception('Cannot set struct property')
 
 
 def get_hwnd(pid):
