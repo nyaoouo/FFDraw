@@ -458,7 +458,7 @@ class MapTrigger(TriggerGroup):
         if not (stack.function == "get" and stack.frame.f_locals.get("cls") is self.__class__ and stack.frame.f_globals is globals()):
             call_from = f"{stack.filename}:{stack.lineno}"
             _warn_logger.warning(f"MapTrigger({territory_id}) called from {call_from}, use MapTrigger.get({territory_id}) instead")
-        assert territory_id not in MapTrigger.triggers
+        assert territory_id not in MapTrigger.triggers, f"MapTrigger({territory_id}) already exists, use MapTrigger.get({territory_id}) instead"
         MapTrigger.triggers[territory_id] = self
         self.territory_id = territory_id
         try:
