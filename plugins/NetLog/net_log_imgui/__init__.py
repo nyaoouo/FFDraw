@@ -38,7 +38,7 @@ class _IMessage:
         yield self.data_str.lower() if lower else self.data_str
 
     def str_to_match(self, lower=False):
-        return '\t'.join(self._str_to_match(lower))
+        yield '\t'.join(self._str_to_match(lower))
 
     def __str__(self):
         return f'{self.timestamp_str}/{self.source_str}/{self.key}/{self.data_str}'
