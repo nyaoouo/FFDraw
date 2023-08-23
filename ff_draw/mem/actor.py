@@ -4,7 +4,7 @@ import typing
 import glm
 from fpt4.utils.se_string import SeString
 from nylib.utils.win32 import memory as ny_mem
-from .utils import direct_mem_property, WinAPIError
+from .utils import direct_mem_property, WinAPIError, struct_mem_property
 
 if typing.TYPE_CHECKING:
     from . import XivMem
@@ -14,6 +14,22 @@ status_struct = struct.Struct('HHfI')
 
 def is_invalid_id(i):
     return i == 0 or i == 0xe0000000
+
+
+class Channeling:
+    class offsets:
+        id = 0x0
+        width = 0x1
+        p_vfx = 0x8
+        target_id = 0x10
+
+    def __init__(self, handle, address):
+        self.handle = handle
+        self.address = address
+
+    id = direct_mem_property(ctypes.c_uint8)
+    width = direct_mem_property(ctypes.c_uint8)
+    target_id = direct_mem_property(ctypes.c_uint64)
 
 
 class StatusManager:
@@ -126,6 +142,7 @@ class ActorOffsets:
     model_attr = 0x1E4
     mount_id = 0x668
     pc_target_id = 0xC80
+    channeling = 0x1A20
     b_npc_target_id = 0x1A88
     current_world = 0x1AF4
     home_world = 0x1AF6
@@ -140,6 +157,7 @@ class ActorOffsets640(ActorOffsets):
     model_attr = 0x1E6
     mount_id = 0x678
     pc_target_id = 0xCB0
+    channeling = 0x1A50
     b_npc_target_id = 0x1AB8
     current_world = 0x1B1C
     home_world = 0x1B1E
@@ -199,6 +217,10 @@ class Actor:
     def target_distance(self, target: 'Actor'):
         return glm.distance(self.pos, target.pos)
 
+    def get_channeling(self, idx):
+        if (c := Channeling(self.handle, self.address + self.offsets.channeling + idx * 0x18)).id:
+            return c
+
     @property
     def target_id(self):
         try:
@@ -224,13 +246,8 @@ class Actor:
         except WinAPIError:
             return False
 
-    @property
-    def status(self):
-        return StatusManager(self.handle, self.address + self.offsets.status)
-
-    @property
-    def cast_info(self):
-        return CastInfo(self.handle, self.address + self.offsets.cast_info)
+    status = struct_mem_property(StatusManager)
+    cast_info = struct_mem_property(CastInfo)
 
 
 class ActorTable:
