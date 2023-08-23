@@ -530,6 +530,7 @@ def timeout_when_channeling_change(omen: BaseOmen, source_id, target_id=None, id
         assert target_id is not None, 'target_id must be specified if source_id is not ActorControlMessage'
 
     def on_channeling(msg: ActorControlMessage[actor_control.SetChanneling | actor_control.RemoveChanneling]):
+        print('on_channeling', msg.id, msg.source_id, msg.param.idx)
         if msg.source_id == source_id and msg.param.idx == idx: remove()
 
     def remove():
@@ -537,15 +538,20 @@ def timeout_when_channeling_change(omen: BaseOmen, source_id, target_id=None, id
         main.sniffer.on_actor_control[ActorControlId.RemoveChanneling].remove(on_channeling)
         omen.timeout()
 
+    get_actor_by_id = main.mem.actor_table.get_actor_by_id
+
+    def validate_shape():
+        return (src_actor := get_actor_by_id(source_id)) and (c := src_actor.get_channeling(idx)) and c.target_id == target_id
+
     @new_thread
     def install():
         with main.sniffer.ipc_lock:
+            print('install', source_id, idx)
             main.sniffer.on_actor_control[ActorControlId.SetChanneling].append(on_channeling)
             main.sniffer.on_actor_control[ActorControlId.RemoveChanneling].append(on_channeling)
-            get_actor_by_id = main.mem.actor_table.get_actor_by_id
 
             old_shape = omen._shape
-            omen._shape = lambda o: o.get_maybe_callable(old_shape) if get_actor_by_id(source_id) and get_actor_by_id(target_id) else o.timeout()
+            omen._shape = lambda o: o.get_maybe_callable(old_shape) if validate_shape() else o.timeout()
             old_destroy = omen.destroy
             omen.destroy = lambda: (remove(), old_destroy())
 
