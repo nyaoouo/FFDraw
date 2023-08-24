@@ -519,3 +519,40 @@ class PlayerSpawn(Structure):
     online_status: 'fctypes.c_uint8' = eval('0XB')
     pose_emote: 'fctypes.c_uint8' = eval('0XC')
     create_common: 'CommonSpawn' = eval('0X10')
+
+
+@type_map.set(ZoneServer.ActorMove)
+@set_fields_from_annotations
+class ActorMove(Structure):
+    _size_ = 0xC
+    _facing: 'fctypes.c_uint16' = eval('0X0')
+    flag: 'fctypes.c_uint16' = eval('0X2')
+    speed: 'fctypes.c_uint8' = eval('0X4')
+    _pos: 'fctypes.array(fctypes.c_uint16, 3)' = eval('0X6')
+
+    @property
+    def pos(self):
+        return glm.vec3(*map(pos_web_to_raw, self._pos))
+
+    @property
+    def facing(self):
+        return dir_web_to_raw(self._facing)
+
+
+@type_map.set(ZoneServer.ActorSetPos)
+@set_fields_from_annotations
+class ActorSetPos(Structure):
+    _size_ = 0X18
+    _facing: 'fctypes.c_uint16' = eval('0X0')
+    type: 'fctypes.c_uint8' = eval('0X2')
+    type_arg: 'fctypes.c_uint8' = eval('0X3')
+    layer_id: 'fctypes.c_uint32' = eval('0X4')
+    _pos: 'fctypes.array(fctypes.c_float, 3)' = eval('0X8')
+
+    @property
+    def pos(self):
+        return glm.vec3(*self._pos)
+
+    @property
+    def facing(self):
+        return dir_web_to_raw(self._facing)
