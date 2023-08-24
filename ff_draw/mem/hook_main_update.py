@@ -11,35 +11,34 @@ def on_game_update_hook():
     once_func = queue.Queue()
 
     def on_update(_hook, game_main):
-        res = _hook.original(game_main)
-        for k, code in list(funcs.items()):
+        for k, (code, args) in list(funcs.items()):
             try:
-                exec(code, {'inject_server': inject_server})
+                exec(code, {'inject_server': inject_server, 'args': args})
             except Exception as e:
                 inject_server.push_event('game_update_hook_error', e)
                 funcs.pop(k, None)
         while True:
             try:
-                _res, code = once_func.get_nowait()
+                _res, code, args = once_func.get_nowait()
                 try:
-                    exec(code, name_space := {'inject_server': inject_server})
+                    exec(code, name_space := {'inject_server': inject_server, 'args': args})
                     _res.set(name_space.get('res', None))
                 except Exception as e:
                     _res.set_exception(e)
             except queue.Empty:
                 break
-        return res
+        return _hook.original(game_main)
 
-    def add_func(code):
+    def add_func(code, *args):
         k = counter.get()
-        funcs[k] = code
+        funcs[k] = code, args
         return k
 
     def remove_func(k):
         funcs.pop(k, None)
 
-    def call_once(code, time_out=5):
-        once_func.put((res := ResEvent(), code))
+    def call_once(code, *args, time_out=5):
+        once_func.put((res := ResEvent(), code, args))
         return res.wait(time_out)
 
     inject_server.call_map['add_game_update_hook'] = add_func
