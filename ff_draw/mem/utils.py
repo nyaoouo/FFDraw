@@ -116,7 +116,7 @@ def struct_mem_property(_type: typing.Type[_T], is_pointer=False, pass_self=Fals
 
 
 class struct_mem_property(typing.Generic[_T]):
-    def __init__(self, _type: typing.Type[_T], is_pointer=False, pass_self=False, offset_key=None):
+    def __init__(self, _type: typing.Type[_T], is_pointer=False, pass_self: bool | str = False, offset_key=None):
         self.type = _type
         self.is_pointer = is_pointer
         self.pass_self = pass_self
@@ -142,7 +142,7 @@ class struct_mem_property(typing.Generic[_T]):
         addr += getattr(self.owner.offsets, self.offset_key)
         if self.is_pointer and not (addr := ny_mem.read_address(instance.handle, addr)):
             return None
-        a1 = instance if self.pass_self else instance.handle
+        a1 = getattr(instance, self.pass_self) if isinstance(self.pass_self, str) else instance if self.pass_self else instance.handle
         return self.type(a1, addr)
 
     def __set__(self, instance, value):
