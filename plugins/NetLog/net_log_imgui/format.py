@@ -34,7 +34,8 @@ class DataFormatter:
         return wrapper
 
     def fmt(self, proto_no: str, source_id: int, data, sq_pack: 'SqPack', actor_getter: typing.Callable[[int], ActorDef], *args, **kwargs):
-        return self._formatters[proto_no](source_id, data, sq_pack, actor_getter, *args, **kwargs)
+        assert isinstance((res := self._formatters[proto_no](source_id, data, sq_pack, actor_getter, *args, **kwargs)), str), f'formatter must return str, got {type(res)}, given {proto_no=}'
+        return res
 
 
 zone_server_fmt = DataFormatter()
@@ -193,9 +194,12 @@ def fmt_actor_control_set_status_param(source_id: int, data: '_actor_control.Set
 @actor_control_fmt.add('StatusEffect')
 def fmt_actor_control_status_effect(source_id: int, data: '_actor_control.StatusEffect', sq_pack: 'SqPack', actor_getter: typing.Callable[[int], ActorDef], target_id: int):
     if data.effect_type == 0x3:
-        return f'{actor_getter(source_id)} status dot from {fmt_status(sq_pack, data.status_id)} by {data.value}'
+        desc = 'dot'
     elif data.effect_type == 0x4:
-        return f'{actor_getter(source_id)} status hot from {fmt_status(sq_pack, data.status_id)} by {data.value}'
+        desc = 'hot'
+    else:
+        desc = f'effect_type {data.effect_type}'
+    return f'{actor_getter(source_id)} status {desc} from {fmt_status(sq_pack, data.status_id)} by {data.value}'
 
 
 @actor_control_fmt.add('SetLockOn')

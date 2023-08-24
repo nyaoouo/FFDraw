@@ -2,7 +2,7 @@ import imgui
 
 from ff_draw.plugins import FFDrawPlugin
 from ff_draw.sniffer.utils import message
-from ff_draw.sniffer.enums import ZoneServer, ActorControlId
+from ff_draw.sniffer.enums import ZoneServer, ActorControlId, ZoneClient
 from nylib.utils.imgui import ctx as imgui_ctx
 from . import net_log_imgui
 
@@ -29,10 +29,19 @@ class NetLog(FFDrawPlugin):
 
     def on_zone_server_message(self, msg: message.NetworkMessage):
         if msg.proto_no in actor_controls: return  # process in on_actor_control_message
+        if msg.proto_no == ZoneServer.ActorMove or msg.proto_no == ZoneServer.ActorSetPos:
+            actor = self.get_actor(msg.header.source_id)
+            actor.pos = msg.message.pos
+            actor.facing = msg.message.facing
         key = msg.proto_no if isinstance(msg.proto_no, int) else msg.proto_no.name
         self.nl.append_data(net_log_imgui.ZoneServerIpc(self.nl, msg.raw_message.bundle_header.timestamp_ms, msg.header.source_id, key, msg.message))
 
     def on_zone_client_message(self, msg: message.NetworkMessage):
+        if msg.proto_no == ZoneClient.UpdatePositionHandler or msg.proto_no == ZoneClient.UpdatePositionInstance:
+            actor = self.get_actor(msg.header.source_id)
+            actor.pos = msg.message.pos
+            actor.facing = msg.message.facing
+            return  # don't record send change pos packet, because it's too many
         key = msg.proto_no if isinstance(msg.proto_no, int) else msg.proto_no.name
         self.nl.append_data(net_log_imgui.ZoneClientIpc(self.nl, msg.raw_message.bundle_header.timestamp_ms, msg.header.source_id, key, msg.message))
 
@@ -72,7 +81,7 @@ class NetLog(FFDrawPlugin):
     def get_actor(self, actor_id):
         if not actor_id or actor_id == 0xe0000000: return None
         if actor := self._get_actor(actor_id):
-            return net_log_imgui.ActorDef(actor_id, actor.base_id, actor.name)
+            return net_log_imgui.ActorDef(actor_id, actor.base_id, actor.name, actor.pos, actor.facing)
         return net_log_imgui.ActorDef(actor_id, 0, '?')
 
     def draw_panel(self):

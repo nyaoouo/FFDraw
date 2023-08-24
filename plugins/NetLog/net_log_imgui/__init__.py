@@ -56,6 +56,7 @@ class ZoneServerIpc(_IMessage):
                 self.data_str = zone_server_fmt.fmt(self.key, self.source_id, self.data, self.main.sq_pack, self.main.actor_getter)
             except KeyError:
                 self.data_str = fmt_simple(self.data_serialized)
+        self.key = f'ZoneServer[{self.key}]'
 
 
 class ZoneClientIpc(_IMessage):
@@ -70,6 +71,7 @@ class ZoneClientIpc(_IMessage):
                 self.data_str = zone_client_fmt.fmt(self.key, self.source_id, self.data, self.main.sq_pack, self.main.actor_getter)
             except KeyError:
                 self.data_str = fmt_simple(self.data_serialized)
+        self.key = f'ZoneClient[{self.key}]'
 
 
 class ActorControlIpc(_IMessage):
@@ -99,6 +101,7 @@ class ChatServerIpc(_IMessage):
                 self.data_str = chat_server_fmt.fmt(self.key, self.source_id, self.data, self.main.sq_pack, self.main.actor_getter)
             except KeyError:
                 self.data_str = fmt_simple(self.data_serialized)
+        self.key = f'ChatServer[{self.key}]'
 
 
 class ChatClientIpc(_IMessage):
@@ -113,6 +116,7 @@ class ChatClientIpc(_IMessage):
                 self.data_str = chat_client_fmt.fmt(self.key, self.source_id, self.data, self.main.sq_pack, self.main.actor_getter)
             except KeyError:
                 self.data_str = fmt_simple(self.data_serialized)
+        self.key = f'ChatClient[{self.key}]'
 
 
 text_selected = imguictx.CtxGroup(
@@ -325,13 +329,14 @@ class NetLogger:
             table_widths[1] = max(table_widths[1], imgui.calc_text_size(data.source_str)[0])
             table_widths[2] = max(table_widths[2], imgui.calc_text_size(data.key)[0])
             with style:
-                with auto_item_width: imgui.input_text(f'##ts[{idx}]', data.timestamp_str, -1, imgui.INPUT_TEXT_READ_ONLY)
+                with auto_item_width: imgui.input_text(f'##ts[{idx}]', data.timestamp_str, 0x20, imgui.INPUT_TEXT_READ_ONLY)
                 imgui.next_column()
-                with auto_item_width: imgui.input_text(f'##src[{idx}]', data.source_str, -1, imgui.INPUT_TEXT_READ_ONLY)
+                with auto_item_width: imgui.input_text(f'##src[{idx}]', data.source_str, 0x50, imgui.INPUT_TEXT_READ_ONLY)
                 imgui.next_column()
-                with auto_item_width: imgui.input_text(f'##key[{idx}]', data.key, -1, imgui.INPUT_TEXT_READ_ONLY)
+                with auto_item_width: imgui.input_text(f'##key[{idx}]', data.key, 0x50, imgui.INPUT_TEXT_READ_ONLY)
                 imgui.next_column()
-                with auto_item_width: imgui.input_text(f'##data[{idx}]', data.data_str, -1, imgui.INPUT_TEXT_READ_ONLY)
+                sstr = str(data.data_str)
+                with auto_item_width: imgui.input_text(f'##data[{idx}]', sstr, len(sstr.encode('utf-8'))+0x5, imgui.INPUT_TEXT_READ_ONLY)
                 imgui.next_column()
             idx += 1
             show_cnt += 1

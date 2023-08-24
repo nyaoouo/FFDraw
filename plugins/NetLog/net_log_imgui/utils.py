@@ -1,3 +1,5 @@
+import glm
+
 datetime_str = '%Y-%m-%d %H:%M:%S'
 proto_name = [
     ('CD', 'chat down'),
@@ -8,15 +10,20 @@ proto_name = [
 
 
 class ActorDef:
-    def __init__(self, entity_id: int, base_id: int, name: str):
+    def __init__(self, entity_id: int, base_id: int, name: str, pos: glm.vec3 = None, facing: float = None):
         self.entity_id = entity_id
         self.base_id = base_id
         self.name = name
+        self.pos = pos
+        self.facing = facing
         self.str = f'{self.name}<{self.entity_id:X}>'
         if self.base_id: self.str += f'[{self.base_id}]'
 
     def __str__(self):
-        return self.str
+        res = self.str
+        if pos := self.pos: res += f'(p:{pos.x:.1f}, {pos.y:.1f}, {pos.z:.1f})'
+        if (facing := self.facing) is not None: res += f'(f:{facing:.1f})'
+        return res
 
 
 class ActorDefs:
