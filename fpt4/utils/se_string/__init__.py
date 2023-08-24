@@ -332,9 +332,9 @@ class SeString(list):
 
     @classmethod
     def from_buffer(cls, buffer: bytearray | bytes, encoding='utf-8') -> 'SeString|str|Macro':
-        if isinstance(buffer, bytes):
-            buffer = bytearray(buffer)
+        if isinstance(buffer, bytes): buffer = bytearray(buffer)
         obj = cls()
+        if (end := buffer.find(0)) != -1: del buffer[end:]
         while buffer:
             sep = buffer.find(MacroType.BEGIN.value)
             if sep == -1:
