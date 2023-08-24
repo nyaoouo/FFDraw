@@ -491,7 +491,8 @@ class Dps(FFDrawPlugin):
                         )
 
     def on_actor_control_death(self, evt: ActorControlMessage[actor_control.Death]):
-        self.get_evnet_monitor().on_death(evt.source_id)
+        if monitor:=self.get_evnet_monitor():
+            monitor.on_death(evt.source_id)
 
     def on_actor_control_status_effect(self, evt: ActorControlMessage[actor_control.StatusEffect]):
         source_id, owner_id = self.wrap_owner(evt.param.source_id)
