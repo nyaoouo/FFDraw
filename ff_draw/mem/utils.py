@@ -146,7 +146,10 @@ class struct_mem_property(typing.Generic[_T]):
         if self.is_pointer and not (addr := ny_mem.read_address(instance.handle, addr)):
             return None
         a1 = getattr(instance, self.pass_self) if isinstance(self.pass_self, str) else instance if self.pass_self else instance.handle
-        return self.type(a1, addr)
+        res = self.type(a1, addr)
+        if not self.is_pointer:
+            setattr(instance, self.offset_key, res)
+        return res
 
     def __set__(self, instance, value):
         if instance is None: return
