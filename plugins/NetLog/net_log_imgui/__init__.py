@@ -22,6 +22,7 @@ class _IMessage:
         self.timestamp_str = datetime.datetime.fromtimestamp(self.timestamp_ms / 1000).strftime('%Y-%m-%d %H:%M:%S:%f')[:-3]
         self.data_serialized = data if isinstance(data, (bytes, bytearray)) else serialize_data(data)
         self.source_str = str(self.main.actor_getter(self.source_id))
+        self.byte_size = None
 
     def match(self, key):
         self.is_select = (not key or any(key in s for s in self.str_to_match(True)))
@@ -328,15 +329,21 @@ class NetLogger:
             table_widths[0] = max(table_widths[0], imgui.calc_text_size(data.timestamp_str)[0])
             table_widths[1] = max(table_widths[1], imgui.calc_text_size(data.source_str)[0])
             table_widths[2] = max(table_widths[2], imgui.calc_text_size(data.key)[0])
+            if data.byte_size is None:
+                data.byte_size = [
+                    len(data.timestamp_str.encode('utf-8')) + 0x1,
+                    len(data.source_str.encode('utf-8')) + 0x1,
+                    len(data.key.encode('utf-8')) + 0x1,
+                    len(data.data_str.encode('utf-8')) + 0x1
+                ]
             with style:
-                with auto_item_width: imgui.input_text(f'##ts[{idx}]', data.timestamp_str, 0x20, imgui.INPUT_TEXT_READ_ONLY)
+                with auto_item_width: imgui.input_text(f'##ts[{idx}]', data.timestamp_str, data.byte_size[0], imgui.INPUT_TEXT_READ_ONLY)
                 imgui.next_column()
-                with auto_item_width: imgui.input_text(f'##src[{idx}]', data.source_str, 0x50, imgui.INPUT_TEXT_READ_ONLY)
+                with auto_item_width: imgui.input_text(f'##src[{idx}]', data.source_str, data.byte_size[1], imgui.INPUT_TEXT_READ_ONLY)
                 imgui.next_column()
-                with auto_item_width: imgui.input_text(f'##key[{idx}]', data.key, 0x50, imgui.INPUT_TEXT_READ_ONLY)
+                with auto_item_width: imgui.input_text(f'##key[{idx}]', data.key, data.byte_size[2], imgui.INPUT_TEXT_READ_ONLY)
                 imgui.next_column()
-                sstr = str(data.data_str)
-                with auto_item_width: imgui.input_text(f'##data[{idx}]', sstr, len(sstr.encode('utf-8'))+0x5, imgui.INPUT_TEXT_READ_ONLY)
+                with auto_item_width: imgui.input_text(f'##data[{idx}]', data.data_str, data.byte_size[3], imgui.INPUT_TEXT_READ_ONLY)
                 imgui.next_column()
             idx += 1
             show_cnt += 1
