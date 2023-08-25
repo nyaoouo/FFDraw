@@ -42,6 +42,9 @@ class bit_field_property:
         self.set_instance_value(instance, new_val)
 
 
+def glm_mem_property(_type: typing.Type[_T], offset_key=None, default=0) -> _T | None: ...  # dirty type hinting
+
+
 class glm_mem_property(typing.Generic[_T]):
     def __init__(self, t: typing.Type[_T], offset_key=None, default=0):
         self.t = t
