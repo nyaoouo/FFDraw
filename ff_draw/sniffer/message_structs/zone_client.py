@@ -32,7 +32,7 @@ class UpdatePositionInstance(Structure):
 @set_fields_from_annotations
 class UpdatePositionHandler(Structure):
     _size_ = 0X24
-    dir: 'fctypes.c_float' = eval('0X0')
+    facing: 'fctypes.c_float' = eval('0X0')
     flag: 'fctypes.c_uint16' = eval('0X4')
     flag_2: 'fctypes.c_uint8' = eval('0X6')
     _pos: 'fctypes.array(fctypes.c_float, 3)' = eval('0X8')
