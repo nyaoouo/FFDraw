@@ -51,6 +51,7 @@ class glm_mem_property(typing.Generic[_T]):
         self.size = glm.sizeof(t)
         self.offset_key = offset_key
         self.default = default
+        self.name = None
         self.owner = None
 
     @classmethod
@@ -59,6 +60,7 @@ class glm_mem_property(typing.Generic[_T]):
         yield from data.items()
 
     def __set_name__(self, owner, name):
+        self.name = name
         self.owner = owner
         if not self.offset_key:
             self.offset_key = name
@@ -81,6 +83,7 @@ class direct_mem_property:
         self.type = _type
         self.offset_key = offset_key
         self.default = default
+        self.name = None
         self.owner = None
 
     @classmethod
@@ -89,6 +92,7 @@ class direct_mem_property:
         yield from data.items()
 
     def __set_name__(self, owner, name):
+        self.name = name
         self.owner = owner
         if not self.offset_key:
             self.offset_key = name
@@ -124,6 +128,7 @@ class struct_mem_property(typing.Generic[_T]):
         self.is_pointer = is_pointer
         self.pass_self = pass_self
         self.offset_key = offset_key
+        self.name = None
         self.owner = None
 
     @classmethod
@@ -133,6 +138,7 @@ class struct_mem_property(typing.Generic[_T]):
 
     def __set_name__(self, owner, name):
         self.owner = owner
+        self.name = name
         if not self.offset_key:
             self.offset_key = name
         if not hasattr(owner, '__struct_mem_property__'):
@@ -148,7 +154,7 @@ class struct_mem_property(typing.Generic[_T]):
         a1 = getattr(instance, self.pass_self) if isinstance(self.pass_self, str) else instance if self.pass_self else instance.handle
         res = self.type(a1, addr)
         if not self.is_pointer:
-            setattr(instance, self.offset_key, res)
+            instance.__dict__[self.name] = res
         return res
 
     def __set__(self, instance, value):
