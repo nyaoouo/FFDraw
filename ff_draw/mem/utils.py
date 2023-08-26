@@ -10,8 +10,23 @@ from nylib.utils.win32.exception import WinAPIError
 _addr_size = ctypes.sizeof(ctypes.c_void_p)
 _T = typing.TypeVar('_T')
 
+def _setdefault(obj, key, default):
+    if key in obj.__dict__:
+        return obj.__dict__[key]
+    setattr(obj, key, default)
+    return default
+
+def _iter_obj_properties(owner, k):
+    yield_names = set()
+    for k, v in (cls_.__dict__[k].items() for cls_ in owner.__mro__ if k in cls_.__dict__):
+        if k in yield_names: continue
+        yield_names.add(k)
+        yield k, v
+
 
 class bit_field_property:
+    k = '__bit_field_property__'
+
     def __init__(self, offset, size=1):
         self.byte_off = offset // 8
         self.bit_off = offset % 8
@@ -20,13 +35,10 @@ class bit_field_property:
 
     @classmethod
     def obj_properties(cls, owner):
-        if not (data := getattr(owner, '__bit_field_property__', {})): return
-        yield from data.items()
+        yield from _iter_obj_properties(owner, cls.k)
 
     def __set_name__(self, owner, name):
-        if not hasattr(owner, '__bit_field_property__'):
-            owner.__bitfields__ = {}
-        owner.__bitfields__[name] = self
+        _setdefault(owner, self.k, {})[name] = self
 
     def get_instance_value(self, instance):
         return getattr(ny_mem, 'read_uint' + str(self.data_size))(instance.handle, instance.address + self.byte_off)
@@ -46,6 +58,8 @@ def glm_mem_property(_type: typing.Type[_T], offset_key=None, default=0) -> _T |
 
 
 class glm_mem_property(typing.Generic[_T]):
+    k = '__glm_mem_property__'
+
     def __init__(self, t: typing.Type[_T], offset_key=None, default=0):
         self.t = t
         self.size = glm.sizeof(t)
@@ -56,17 +70,13 @@ class glm_mem_property(typing.Generic[_T]):
 
     @classmethod
     def obj_properties(cls, owner):
-        if not (data := getattr(owner, '__glm_mem_property__', {})): return
-        yield from data.items()
+        yield from _iter_obj_properties(owner, cls.k)
 
     def __set_name__(self, owner, name):
         self.name = name
         self.owner = owner
-        if not self.offset_key:
-            self.offset_key = name
-        if not hasattr(owner, '__glm_mem_property__'):
-            owner.__bitfields__ = {}
-        owner.__bitfields__[name] = self
+        if not self.offset_key: self.offset_key = name
+        _setdefault(owner, self.k, {})[name] = self
 
     def __get__(self, instance, owner) -> _T:
         if not (addr := instance.address):
@@ -79,6 +89,8 @@ class glm_mem_property(typing.Generic[_T]):
 
 
 class direct_mem_property:
+    k = '__direct_mem_property__'
+
     def __init__(self, _type, offset_key=None, default=0):
         self.type = _type
         self.offset_key = offset_key
@@ -88,17 +100,13 @@ class direct_mem_property:
 
     @classmethod
     def obj_properties(cls, owner):
-        if not (data := getattr(owner, '__direct_mem_property__', {})): return
-        yield from data.items()
+        yield from _iter_obj_properties(owner, cls.k)
 
     def __set_name__(self, owner, name):
         self.name = name
         self.owner = owner
-        if not self.offset_key:
-            self.offset_key = name
-        if not hasattr(owner, '__direct_mem_property__'):
-            owner.__direct_mem_property__ = {}
-        owner.__direct_mem_property__[name] = self
+        if not self.offset_key: self.offset_key = name
+        _setdefault(owner, self.k, {})[name] = self
 
     def __get__(self, instance, owner) -> 'float | int | direct_mem_property':
         if instance is None: return self
@@ -123,6 +131,8 @@ def struct_mem_property(_type: typing.Type[_T], is_pointer=False, pass_self=Fals
 
 
 class struct_mem_property(typing.Generic[_T]):
+    k = '__struct_mem_property__'
+
     def __init__(self, _type: typing.Type[_T], is_pointer=False, pass_self: bool | str = False, offset_key=None):
         self.type = _type
         self.is_pointer = is_pointer
@@ -133,17 +143,13 @@ class struct_mem_property(typing.Generic[_T]):
 
     @classmethod
     def obj_properties(cls, owner):
-        if not (data := getattr(owner, '__struct_mem_property__', {})): return
-        yield from data.items()
+        yield from _iter_obj_properties(owner, cls.k)
 
     def __set_name__(self, owner, name):
         self.owner = owner
         self.name = name
-        if not self.offset_key:
-            self.offset_key = name
-        if not hasattr(owner, '__struct_mem_property__'):
-            owner.__direct_mem_property__ = {}
-        owner.__direct_mem_property__[name] = self
+        if not self.offset_key: self.offset_key = name
+        _setdefault(owner, self.k, {})[name] = self
 
     def __get__(self, instance, owner) -> _T | None:
         if instance is None: return self
