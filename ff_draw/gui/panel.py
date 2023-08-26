@@ -285,6 +285,10 @@ class FFDPanel:
 
         if imgui.collapsing_header(i18n(Omen_draw) + '###tab_setting_div_draw', None, flag)[0]:
             gui = self.main.gui
+            clicked, gui.omen_animated_in_out = imgui.checkbox(i18n(Omen_animated_in_out), gui.omen_animated_in_out)
+            if clicked:
+                gui.cfg['omen_animated_in_out'] = gui.omen_animated_in_out
+                self.main.save_config()
             clicked, gui.always_draw = imgui.checkbox(i18n(Always_drawing), gui.always_draw)
             if clicked:
                 gui.cfg['always_draw'] = gui.always_draw

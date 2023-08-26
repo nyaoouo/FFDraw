@@ -57,8 +57,10 @@ class BaseOmen:
             label_at=1,
 
             duration=0,
-            in_effector=effector.ScaleInEffector,
-            out_effector=effector.FadeOutEffector,
+            in_effector=None,
+            out_effector=None,
+            # in_effector=effector.ScaleInEffector,
+            # out_effector=effector.FadeOutEffector,
             alpha=None,
     ):
         self.oid = omen_counter.get()
@@ -88,6 +90,11 @@ class BaseOmen:
         # self.logger.debug(f'create omen {self.oid}')
 
         self.effectors = []
+        if main.gui.omen_animated_in_out:
+            if in_effector is None:
+                in_effector = effector.ScaleInEffector
+            if out_effector is None:
+                out_effector = effector.FadeOutEffector
         self._in_effector = in_effector
         self._out_effect_playing = False
         self._out_effector = out_effector
