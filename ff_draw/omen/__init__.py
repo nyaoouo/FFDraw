@@ -148,6 +148,8 @@ class BaseOmen:
             self.scale = self.get_maybe_callable(self._scale)
         else:
             self.shape, self.scale = self.get_maybe_callable(self._shape_scale) or (None, None)
+        if not _old_shape and self._in_effector:
+            self.apply_effect(self._in_effector)
         if isinstance(self.scale, (tuple, list)):
             self.scale = glm.vec3(*self.scale)
         for eff in self.effectors:
@@ -155,9 +157,6 @@ class BaseOmen:
         if not self.working: return self.destroy()
         self.pos = None
         if self.shape:
-            if not _old_shape and self._in_effector:
-                self.apply_effect(self._in_effector)
-
             self.pos = self.get_maybe_callable(self._pos)
             if self.pos is None: return
             for eff in self.effectors:
