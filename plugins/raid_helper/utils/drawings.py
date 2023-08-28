@@ -1,3 +1,5 @@
+import glm
+
 from ff_draw.omen import Line
 from nylib.utils import safe_lazy, safe
 from .logic import *
@@ -557,3 +559,112 @@ def timeout_when_channeling_change(omen: BaseOmen, source_id, target_id=None, id
 
     install()
     return omen
+
+
+class Waypoint:
+    REACH_DIS = 1
+    POP_WHEN_REACH = 0
+    POP_MANUAL = 1
+    DEFAULT_SURFACE_COLOR = glm.vec3(.5, .5, 1)
+    DEFAULT_LINE_COLOR = glm.vec3(.3, .3, 1)
+
+    def __init__(self, l: 'WaypointList', pos: glm.vec3, pop_mode=POP_WHEN_REACH, reach_dis=REACH_DIS, auto_pop=-1., surface_color: glm.vec3 = None, line_color: glm.vec3 = None):
+        self.l = l
+        self.pos = pos
+        self.pop_mode = pop_mode
+        self.reach_dis = reach_dis
+        self.auto_pop = auto_pop
+        self.surface_color = surface_color or self.DEFAULT_SURFACE_COLOR
+        self.line_color = line_color or self.DEFAULT_LINE_COLOR
+        if auto_pop > 0:
+            new_thread(self._delay_pop)()
+
+    def _delay_pop(self):
+        if self.auto_pop > 0:
+            time.sleep(self.auto_pop)
+            self.pop()
+
+    @property
+    def is_valid(self):
+        return self in self.l
+
+    def pop(self):
+        try:
+            self.l.remove(self)
+        except ValueError:
+            return False
+        return True
+
+    @property
+    def idx(self):
+        return self.l.index(self)
+
+    def is_reach(self, pos: glm.vec3):
+        return glm.distance(pos, self.pos) < self.reach_dis
+
+    def should_pop(self, me_pos):
+        if self.pop_mode != self.POP_WHEN_REACH: return False
+        return self.is_reach(me_pos)
+
+    def __repr__(self):
+        return f'<Waypoint {self.pos}>'
+
+
+class WaypointList(list):
+    last_tid = -1
+
+    def append_waypoint(self, pos: glm.vec3, pop_mode=Waypoint.POP_WHEN_REACH, reach_dis=Waypoint.REACH_DIS, auto_pop=-1., surface_color: glm.vec3 = None, line_color: glm.vec3 = None):
+        self.append(w := Waypoint(self, pos, pop_mode, reach_dis, auto_pop, surface_color, line_color))
+        return w
+
+    def set_waypoint(self, *pos: glm.vec3, pop_mode=Waypoint.POP_WHEN_REACH):
+        self.clear()
+        return [self.append_waypoint(p, pop_mode) for p in pos]
+
+    def update(self):
+        if (tid := main.mem.territory_info.territory_id) != self.last_tid:
+            self.last_tid = tid
+            self.clear()
+            return
+        if not self: return
+        if not (me := get_me()): return
+        me_pos = me.pos
+        while self:
+            try:
+                next_waypoint = self[0]
+            except IndexError:
+                return
+            if next_waypoint.should_pop(me_pos):
+                next_waypoint.pop()
+            else:
+                break
+
+    def render_game(self):
+        if not self: return
+        if not (me := get_me()): return
+        prev_pt = me_pos = me.pos
+        i = 0
+        cos_a = (math.cos(time.time() * 4) + 1) * .3 + .1
+        while i < len(self):
+            next_wp: Waypoint = self[i]
+            if next_wp.is_reach(me_pos):
+                main.gui.add_3d_shape(
+                    circle_shape,
+                    glm.translate(next_wp.pos) * glm.scale(glm.vec3(next_wp.reach_dis)),
+                    surface_color=glm.vec4(*next_wp.surface_color, .35), line_color=glm.vec4(*next_wp.line_color, .7)
+                )
+            else:
+                main.gui.add_3d_shape(
+                    donut_shape(.5, 1),
+                    glm.translate(next_wp.pos) * glm.scale(glm.vec3(next_wp.reach_dis)),
+                    surface_color=glm.vec4(*next_wp.surface_color, cos_a / 2), line_color=glm.vec4(*next_wp.line_color, cos_a),
+                )
+                main.gui.add_line(prev_pt, next_wp.pos, glm.vec4(*next_wp.line_color, .7))
+                if i == 0:
+                    main.gui.add_3d_shape(
+                        0x1010000,
+                        glm.translate(prev_pt) * glm.rotate(glm.polar(next_wp.pos - me_pos).y, glm.vec3(0, 1, 0)),
+                        surface_color=glm.vec4(*next_wp.surface_color, .35), line_color=glm.vec4(*next_wp.line_color, .7),
+                    )
+            prev_pt = next_wp.pos
+            i += 1

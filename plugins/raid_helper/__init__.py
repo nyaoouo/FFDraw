@@ -100,6 +100,8 @@ class RaidHelper(FFDrawPlugin):
         self.bnpc_battalion_offset = self.main.mem.scanner.find_val('44 ? ? ? * * * * 4c 89 68 ? 4c 89 70')[0]
         self.logger.debug(f'bnpc b offset {self.bnpc_battalion_offset:x}')
 
+        self.waypoints = WaypointList()
+
         self._panel_filter_string = ''
 
     def _init_hook_map(self):
@@ -134,8 +136,24 @@ class RaidHelper(FFDrawPlugin):
                 for m in iter_main_party(False)
             ], reload)
 
+    # def test_waypoint_list(self):
+    #     marking = self.main.mem.marking
+    #     res = []
+    #     for i in range(8):
+    #         mark = marking.way_mark(i)
+    #         if mark.is_enable:
+    #             res.append(mark.pos)
+    #     self.waypoints.set_waypoint(*res)
+
+    def update(self, _):
+        self.waypoints.update()
+        self.waypoints.render_game()
+
     def draw_panel(self):
         imgui.text(f'has tts: {"tts/TTS" in self.main.plugins}')
+        imgui.text(f'{self.waypoints}')
+        # if imgui.button('test waypoint list'):
+        #     self.test_waypoint_list()
         if imgui.tree_node('simple cast'):
             clicked, self.enable_simple_cast = imgui.checkbox("enable_simple_cast", self.enable_simple_cast)
             if clicked:
