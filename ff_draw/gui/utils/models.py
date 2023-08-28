@@ -180,8 +180,8 @@ class Arrow(BaseModel3d):
 class Triangle(BaseModel3d):
     _surface_vertices = [
         1, 0, 0,
-        -1, 0, 0,
-        0, 0, 1,
+        -1 / 3 ** .5, 0, 0,
+        0, 0, 1 / 3 ** .5,
     ]
     _edge_vertices = _surface_vertices
     _point_vertices = _surface_vertices
