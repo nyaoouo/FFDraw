@@ -10,11 +10,13 @@ from nylib.utils.win32.exception import WinAPIError
 _addr_size = ctypes.sizeof(ctypes.c_void_p)
 _T = typing.TypeVar('_T')
 
+
 def _setdefault(obj, key, default):
     if key in obj.__dict__:
         return obj.__dict__[key]
     setattr(obj, key, default)
     return default
+
 
 def _iter_obj_properties(owner, k):
     yield_names = set()
@@ -60,11 +62,12 @@ def glm_mem_property(_type: typing.Type[_T], offset_key=None, default=0) -> _T |
 class glm_mem_property(typing.Generic[_T]):
     k = '__glm_mem_property__'
 
-    def __init__(self, t: typing.Type[_T], offset_key=None, default=0):
+    def __init__(self, t: typing.Type[_T], offset_key=None, default=0, is_static=False):
         self.t = t
         self.size = glm.sizeof(t)
         self.offset_key = offset_key
         self.default = default
+        self.is_static = is_static
         self.name = None
         self.owner = None
 
@@ -79,22 +82,25 @@ class glm_mem_property(typing.Generic[_T]):
         _setdefault(owner, self.k, {})[name] = self
 
     def __get__(self, instance, owner) -> _T:
-        if not (addr := instance.address):
+        addr = 0
+        if not self.is_static and not (addr := instance.address):
             return self.default
         return self.t.from_bytes(bytes(ny_mem.read_bytes(instance.handle, addr + getattr(self.owner.offsets, self.offset_key), self.size)))
 
     def __set__(self, instance, value: _T):
-        if not (addr := instance.address): return
+        addr = 0
+        if not self.is_static and not (addr := instance.address): return
         return ny_mem.write_bytes(instance.handle, addr + getattr(self.owner.offsets, self.offset_key), value.to_bytes())
 
 
 class direct_mem_property:
     k = '__direct_mem_property__'
 
-    def __init__(self, _type, offset_key=None, default=0):
+    def __init__(self, _type, offset_key=None, default=0, is_static=False):
         self.type = _type
         self.offset_key = offset_key
         self.default = default
+        self.is_static = is_static
         self.name = None
         self.owner = None
 
@@ -110,7 +116,8 @@ class direct_mem_property:
 
     def __get__(self, instance, owner) -> 'float | int | direct_mem_property':
         if instance is None: return self
-        if not (addr := instance.address): return self.default
+        addr = 0
+        if not self.is_static and not (addr := instance.address): return self.default
         try:
             return ny_mem.read_memory(
                 instance.handle, self.type,
@@ -120,7 +127,8 @@ class direct_mem_property:
 
     def __set__(self, instance, value):
         if instance is None: return
-        if not (addr := instance.address): return
+        addr = 0
+        if not self.is_static and not (addr := instance.address): return
         try:
             return ny_mem.write_bytes(instance.handle, addr + getattr(self.owner.offsets, self.offset_key), bytearray(self.type(value)))
         except Exception:
@@ -133,11 +141,12 @@ def struct_mem_property(_type: typing.Type[_T], is_pointer=False, pass_self=Fals
 class struct_mem_property(typing.Generic[_T]):
     k = '__struct_mem_property__'
 
-    def __init__(self, _type: typing.Type[_T], is_pointer=False, pass_self: bool | str = False, offset_key=None):
+    def __init__(self, _type: typing.Type[_T], is_pointer=False, pass_self: bool | str = False, offset_key=None, is_static=False):
         self.type = _type
         self.is_pointer = is_pointer
         self.pass_self = pass_self
         self.offset_key = offset_key
+        self.is_static = is_static
         self.name = None
         self.owner = None
 
@@ -153,19 +162,16 @@ class struct_mem_property(typing.Generic[_T]):
 
     def __get__(self, instance, owner) -> _T | None:
         if instance is None: return self
-        if not (addr := instance.address): return None
+        addr = 0
+        if not self.is_static and not (addr := instance.address): return None
         addr += getattr(self.owner.offsets, self.offset_key)
         if self.is_pointer and not (addr := ny_mem.read_address(instance.handle, addr)):
             return None
         a1 = getattr(instance, self.pass_self) if isinstance(self.pass_self, str) else instance if self.pass_self else instance.handle
         res = self.type(a1, addr)
         if not self.is_pointer:
-            instance.__dict__[self.name] = res
+            setattr(instance, self.name, res)
         return res
-
-    def __set__(self, instance, value):
-        if instance is None: return
-        raise Exception('Cannot set struct property')
 
 
 def get_hwnd(pid):
@@ -193,8 +199,7 @@ def get_game_version_info(file_name):
     with open(file_name, 'rb') as f: base_data = f.read()
     match = re.search(r"/\*{5}ff14\*{6}rev\d+_(\d{4})/(\d{2})/(\d{2})".encode(), base_data)
     game_build_date: str = f"{match.group(1).decode()}.{match.group(2).decode()}.{match.group(3).decode()}.0000.0000"
-    match = re.search(r'(\d{3})\\trunk\\prog\\client\\Build\\FFXIVGame\\x64-Release\\ffxiv_dx11.pdb'.encode(),
-                      base_data)
+    match = re.search(r'(\d{3})\\trunk\\prog\\client\\Build\\FFXIVGame\\x64-Release\\ffxiv_dx11.pdb'.encode(), base_data)
     game_version: tuple[int, int, int] = tuple(b - 48 for b in match.group(1))
     return game_version, game_build_date
 
