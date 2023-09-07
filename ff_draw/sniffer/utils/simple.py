@@ -5,21 +5,23 @@ import typing
 from csv import DictReader
 
 
-def load_pno_map(path: pathlib.Path, game_version, t: typing.Type[enum.Enum]) -> dict[int, enum.Enum]:
+def load_pno_map(path: pathlib.Path, game_version, t: typing.Type[enum.Enum]) -> tuple[dict[int, enum.Enum], dict[str, list[int]]]:
     data = {}
+    k2pno = {}
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             for row in DictReader(f):
-                if not row['key'].startswith('_') and row.get(game_version):
+                if not row['key'].startswith('_') and (sv := row.get(game_version)):
                     try:
                         e = t[row['key']]
                     except KeyError:
                         continue
-                    if isinstance((pnos := eval(row.get(game_version))), int):
+                    if isinstance((pnos := eval(sv)), int):
                         pnos = pnos,
                     for pno in pnos:
                         data[pno] = e
-    return data
+                        k2pno.setdefault(row['key'], []).append(pno)
+    return data, k2pno
 
 
 c = 200000 / 65535 * 0.01
