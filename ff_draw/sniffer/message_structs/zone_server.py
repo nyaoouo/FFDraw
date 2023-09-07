@@ -240,9 +240,9 @@ class _EffectResult(Structure):
 
 
 @type_map.set(ZoneServer.EffectResult)
-@type_map.set(ZoneServer.EffectResult4)
-@type_map.set(ZoneServer.EffectResult8)
-@type_map.set(ZoneServer.EffectResult16)
+# @type_map.set(ZoneServer.EffectResult4)
+# @type_map.set(ZoneServer.EffectResult8)
+# @type_map.set(ZoneServer.EffectResult16)
 @set_fields_from_annotations
 class EffectResult(Structure):
     _size_ = 0X60
@@ -556,3 +556,55 @@ class ActorSetPos(Structure):
     @property
     def facing(self):
         return dir_web_to_raw(self._facing)
+
+
+@type_map.set(ZoneServer.EventStart)
+@set_fields_from_annotations
+class EventStart(Structure):
+    _size_ = 0x18
+    target_common_id: 'fctypes.c_uint64' = eval('0X0')
+    handler_id: 'fctypes.c_uint32' = eval('0X8')
+    type: 'fctypes.c_uint8' = eval('0XC')
+    flags: 'fctypes.c_uint8' = eval('0XD')
+    arg: 'fctypes.c_uint32' = eval('0X10')
+
+
+@type_map.set(ZoneServer.EventFinish)
+@set_fields_from_annotations
+class EventFinish(Structure):
+    _size_ = 0x10
+    handler_id: 'fctypes.c_uint32' = eval('0X0')
+    type: 'fctypes.c_uint8' = eval('0X4')
+    res: 'fctypes.c_uint8' = eval('0X5')
+    arg: 'fctypes.c_uint32' = eval('0X8')
+
+
+@type_map.set(ZoneServer.EventPlayN)
+@set_fields_from_annotations
+class EventPlayN(Structure):
+    _size_ = 0x28
+    target_common_id: 'fctypes.c_uint64' = eval('0X0')
+    handler_id: 'fctypes.c_uint32' = eval('0X8')
+    scene_id: 'fctypes.c_uint16' = eval('0XC')
+    flags: 'fctypes.c_uint64' = eval('0X10')
+    arg_cnt: 'fctypes.c_uint8' = eval('0X18')
+    _args: 'fctypes.array(fctypes.c_uint32, 255)' = eval('0X1C')
+
+    @property
+    def args(self):
+        return self._args[:self.arg_cnt]
+
+
+@type_map.set(ZoneServer.EventActionResultN)
+@set_fields_from_annotations
+class EventActionResultN(Structure):
+    _size_ = 0x10
+    handler_id: 'fctypes.c_uint32' = eval('0X0')
+    scene_id: 'fctypes.c_uint16' = eval('0X4')
+    res: 'fctypes.c_uint8' = eval('0X6')
+    arg_cnt: 'fctypes.c_uint8' = eval('0X7')
+    _args: 'fctypes.array(fctypes.c_uint32, 255)' = eval('0X8')
+
+    @property
+    def args(self):
+        return self._args[:self.arg_cnt]

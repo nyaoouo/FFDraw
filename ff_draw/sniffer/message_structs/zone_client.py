@@ -40,3 +40,51 @@ class UpdatePositionHandler(Structure):
     @property
     def pos(self):
         return glm.vec3(*self._pos)
+
+
+@type_map.set(ZoneClient.EventStart)
+@set_fields_from_annotations
+class EventStart(Structure):
+    _size_ = 0x10
+    target_common_id: 'fctypes.c_uint64' = eval('0x0')
+    handler_id: 'fctypes.c_uint32' = eval('0x8')
+
+
+@type_map.set(ZoneClient.EventFinish)
+@set_fields_from_annotations
+class EventFinish(Structure):
+    _size_ = 0x10
+    handler_id: 'fctypes.c_uint32' = eval('0X0')
+    scene_id: 'fctypes.c_uint16' = eval('0X4')
+    error: 'fctypes.c_uint8' = eval('0X6')
+    arg_cnt: 'fctypes.c_uint8' = eval('0X7')
+    _args: 'fctypes.array(fctypes.c_uint32, 255)' = eval('0X8')
+
+    @property
+    def args(self):
+        return self._args[:self.arg_cnt]
+
+
+@type_map.set(ZoneClient.EventAction)
+@set_fields_from_annotations
+class EventAction(Structure):
+    _size_ = 0X10
+
+    handler_id: 'fctypes.c_uint32' = eval('0X0')
+    scene_id: 'fctypes.c_uint16' = eval('0X4')
+    res: 'fctypes.c_uint8' = eval('0X6')
+    arg_cnt: 'fctypes.c_uint8' = eval('0X7')
+    _args: 'fctypes.array(fctypes.c_uint32, 255)' = eval('0X8')
+
+    @property
+    def args(self):
+        return self._args[:self.arg_cnt]
+
+
+@type_map.set(ZoneClient.ClientTrigger)
+@set_fields_from_annotations
+class ClientTrigger(Structure):
+    _size_ = 0x20
+    id: 'fctypes.c_uint32' = eval('0X0')
+    args: 'fctypes.array(fctypes.c_uint32, 4)' = eval('0X4')
+    target_common_id: 'fctypes.c_uint64' = eval('0X18')

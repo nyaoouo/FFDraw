@@ -33,9 +33,9 @@ class SnifferExtra:
         sniffer.on_zone_server_message[enums.ZoneServer.RsvString].append(self.on_rsv_string)
         sniffer.on_zone_server_message[enums.ZoneServer.StartActionTimelineMulti].append(self.on_play_action_timeline_muliti)
         sniffer.on_zone_server_message[enums.ZoneServer.EffectResult].append(self.on_effect_result)
-        sniffer.on_zone_server_message[enums.ZoneServer.EffectResult4].append(self.on_effect_result)
-        sniffer.on_zone_server_message[enums.ZoneServer.EffectResult8].append(self.on_effect_result)
-        sniffer.on_zone_server_message[enums.ZoneServer.EffectResult16].append(self.on_effect_result)
+        # sniffer.on_zone_server_message[enums.ZoneServer.EffectResult4].append(self.on_effect_result)
+        # sniffer.on_zone_server_message[enums.ZoneServer.EffectResult8].append(self.on_effect_result)
+        # sniffer.on_zone_server_message[enums.ZoneServer.EffectResult16].append(self.on_effect_result)
         sniffer.on_actor_control[enums.ActorControlId.PlayActionTimeLine].append(self.on_actor_control_play_action_timeline)
         sniffer.on_actor_control[enums.ActorControlId.EventDirector].append(self.on_actor_control_event_director)
 
