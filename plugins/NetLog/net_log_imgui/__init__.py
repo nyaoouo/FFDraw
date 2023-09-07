@@ -133,6 +133,7 @@ auto_item_width = imguictx.ItemWidth(-1)
 
 
 def imgui_render_data_kv(keys, values):
+    if len(keys) == 0: return
     with imguictx.Child('#kv', 0, calc_imgui_render_data_kv_height(values)):
         x_spacing = imgui.get_style().item_spacing.x * 2
         imgui.columns(2)
@@ -190,6 +191,7 @@ class NetLogger:
         self.data = []
         self.display_data = []
         self.filter = ''
+        self.filter_reverse = False
         self.filter_use_regex = False
         self._filter = ''
         self._filter_use_regex = False
@@ -207,7 +209,7 @@ class NetLogger:
         self.touch_bottom = False
 
     def _is_display_data(self, data):
-        return (not self._only_show_filtered or data.is_select) and not (self._only_show_defined and isinstance(data.data, (bytes, bytearray)))
+        return (not self._only_show_filtered or (data.is_select != self.filter_reverse)) and not (self._only_show_defined and isinstance(data.data, (bytes, bytearray)))
 
     def _update_display_data(self, display_change=True):
         if display_change:
@@ -221,9 +223,9 @@ class NetLogger:
         self._filter_use_regex = self.filter_use_regex
 
         if self.filter_use_regex:
-            if self.filter:
+            if self._filter:
                 try:
-                    regex = re.compile(self.filter)
+                    regex = re.compile(self._filter)
                 except re.error:
                     self._update_display_data(False)
                     return
@@ -256,7 +258,20 @@ class NetLogger:
 
     def append_data(self, data: _IMessage):
         self.data.append(data)
-        data.match(self.filter)
+
+        if self.filter_use_regex:
+            if self._filter:
+                try:
+                    regex = re.compile(self._filter)
+                except re.error:
+                    self._update_display_data(False)
+                    return
+            else:
+                regex = None
+            data.re_match(regex)
+        else:
+            data.match(self._filter.lower())
+
         if self._is_display_data(data):
             self.display_data.append(data)
         if self._lock_bottom:
@@ -322,7 +337,7 @@ class NetLogger:
             if imgui.get_cursor_screen_pos()[1] >= max_y:
                 break
             data: _IMessage = self.display_data[idx]
-            style = text_selected if self._filter and data.is_select else text_unselected
+            style = text_selected if self._filter and (data.is_select != self.filter_reverse) else text_unselected
             changed, var = imgui.checkbox(f'##select[{idx}]', self.select_idx == idx)
             if changed: self.select_idx = idx if var else -1
             imgui.next_column()
@@ -406,6 +421,10 @@ class NetLogger:
         imgui.same_line()
         changed, self.filter_use_regex = imgui.checkbox('##filter_use_regex', self.filter_use_regex)
         if changed: self.apply_filter()
+        imgui.text('filter reverse:')
+        imgui.same_line()
+        changed, self.filter_reverse = imgui.checkbox('##filter_reverse', self.filter_reverse)
+        if changed: self._update_display_data()
 
         imgui.text('filter:')
         imgui.same_line()
