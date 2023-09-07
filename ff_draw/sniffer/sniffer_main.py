@@ -35,8 +35,11 @@ class Sniffer:
     target: tuple[str, int] = None
     logger = logging.getLogger('Sniffer')
     dump: message_dump.MessageDumper | None = None
+    instance: 'Sniffer' = None
 
     def __init__(self, main: 'FFDraw'):
+        assert Sniffer.instance is None, 'Sniffer instance already exists'
+        Sniffer.instance = self
         self.main = main
         self.ipc_lock = threading.Lock()
 
