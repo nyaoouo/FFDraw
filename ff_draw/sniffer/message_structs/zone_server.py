@@ -608,3 +608,25 @@ class EventActionResultN(Structure):
     @property
     def args(self):
         return self._args[:self.arg_cnt]
+
+
+@type_map.set(ZoneServer.RetainerInformation)
+@set_fields_from_annotations
+class RetainerInformation(Structure):
+    _size_ = 0X50
+    retainer_id: 'fctypes.c_uint64' = eval('0X8')
+    idx: 'fctypes.c_uint8' = eval('0X10')
+    item_cnt: 'fctypes.c_uint8' = eval('0X11')
+    gil: 'fctypes.c_uint32' = eval('0X14')
+    sell_cnt: 'fctypes.c_uint8' = eval('0X18')
+    selling_market: 'fctypes.c_uint8' = eval('0X19')
+    class_job: 'fctypes.c_uint8' = eval('0X1A')
+    level: 'fctypes.c_uint8' = eval('0X1B')
+    sell_expiration_time: 'fctypes.c_uint32' = eval('0X1C')
+    task_id: 'fctypes.c_uint16' = eval('0X20')
+    task_end_time: 'fctypes.c_uint32' = eval('0X24')
+    _name: 'fctypes.array(fctypes.c_char, 32)' = eval('0X29')
+
+    @property
+    def name(self) -> str:
+        return self._name.split(b'\0', 1)[0].decode('utf-8', errors='ignore')

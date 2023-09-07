@@ -86,5 +86,8 @@ class EventAction(Structure):
 class ClientTrigger(Structure):
     _size_ = 0x20
     id: 'fctypes.c_uint32' = eval('0X0')
-    args: 'fctypes.array(fctypes.c_uint32, 4)' = eval('0X4')
+    arg0: 'fctypes.c_uint32' = eval('0X4')
+    arg1: 'fctypes.c_uint32' = eval('0X8')
+    arg2: 'fctypes.c_uint32' = eval('0XC')
+    arg3: 'fctypes.c_uint32' = eval('0X10')
     target_common_id: 'fctypes.c_uint64' = eval('0X18')
