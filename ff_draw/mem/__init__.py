@@ -1,4 +1,7 @@
-import json
+import ctypes
+import functools
+import pathlib
+
 import math
 import os
 import sys
@@ -10,11 +13,10 @@ import imgui
 
 from nylib.utils.win32 import memory as ny_mem, process as ny_proc
 from nylib.pefile import PE
-from nylib.pattern import StaticPatternSearcher
 from nylib.utils.win32.inject_rpc import Handle, pywin32_dll_place
 from nylib.utils.imgui import ctx as imgui_ctx
 from . import utils, actor, party, network_target, packet_fix, marking, territory_info, event_module, quest_info, storage
-from . import move_controller, hate_list
+from . import move_controller, hate_list, scanners
 from . import hook_main_update, do_text_command, utf8string, hook_chatlog
 
 if typing.TYPE_CHECKING:
@@ -91,54 +93,6 @@ class XivMemPanel:
             _, self.mem.actor_table.use_brute_search = imgui.checkbox('actor_table use_brute_search', self.mem.actor_table.use_brute_search)
 
 
-class CachedSigScanner(StaticPatternSearcher):
-    def __init__(self, mem: 'XivMem', pe, base_address):
-        super().__init__(pe, base_address)
-        self.mem = mem
-        self._cache_file = mem.main.app_data_path / 'sig_cache' / (mem.game_build_date + '.json')
-        self._cache = self._load_cache()
-
-    def find_address(self, pattern):
-        cache = self._cache.setdefault('address', {})
-        if pattern in cache:
-            return cache[pattern] + self.base_address
-        address = super().find_address(pattern)
-        cache[pattern] = address - self.base_address
-        self._save_cache()
-        return address
-
-    def find_point(self, pattern: str):
-        cache = self._cache.setdefault('point', {})
-        if pattern in cache:
-            return [a + self.base_address for a in cache[pattern]]
-        point = super().find_point(pattern)
-        cache[pattern] = [a - self.base_address for a in point]
-        self._save_cache()
-        return point
-
-    def find_val(self, pattern: str):
-        cache = self._cache.setdefault('val', {})
-        if pattern in cache:
-            return cache[pattern]
-        val = super().find_val(pattern)
-        cache[pattern] = val
-        self._save_cache()
-        return val
-
-    def _load_cache(self):
-        if not self._cache_file.exists(): return {}
-        try:
-            with self._cache_file.open('r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception:
-            return {}
-
-    def _save_cache(self):
-        self._cache_file.parent.mkdir(parents=True, exist_ok=True)
-        with self._cache_file.open('w', encoding='utf-8') as f:
-            json.dump(self._cache, f, indent=4, ensure_ascii=False)
-
-
 class XivMem:
     instance: 'XivMem' = None
 
@@ -154,7 +108,9 @@ class XivMem:
         self.game_version, self.game_build_date = utils.get_game_version_info(file_name)
         os.environ['FFXIV_GAME_VERSION'] = '.'.join(map(str, self.game_version))
         os.environ['FFXIV_GAME_BUILD_DATE'] = self.game_build_date
-        self.scanner = CachedSigScanner(self, PE(file_name, fast_load=True), self.base_module.lpBaseOfDll)
+        exe_pe = PE(file_name, fast_load=True)
+        self.scanner = scanners.CachedStaticPatternSearcherV1(self, exe_pe, self.base_module.lpBaseOfDll)
+        self.scanner_v2 = scanners.CachedStaticPatternSearcherV2(self, exe_pe, self.base_module.lpBaseOfDll)
         ny_mem.write_ubyte(self.handle, self.scanner.find_address('74 ? 83 E8 ? 89 83 ? ? ? ?'), 0xeb)
 
         self.screen_address = self.scanner.find_point('48 ? ? * * * * e8 ? ? ? ? 42 ? ? ? 39 05')[0] + 0x1b4
