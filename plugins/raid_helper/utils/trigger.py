@@ -232,6 +232,7 @@ class TriggerGroup:
         self._on_npc_spawn = {}
         self._on_npc_yell = {}
         self._on_object_spawn = {}
+        self._on_actor_control = {}
         self._on_actor_delete = []
         self._on_actor_play_action_timeline = {}
         self._on_map_effect = []
@@ -404,6 +405,17 @@ class TriggerGroup:
     def on_cancel_channel(self, *channel_id):
         self.hook_map.set(main.sniffer.on_actor_control[ActorControlId.RemoveChanneling], self._recv_on_cancel_channel)
         return self._add_set(self._on_cancel_channel, channel_id or pair_all)
+
+    # endregion
+    # region on_actor_control
+    # add event support for overall actor control
+    def _recv_on_actor_control(self, msg: ActorControlMessage):
+        for c in self._on_cancel_channel.get(msg.id, ()): call_safe(c, msg)
+        for c in self._on_cancel_channel.get(None, ()):  call_safe(c, msg)  # pair all
+
+    def on_actor_control(self, *actor_control_id):
+        self.hook_map.set(main.sniffer.on_actor_control.any_call, self._recv_on_actor_control)
+        return self._add_set(self._on_actor_control, actor_control_id or pair_all)
 
     # endregion
     # region on_actor_play_action_timeline
