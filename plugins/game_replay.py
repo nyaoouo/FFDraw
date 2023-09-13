@@ -124,7 +124,7 @@ class GameReplay(FFDrawPlugin):
             self.enable = enabled
             self.data['enabled'] = enabled
             self.storage.save()
-        enabled and imgui.button('start_recording') and self.start_recording()
+        enabled and imgui.button('click to start recording') and self.start_recording()
 
         if chr_id := self.get_character_id():
             replay_dir = self.mem.user_path / 'replay'
