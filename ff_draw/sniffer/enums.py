@@ -138,8 +138,11 @@ class ActorControlId(enum.Enum):
     SetLockOn = 0X22
     SetChanneling = 0X23
     RemoveChanneling = 0X2F
+    SetModelScale = 0X30
     SetModelAttr = 0X31
     SetTargetable = 0X36
+    SetTimelineModelSkin = 0x3E
+    SetTimelineModelFlag = 0x3F
     EventDirector = 0X6D
     RejectEventFinish = 0X8C
     SetLimitBreak = 0X1F9

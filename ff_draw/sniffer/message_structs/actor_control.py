@@ -130,6 +130,12 @@ class RemoveChanneling:
     channel_id: int
 
 
+@type_map.set(ActorControlId.SetModelScale)  # 0X30
+@dataclasses.dataclass
+class SetModelScale:
+    scale: int
+
+
 @type_map.set(ActorControlId.SetModelAttr)  # 0X31
 @dataclasses.dataclass
 class SetModelAttr:
@@ -140,6 +146,19 @@ class SetModelAttr:
 @dataclasses.dataclass
 class SetTargetable:
     is_targetable: int
+
+
+@type_map.set(ActorControlId.SetTimelineModelSkin)
+@dataclasses.dataclass
+class SetTimelineModelSkin:
+    idx: int
+    val: int
+
+
+@type_map.set(ActorControlId.SetTimelineModelFlag)
+@dataclasses.dataclass
+class SetTimelineModelFlag:
+    val: int
 
 
 class EventDirectorType(enum.Enum):
