@@ -48,6 +48,10 @@ class XivMemPanel:
 
         imgui.text(f'game_version: {mem.game_version}')
         imgui.text(f'game_build_date: {mem.game_build_date}')
+        imgui.text(f'user_path: {mem.user_path}')
+        imgui.same_line()
+        if imgui.button('open'):
+            os.system(f'start "" /B explorer "{mem.user_path}"')
 
         if me := mem.actor_table.me:
             imgui.text(f'me: {me.name}#{me.id:#x}')
@@ -116,6 +120,7 @@ class XivMem:
         self.screen_address = self.scanner.find_point('48 ? ? * * * * e8 ? ? ? ? 42 ? ? ? 39 05')[0] + 0x1b4
         self.replay_flag_address = self.scanner.find_point('84 1d * * * * 74 ? 80 3d')[0]
         self._a_p_framework = self.scanner.find_point('48 ? ? * * * * 41 39 b1')[0]
+        self._p_get_user_path = self.scanner.find_point('e8 * * * * 48 ? ? ? ? ? ? ? 48 ? ? 48 ? ? 74 ? e8 ? ? ? ? 48 89 bc 24')[0]
         self.actor_table = actor.ActorTable(self)
         self.targets = actor.Targets(self)
         self.party = party.PartyManager(self)
@@ -157,3 +162,7 @@ class XivMem:
     @property
     def is_in_replay(self):
         return (ny_mem.read_ubyte(self.handle, self.replay_flag_address) & 0b100) > 0
+
+    @functools.cached_property
+    def user_path(self):
+        return pathlib.Path(self.call_native_once_game_main(self._p_get_user_path, 'c_wchar_p', ("c_void_p",), (self.p_framework,)))
