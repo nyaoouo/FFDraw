@@ -4,6 +4,7 @@ from tkinter import filedialog
 
 import imgui
 from nylib.utils.imgui import ctx as imgui_ctx
+
 from .db_handler import RsDataHandler
 
 if typing.TYPE_CHECKING:
@@ -41,6 +42,7 @@ class RsData:
     def load_db(self):
         if path := filedialog.askopenfilename():
             self.db_handler.load_new_db(path).wait()
+            self.load_to_game(True)
 
     def load_to_game(self, force=False):
         mem = self.main.mem
@@ -61,4 +63,4 @@ class RsData:
                 threading.Thread(target=self.load_db, daemon=True).start()
             imgui.same_line()
             if imgui.button('force load'):
-                threading.Thread(target=self.load_to_game, daemon=True).start()
+                threading.Thread(target=self.load_to_game, args=(True,), daemon=True).start()
