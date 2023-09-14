@@ -65,6 +65,7 @@ class ZoneServer(enum.Enum):
     PrepareZoning = enum.auto()
     RetainerInformation = enum.auto()
     RsvString = enum.auto()
+    RsfHeader = enum.auto()
     StartActionTimelineMulti = enum.auto()
     StatusEffectList = enum.auto()
     StatusEffectList2 = enum.auto()

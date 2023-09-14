@@ -490,8 +490,25 @@ class RsvString(Structure):
         return self.__key.split(b'\0', 1)[0].decode('utf-8', errors='ignore')
 
     @property
+    def raw_value(self) -> bytearray:
+        return bytearray(self.__value[:self.value_length])
+
+    @property
     def value(self):
-        return SeString.from_buffer(bytearray(self.__value[:self.value_length]))
+        return SeString.from_buffer(self.raw_value)
+
+
+@type_map.set(ZoneServer.RsfHeader)
+@set_fields_from_annotations
+class RsfHeader(Structure):
+    _size_ = 0X48
+
+    key: 'fctypes.c_uint64' = eval('0X0')
+    __value: 'fctypes.array(fctypes.c_uint8, 64)' = eval('0X8')
+
+    @property
+    def value(self):
+        return bytes(self.__value)
 
 
 @type_map.set(ZoneServer.NpcYell)
