@@ -20,7 +20,7 @@ except ImportError:
 else:
     use_aiohttp_cors = True
 
-from . import gui, omen, mem, func_parser, plugins, update
+from . import gui, omen, mem, func_parser, plugins, update, rs_data
 
 default_cn = bool(os.environ.get('DefaultCn'))
 
@@ -84,6 +84,8 @@ class FFDraw:
             line_color = glm.vec4(*v['line']) if (_line_color := v.get('line')) else None
             self.logger.debug(f'load color {k}: surface={surface_color} line={line_color}')
             self.preset_omen_colors[k] = surface_color, line_color
+
+        self.rs_data = rs_data.RsData(self)
 
         self.plugins = {}
         self.enable_plugins = self.config.setdefault('enable_plugins', {})

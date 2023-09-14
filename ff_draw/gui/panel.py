@@ -308,6 +308,10 @@ class FFDPanel:
                 parser.compile_config.setdefault('print_debug', {})['enable'] = parser.print_compile
                 self.main.save_config()
 
+        if imgui.collapsing_header(i18n(RS_DATA) + '###tab_setting_div_rs_data', None, flag)[0]:
+            self.main.rs_data.render_panel()
+
+
     def push_style(self, _):
         return set_style(self.style_color)
 
