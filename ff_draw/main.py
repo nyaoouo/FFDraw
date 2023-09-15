@@ -22,7 +22,7 @@ except ImportError:
 else:
     use_aiohttp_cors = True
 
-from . import gui, omen, mem, func_parser, plugins, update, rs_data
+from . import gui, omen, mem, func_parser, plugins, update, rs_data, command
 
 _T = typing.TypeVar('_T')
 default_cn = bool(os.environ.get('DefaultCn'))
@@ -89,6 +89,7 @@ class FFDraw:
             self.preset_omen_colors[k] = surface_color, line_color
 
         self.rs_data = rs_data.RsData(self)
+        self.command = command.Command(self)
 
         self.plugins = {}
         self.enable_plugins = self.config.setdefault('enable_plugins', {})
