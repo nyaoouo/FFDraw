@@ -96,19 +96,23 @@ def set_color(style_color: dict, mainColor: tuple, darkColor: tuple):
     change('color_background2', 11, 11, 11)
 
 
-def set_style(style_color):
-    imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 5)
-    imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, 0)
+def set_style():
+    from .panel import FFDPanel
+    style_var = FFDPanel.instance.style_var
+    style_color = FFDPanel.instance.style_color
+    default_rounding = style_var.setdefault('rounding', 5)
+    imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, style_var.get('window_rounding', default_rounding))
+    imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, style_var.setdefault('window_border_size', 0))
     imgui.push_style_var(imgui.STYLE_WINDOW_PADDING, (10, 10))
-    imgui.push_style_var(imgui.STYLE_POPUP_ROUNDING, 5)
+    imgui.push_style_var(imgui.STYLE_POPUP_ROUNDING, style_var.get('popup_rounding', default_rounding))
     imgui.push_style_var(imgui.STYLE_POPUP_BORDERSIZE, 0)
-    imgui.push_style_var(imgui.STYLE_FRAME_ROUNDING, 5)
+    imgui.push_style_var(imgui.STYLE_FRAME_ROUNDING, style_var.get('frame_rounding', default_rounding))
     imgui.push_style_var(imgui.STYLE_FRAME_PADDING, (5, 5))
     imgui.push_style_var(imgui.STYLE_ITEM_SPACING, (12, 12))
     imgui.push_style_var(imgui.STYLE_ITEM_INNER_SPACING, (8, 6))
     imgui.push_style_var(imgui.STYLE_SCROLLBAR_SIZE, 20)
     imgui.push_style_var(imgui.STYLE_INDENT_SPACING, 22)
-    imgui.push_style_var(imgui.STYLE_GRAB_ROUNDING, 5)
+    imgui.push_style_var(imgui.STYLE_GRAB_ROUNDING, style_var.get('grab_rounding', default_rounding))
     imgui.push_style_var(imgui.STYLE_GRAB_MIN_SIZE, 10)
 
     imgui.push_style_color(imgui.COLOR_TEXT, *rgba_to_float(255, 255, 255, 255))

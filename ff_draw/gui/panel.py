@@ -26,9 +26,13 @@ gl_src_alpha_types = [
 
 
 class FFDPanel:
+    instance: 'FFDPanel' = None
     logger = logging.getLogger('Panel')
 
     def __init__(self, gui: 'Drawing'):
+        assert FFDPanel.instance is None, 'FFDPanel.instance is not None'
+        FFDPanel.instance = self
+
         self.main = gui.main
         self.is_expand = True
         self.is_show = True
@@ -50,6 +54,7 @@ class FFDPanel:
         self.lang_idx = self.main.config.setdefault('language', 0)
         i18n.current_lang = self.lang_idx
         self.style_color = set_default_color(self.main.config.setdefault('style_color', {}))
+        self.style_var = set_default_color(self.main.config.setdefault('style_var', {}))
         self.font_size = self.main.config['gui']['font_size']
         imgui.get_style().alpha = self.style_color['alpha']
 
@@ -130,6 +135,12 @@ class FFDPanel:
             changed, self.font_size = imgui.slider_int(i18n(Font_size), self.font_size, 15, 30)
             if changed:
                 self.main.config['gui']['font_size'] = self.font_size
+                self.main.save_config()
+
+            imgui.new_line()
+            changed, new_val = imgui.slider_int(i18n(ROUNDING), self.style_var['rounding'], 0, 10)
+            if changed:
+                self.style_var['rounding'] = new_val
                 self.main.save_config()
 
             imgui.text(i18n(Font_path))
@@ -311,9 +322,8 @@ class FFDPanel:
         if imgui.collapsing_header(i18n(RS_DATA) + '###tab_setting_div_rs_data', None, flag)[0]:
             self.main.rs_data.render_panel()
 
-
     def push_style(self, _):
-        return set_style(self.style_color)
+        return set_style()
 
     def pop_style(self, _):
         return pop_style()
