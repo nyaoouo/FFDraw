@@ -16,7 +16,7 @@ from nylib.pefile import PE
 from nylib.utils.win32.inject_rpc import Handle, pywin32_dll_place
 from nylib.utils.imgui import ctx as imgui_ctx
 from . import utils, actor, party, network_target, packet_fix, marking, territory_info, event_module, quest_info, storage
-from . import move_controller, hate_list, scanners
+from . import move_controller, hate_list, scanners, ray_cast
 from . import hook_main_update, do_text_command, utf8string, hook_chatlog
 
 if typing.TYPE_CHECKING:
@@ -146,6 +146,7 @@ class XivMem:
         self.inject_handle.reg_std_err(lambda _, s: print(s, end=''))
         self.add_game_main_func, self.remove_game_main_func, self.call_once_game_main = hook_main_update.install(self)
         self.do_text_command = do_text_command.DoTextCommand(self)
+        self.ray_cast = ray_cast.RayCast(self)
         self.on_print_chat_log = hook_chatlog.OnPrintChatLog(self)
 
     def call_native_once_game_main(self, func_ptr, res_type, arg_types, args):
