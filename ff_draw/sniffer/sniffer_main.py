@@ -13,6 +13,7 @@ import imgui
 
 from nylib.utils import serialize_data, KeyRoute, BroadcastHook
 from nylib.utils.win32.network import find_process_tcp_connections
+from ff_draw.utils import EvtQueue
 from . import enums, extra, message_dump, hook_sniff
 from .message_structs import zone_server, zone_client, chat_server, chat_client
 from .utils import message, structs, simple, bundle, oodle
@@ -91,11 +92,7 @@ class Sniffer:
         self.extra = extra.SnifferExtra(self)
 
         self.update_dump()
-        self.msg_queue = queue.Queue()
-        self._msg_queue = queue.Queue()
-        self._msg_evt = threading.Event()
-        self.msg_loop_thread = threading.Thread(target=self.msg_loop, daemon=True)
-        self.msg_loop_watcher_thread = threading.Thread(target=self.msg_loop_watcher, daemon=True)
+        self.evt_queue = EvtQueue(self._on_ipc_message)
 
     def update_dump(self):
         if self.dump:
@@ -106,27 +103,14 @@ class Sniffer:
             self.dump = message_dump.MessageDumper(file_name, self.main.mem.game_build_date)
             self.logger.info(f'dump packets at {file_name}')
 
-    def msg_loop_watcher(self):
-        while True:
-            is_zone, is_up, msg = self.msg_queue.get()
-            self._msg_evt.clear()
-            start_time = time.time()
-            self._msg_queue.put((is_zone, is_up, msg))
-            self._msg_evt.wait(.1)
-            while not self._msg_evt.is_set():
-                try:
-                    self.logger.warning(f'parse ipc {is_zone=} {is_up=} {msg.element.proto_no=} run for {time.time() - start_time:.3f}s, for blocking event, please use async method\n' + ''.join(
-                        traceback.format_stack(sys._current_frames()[self.msg_loop_thread.ident])[10:]
-                    ))
-                except Exception as e:
-                    self.logger.warning(f'exception when get overtime stack', exc_info=e)
-                self._msg_evt.wait(.5)
-
-    def msg_loop(self):
-        msg: message.ElementMessage[structs.IpcHeader]
-        while True:
-            self._on_ipc_message(*self._msg_queue.get())
-            self._msg_evt.set()
+    def _on_evt_queue_timeout(self, args, time_, q):
+        is_zone, is_up, msg = args
+        try:
+            self.logger.warning(f'parse ipc {is_zone=} {is_up=} {msg.element.proto_no=} run for {time_:.3f}s, for blocking event, please use async method\n' + ''.join(
+                traceback.format_stack(sys._current_frames()[self.evt_queue.msg_loop_thread.ident])[10:]
+            ))
+        except Exception as e:
+            self.logger.warning(f'exception when get overtime stack', exc_info=e)
 
     def _on_ipc_message(self, is_zone, is_up, msg):
         fix_value = None
@@ -171,11 +155,9 @@ class Sniffer:
                 self.logger.error(f'error in processing network message {pno}', exc_info=e)
 
     def on_ipc_message(self, is_zone, is_up, msg: message.ElementMessage[structs.IpcHeader]):
-        self.msg_queue.put((is_zone, is_up, msg))
+        self.evt_queue.put(is_zone, is_up, msg)
 
     def start(self):
-        self.msg_loop_thread.start()
-        self.msg_loop_watcher_thread.start()
         hook_sniff.install()
 
     def render_panel(self):
