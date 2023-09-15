@@ -4,6 +4,8 @@ import logging
 import os
 import pathlib
 import pkgutil
+import typing
+
 import sys
 import threading
 
@@ -22,6 +24,7 @@ else:
 
 from . import gui, omen, mem, func_parser, plugins, update, rs_data
 
+_T = typing.TypeVar('_T')
 default_cn = bool(os.environ.get('DefaultCn'))
 
 
@@ -107,14 +110,19 @@ class FFDraw:
 
     def reload_plugin(self, name):
         if plugin := self.plugins.pop(name, None): plugin.unload()
-        self.reload_plugin_lists()[name](self)
+        # self.reload_plugin_lists()[name](self)
+        self.touch_plugin(self.reload_plugin_lists()[name])
+
+    def touch_plugin(self, plugin_cls: typing.Type[_T]) -> _T:
+        return self.plugins.get(plugin_cls.plugin_name) or plugin_cls(self)
 
     def load_init_plugins(self):
         self.reload_plugin_lists()
         for k, p in plugins.plugins.items():
             if self.enable_plugins.setdefault(k, False):
                 self.logger.debug(f'load plugin {k}')
-                p(self)
+                # p(self)
+                self.touch_plugin(p)
             else:
                 self.logger.debug(f'disable plugin {k}')
         for k in list(self.enable_plugins.keys()):
