@@ -299,7 +299,7 @@ class DpsWindow:
     def before_draw_window(self, w: Window):
         if self.window is None:
             self.window = w
-        set_style(self.main.main.gui.panel.style_color)
+        set_style()
 
     def after_draw_window(self, w: Window):
         pop_style()
