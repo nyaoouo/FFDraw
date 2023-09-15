@@ -47,7 +47,7 @@ class Command:
         self.prefix = self.data.setdefault('prefix', '/#')
         self.on_command = KeyRoute(lambda cmd, args: cmd)
         self.evt_queue = EvtQueue(self.on_command, )
-        self.on_command['test'].append(lambda _, args: self.logger.debug(f'test {args=}'))
+        # self.on_command['test'].append(lambda _, args: self.logger.debug(f'test {args=}'))
 
     @property
     def prefix(self):
@@ -58,6 +58,8 @@ class Command:
         if isinstance(value, str): value = value.encode('utf-8')
         assert len(value) < 0x10, 'prefix too long'
         ny_mem.write_bytes(self.handle, self.p_cfg, value)
+        self.data['prefix'] = value.decode('utf-8')
+        self.main.save_config()
 
     def _on_evt_queue_timeout(self, args, time_, q):
         cmd, args = args

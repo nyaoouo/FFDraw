@@ -321,6 +321,11 @@ class FFDPanel:
 
         if imgui.collapsing_header(i18n(RS_DATA) + '###tab_setting_div_rs_data', None, flag)[0]:
             self.main.rs_data.render_panel()
+        if imgui.collapsing_header(i18n(COMMAND) + '###tab_setting_div_command', None, flag)[0]:
+            cmd = self.main.command
+            imgui.text(i18n(PREFIX))
+            changed, new_val = imgui.input_text('##command', cmd.prefix, 0x10)
+            if changed: cmd.prefix = new_val
 
     def push_style(self, _):
         return set_style()
