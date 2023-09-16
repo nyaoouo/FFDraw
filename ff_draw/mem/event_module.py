@@ -60,8 +60,7 @@ class ContentInfo:
         self.handle = event_module.main.handle
 
         # mov     rax, [rcx+158h]
-        get_content_info_func = self.main.scanner.find_point('e8 * * * * 48 ? ? 0f 84 ? ? ? ? 8b ? ? ? 0f ? ? 44')[0]
-        self._content_info_offset = ny_mem.read_int(self.handle, get_content_info_func + 3)
+        self._content_info_offset, = self.main.scanner_v2.find_val('e8 (* * * *:48 ? ? <? ? ? ?>) 4c ? ? 48 ? ? 74 ? 44 38 b0')
 
     @property
     def address(self):
@@ -125,4 +124,3 @@ class EventModule:
     def render_debug(self):
         with imgui_ctx.TreeNode('ContentInfo') as n, n:
             self.content_info.render_debug()
-
