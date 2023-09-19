@@ -17,6 +17,8 @@ special_actions[33315] = 0
 special_actions[33292] = 0
 special_actions[33139] = 0
 special_actions[33145] = 0
+special_actions[34709] = raid_utils.fan_shape(180)
+special_actions[34710] = raid_utils.fan_shape(180)
 
 delay_until[33121] = 4
 
