@@ -10,3 +10,4 @@
 * PVP插件 https://github.com/extrant/FFDraw-PVPPlugins
 * 绝欧米茄绘制 P1  https://github.com/Errerer/FFDrawplugins
 * 绝欧米茄P3绘制  https://github.com/cyf2023/my-ffd
+* 极高贝扎四风、冰刀调色  https://github.com/extrant/ffdplugins
