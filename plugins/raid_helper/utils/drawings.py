@@ -8,10 +8,13 @@ from .typing import *
 
 main = FFDraw.instance
 
-circle_shape = 0x10000
-rect_shape = 0x20000
+circle_shape = lambda: 0x10000
+rect_shape = lambda t=0: 0x20000 | t
 fan_shape = lambda degree: 0x50000 | degree
 donut_shape = lambda inner, outer: 0x10000 | int(inner / outer * 0xffff)
+is_shape_circle = lambda shape: shape >> 16 == 1
+is_shape_rect = lambda shape: shape >> 16 == 2
+is_shape_fan = lambda shape: shape >> 16 == 5
 
 
 def default_color(is_enemy=True):
@@ -649,7 +652,7 @@ class WaypointList(list):
             next_wp: Waypoint = self[i]
             if next_wp.is_reach(me_pos):
                 main.gui.add_3d_shape(
-                    circle_shape,
+                    circle_shape(),
                     glm.translate(next_wp.pos) * glm.scale(glm.vec3(next_wp.reach_dis)),
                     surface_color=glm.vec4(*next_wp.surface_color, .35), line_color=glm.vec4(*next_wp.line_color, .7)
                 )

@@ -1,14 +1,35 @@
+import functools
+import time
+import typing
+
+import glm
 import itertools
 
 import imgui
 
-from ff_draw.func_parser import action_type_to_shape_default
 from ff_draw.plugins import FFDrawPlugin
 from ff_draw.sniffer.message_structs.zone_server import ActorCast
 from nylib.utils.win32 import memory as ny_mem
 from .data import special_actions, delay_until, omen_color
-from .utils import *
+from . import utils as raid_utils
 from .utils import party_role
+
+
+@functools.cache
+def get_shape_default_by_action_type(t):
+    return {
+        2: raid_utils.circle_shape(),  # circle
+        3: raid_utils.fan_shape(90),  # fan
+        4: raid_utils.rect_shape(),  # rect
+        5: raid_utils.circle_shape(),  # circle
+        6: raid_utils.circle_shape(),  # circle
+        7: raid_utils.circle_shape(),  # circle
+        # 8: 0x20000,  # rect to target
+        10: raid_utils.donut_shape(1, 2),  # donut
+        11: raid_utils.rect_shape(2),  # cross
+        12: raid_utils.rect_shape(),  # rect
+        13: raid_utils.fan_shape(90),  # fan
+    }.get(t, 0)
 
 
 def set_raid_helper_instance(raid_helper: 'RaidHelper'):
@@ -37,7 +58,7 @@ class HookCall:
 
     def play(self, msg):
         for c in self.common: c(msg)
-        for c in self.by_map.get(FFDraw.instance.mem.territory_info.territory_id, ()): c(msg)
+        for c in self.by_map.get(raid_utils.FFDraw.instance.mem.territory_info.territory_id, ()): c(msg)
 
 
 def delay_until_dec(action_id, shape):
@@ -48,13 +69,13 @@ def delay_until_dec(action_id, shape):
 
 class HookMap2:
     call_map: dict[int, HookCall]
-    hook_map: dict[int, BroadcastHook]
+    hook_map: dict[int, raid_utils.BroadcastHook]
 
     def __init__(self):
         self.call_map = {}
         self.hook_map = {}
 
-    def get_call(self, hook: BroadcastHook):
+    def get_call(self, hook: raid_utils.BroadcastHook):
         self.hook_map[hid := id(hook)] = hook
         if hid not in self.call_map:
             self.call_map[hid] = res = HookCall()
@@ -67,7 +88,7 @@ class HookMap2:
 
 
 class RaidHelper(FFDrawPlugin):
-    actor_omens: dict[int, BaseOmen]
+    actor_omens: dict[int, raid_utils.BaseOmen]
     instance: 'RaidHelper' = None
 
     def __init__(self, main):
@@ -85,30 +106,30 @@ class RaidHelper(FFDrawPlugin):
         self.show_friend = self.simple_cast_cfg.setdefault('show_friend', True)
         self.print_history = self.simple_cast_cfg.setdefault('print_history', False)
 
-        self.main.sniffer.on_zone_server_message[ZoneServer.ActorCast].append(self.on_simple_cast)
+        self.main.sniffer.on_zone_server_message[raid_utils.ZoneServer.ActorCast].append(self.on_simple_cast)
         self.on_action_effect = lambda m: self.remove_actor_omen(m.header.source_id)
         self.main.sniffer.on_action_effect.append(self.on_action_effect)
         self.on_cancel_cast = lambda m: self.remove_actor_omen(m.source_id)
-        self.main.sniffer.on_actor_control[ActorControlId.CancelCast].append(self.on_cancel_cast)
+        self.main.sniffer.on_actor_control[raid_utils.ActorControlId.CancelCast].append(self.on_cancel_cast)
 
         # party_role
         self.party_role = party_role.PartyRole()
-        self.main.sniffer.on_zone_server_message[ZoneServer.PartyUpdate].append(self.on_party_update)
+        self.main.sniffer.on_zone_server_message[raid_utils.ZoneServer.PartyUpdate].append(self.on_party_update)
         self.party_reload()
 
         self.actor_omens = {}
-        self.bnpc_battalion_offset = self.main.mem.scanner.find_val('44 ? ? ? * * * * 4c 89 68 ? 4c 89 70')[0]
+        self.bnpc_battalion_offset, = self.main.mem.scanner_v2.find_val('44 ? ? ? <? ? ? ?> 4c 89 68 ? 4c 89 70 ? 4c 89 78 ? 0f 29 70')
         self.logger.debug(f'bnpc b offset {self.bnpc_battalion_offset:x}')
 
-        self.waypoints = WaypointList()
+        self.waypoints = raid_utils.WaypointList()
 
         self._panel_filter_string = ''
 
     def _init_hook_map(self):
         load_triggers()
-        for hook, calls in common_trigger.hook_map.iter():
+        for hook, calls in raid_utils.common_trigger.hook_map.iter():
             self.hook_map.get_call(hook).common = calls
-        for tid, mt in MapTrigger.triggers.items():
+        for tid, mt in raid_utils.MapTrigger.triggers.items():
             for hook, calls in mt.hook_map.iter():
                 self.hook_map.get_call(hook).by_map[tid] = calls
 
@@ -116,24 +137,24 @@ class RaidHelper(FFDrawPlugin):
         for h, c in self.hook_map.iter(): h.remove(c.play)
 
         # simple cast
-        self.main.sniffer.on_zone_server_message[ZoneServer.ActorCast].remove(self.on_simple_cast)
+        self.main.sniffer.on_zone_server_message[raid_utils.ZoneServer.ActorCast].remove(self.on_simple_cast)
         self.main.sniffer.on_action_effect.remove(self.on_action_effect)
-        self.main.sniffer.on_actor_control[ActorControlId.CancelCast].remove(self.on_cancel_cast)
+        self.main.sniffer.on_actor_control[raid_utils.ActorControlId.CancelCast].remove(self.on_cancel_cast)
 
         # party_role
-        self.main.sniffer.on_zone_server_message[ZoneServer.PartyUpdate].remove(self.on_party_update)
+        self.main.sniffer.on_zone_server_message[raid_utils.ZoneServer.PartyUpdate].remove(self.on_party_update)
 
-    def on_party_update(self, evt: NetworkMessage[zone_server.PartyUpdate]):
+    def on_party_update(self, evt: raid_utils.NetworkMessage[raid_utils.zone_server.PartyUpdate]):
         self.party_role.update([
             (m.name, m.home_world_id, m.actor_id, m.class_job,)
             for m in (evt.message.member[i] for i in range(evt.message.party_count))
         ], False)
 
     def party_reload(self, reload=False):
-        if get_me():
+        if raid_utils.get_me():
             self.party_role.update([
                 (m.name, m.home_world, m.id, m.class_job,)
-                for m in iter_main_party(False)
+                for m in raid_utils.iter_main_party(False)
             ], reload)
 
     # def test_waypoint_list(self):
@@ -194,28 +215,28 @@ class RaidHelper(FFDrawPlugin):
             imgui.same_line()
         _, self._panel_filter_string = imgui.input_text('filter', self._panel_filter_string, 256)
 
-        for idx, tg in sorted(((tg.get_index(), tg) for tg in itertools.chain(MapTrigger.triggers.values(), [common_trigger]) if self._panel_filter_string in tg.label), reverse=True):
+        for idx, tg in sorted(((tg.get_index(), tg) for tg in itertools.chain(raid_utils.MapTrigger.triggers.values(), [raid_utils.common_trigger]) if self._panel_filter_string in tg.label), reverse=True):
             if idx > 0:
                 highlight = (.3, 1, .3, 1)
             else:
                 highlight = None
             tg.render(highlight)
 
-    def current_triggers(self) -> typing.Iterable[TriggerGroup]:
-        yield common_trigger
-        if t := MapTrigger.triggers.get(self.main.mem.territory_info.territory_id):
+    def current_triggers(self) -> typing.Iterable[raid_utils.TriggerGroup]:
+        yield raid_utils.common_trigger
+        if t := raid_utils.MapTrigger.triggers.get(self.main.mem.territory_info.territory_id):
             yield t
 
     def remove_actor_omen(self, actor_id):
         if omen := self.actor_omens.pop(actor_id, None):
             omen.timeout()
 
-    def get_battalion_key(self, actor: Actor, mode: int):
+    def get_battalion_key(self, actor: raid_utils.Actor, mode: int):
         # e8 * * * * 33 ? 48 ? ? 8b ? e8 ? ? ? ? 8b
         if mode == 1 and actor.actor_type == 1: return 0
         return ny_mem.read_ubyte(actor.handle, actor.address + self.bnpc_battalion_offset)
 
-    def is_enemy(self, a1: Actor | None, a2: Actor | None):
+    def is_enemy(self, a1: raid_utils.Actor | None, a2: raid_utils.Actor | None):
         # e8 * * * * 84 ? 0f 85 ? ? ? ? 85 ? 74
         if not (a1 and a2): return True
         if a1.actor_type > 2 or a2.actor_type > 2: return False
@@ -226,7 +247,7 @@ class RaidHelper(FFDrawPlugin):
         if battalion_mode == 0: return False
         return self.main.sq_pack.sheets.battalion_sheet[self.get_battalion_key(a1, battalion_mode)][self.get_battalion_key(a2, battalion_mode)]
 
-    def on_simple_cast(self, msg: NetworkMessage[ActorCast]):
+    def on_simple_cast(self, msg: raid_utils.NetworkMessage[ActorCast]):
         if not self.enable_simple_cast: return
         data = msg.message
         if data.action_kind != 1: return
@@ -263,10 +284,10 @@ class RaidHelper(FFDrawPlugin):
             if not (source and target): return
             if self.print_history:
                 self.logger.debug(f'#simple_cast {source.name} cast laser {action.text}#{action_id} to with width {effect_width}')
-            self.actor_omens[source_id] = BaseOmen(
+            self.actor_omens[source_id] = raid_utils.BaseOmen(
                 main=self.main,
                 pos=lambda _: source.pos,
-                shape=delay_until_dec(action_id, 0x20000),
+                shape=delay_until_dec(action_id, raid_utils.rect_shape()),
                 scale=lambda _: glm.vec3(effect_width, 1, glm.distance(source.pos, target.pos)),
                 facing=lambda _: glm.polar(target.pos - source.pos).y,
                 surface_color=surface_color,
@@ -275,21 +296,24 @@ class RaidHelper(FFDrawPlugin):
                 duration=data.cast_time + .5,
                 alpha=alpha,
             )
-        shape = special_actions[action_id] if action_id in special_actions else action_type_to_shape_default.get(effect_type)
-        if not shape: return
-        scale = glm.vec3(effect_width if shape >> 16 == 2 else effect_range, 1, effect_range)
-        is_circle = shape >> 16 == 1
+        shape = special_actions[action_id] if action_id in special_actions else get_shape_default_by_action_type(effect_type)
+        if not shape:
+            self.logger.debug(f'#simple_cast {source.name} cast {action.text}#{action_id} with unknown shape {effect_type} got {shape}')
+            return
+        scale = glm.vec3(effect_width if raid_utils.is_shape_rect(shape) else effect_range, 1, effect_range)
+        is_circle = raid_utils.is_shape_circle(shape)
         pos = (lambda _: target.pos) if is_circle and target else data.pos
         facing = 0 if is_circle else (lambda _: glm.polar(target.pos - source.pos).y) if target else data.facing
         maybe_callable = lambda v: v(None) if callable(v) else v
         if self.print_history:
+            shape_ = maybe_callable(shape)
             self.logger.debug(
                 f'#simple_cast {source.name} cast {action.text}#{action_id} '
-                f'shape:{maybe_callable(shape):#X} time:{data.cast_time:.2f} '
+                f'shape:{hex(shape_) if isinstance(shape_, int) else shape_} time:{data.cast_time:.2f} '
                 f'pos:{maybe_callable(pos)} facing:{maybe_callable(facing)} scale:{scale} '
                 f'color:{color} line_color:{line_color} surface_color:{surface_color}'
             )
-        self.actor_omens[source_id] = BaseOmen(
+        self.actor_omens[source_id] = raid_utils.BaseOmen(
             main=self.main,
             pos=pos,
             shape=delay_until_dec(action_id, shape),
