@@ -224,25 +224,30 @@ class RejectSendAction:
     recast_max = property(lambda self: self._recast_max / 100)
 
 
-@type_map.set(ActorControlId.FateInit)  # 0X931
+@type_map.set(ActorControlId.FateState)
 @dataclasses.dataclass
-class FateInit:
+class FateState:
     pass
 
 
-@type_map.set(ActorControlId.FateProgress)  # 0X934
+@type_map.set(ActorControlId.FateProgress)
 @dataclasses.dataclass
 class FateProgress:
     pass
 
 
-@type_map.set(ActorControlId.FateStart)  # 0X935
+@type_map.set(ActorControlId.FateStart)
 @dataclasses.dataclass
 class FateStart:
     pass
 
 
-@type_map.set(ActorControlId.FateEnd)  # 0X936
+@type_map.set(ActorControlId.FateEnd)
 @dataclasses.dataclass
 class FateEnd:
     pass
+
+@type_map.set(ActorControlId.SetMoveFlag2)
+@dataclasses.dataclass
+class SetMoveFlag2:
+    flag_2: int

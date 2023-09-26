@@ -146,15 +146,17 @@ class ActorControlId(enum.Enum):
     SetTimelineModelFlag = 0x3F
     EventDirector = 0X6D
     RejectEventFinish = 0X8C
+    SetMoveFlag2 = 0xEc
     SetLimitBreak = 0X1F9
     PlayActionTimeLine = 0X197
     SetActorTimeLine = 0X19D
     RejectSendAction = 0X2BC
     InterruptCast = 0X5F1
-    FateInit = 0X931
-    FateProgress = 0X934
-    FateStart = 0X935
-    FateEnd = 0X936
+    FateState = 0X931
+    FateStart = 0X934
+    FateEnd = 0X935
+    FateProgress = 0X93C
+
 
 
 class ClientTriggerId(enum.Enum):
