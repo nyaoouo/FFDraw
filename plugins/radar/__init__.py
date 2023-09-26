@@ -32,6 +32,7 @@ class CActor:
     actor_type = safe_cached_property((lambda self: self._actor.actor_type), 0)
     target_id = safe_cached_property((lambda self: self._actor.target_id), 0xe0000000)
     can_select = safe_cached_property((lambda self: self._actor.can_select), False)
+    is_visible = safe_cached_property((lambda self: self._actor.is_visible), False)
 
 
 y_axis = glm.vec3(0, 1, 0)
@@ -40,7 +41,7 @@ x_axis = glm.vec3(1, 0, 0)
 
 def line_trans(start, end):
     distance = glm.distance(start, end)
-    return glm.translate(start) * glm.rotate(glm.polar(end - start).y, y_axis) * glm.rotate(math.atan2(start.y - end.y, glm.distance(start.xz, end.xz)), x_axis) * glm.scale(glm.vec3(1,1,distance))
+    return glm.translate(start) * glm.rotate(glm.polar(end - start).y, y_axis) * glm.rotate(math.atan2(start.y - end.y, glm.distance(start.xz, end.xz)), x_axis) * glm.scale(glm.vec3(1, 1, distance))
 
 
 class Radar(FFDrawPlugin):
@@ -49,6 +50,7 @@ class Radar(FFDrawPlugin):
         self.print_name = self.data.setdefault('print_name', True)
         self.show_hitbox = self.data.setdefault('show_hitbox', True)
         self.show_target = self.data.setdefault('show_target', True)
+        self.show_hide = self.data.setdefault('show_hide', True)
 
         self.colors_data = self.data.setdefault('colors', {})
         self.color_player = self.colors_data.setdefault('player', [0, 0, 1])
@@ -70,6 +72,11 @@ class Radar(FFDrawPlugin):
         clicked, self.show_target = imgui.checkbox("show target", self.show_target)
         if clicked:
             self.data['show_target'] = self.show_target
+            self.storage.save()
+
+        clicked, self.show_hide = imgui.checkbox("show hide", self.show_hide)
+        if clicked:
+            self.data['show_hide'] = self.show_hide
             self.storage.save()
 
         clicked, self.color_player = imgui.color_edit3("player", *self.color_player)
@@ -109,6 +116,7 @@ class Radar(FFDrawPlugin):
         focus_id = getattr(main.mem.targets.focus, 'id', -1)
 
         for actor in actors.values():
+            if not self.show_hide and not actor.is_visible: continue
             if actor.id == me_id:
                 color = me_color
             elif actor.actor_type == 1:
