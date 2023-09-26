@@ -266,7 +266,9 @@ class TriggerGroup:
         *directory, _key = key.split('/')
         for k in directory:
             vt = vt.setdefault(k, {})
-        self.values.setdefault(tuple(directory), {})[_key] = v
+        if _key in (dir_ := self.values.setdefault(tuple(directory), {})):
+            raise KeyError(f'{v.key} is exists')
+        dir_[_key] = v
         return v
 
     def _render_directory(self, p: tuple, vt: dict, ind=0):

@@ -118,7 +118,7 @@ class PartyRole:
         """
         with self.lock:
             new_data: list[typing.Any] = [None for _ in range(8)]
-            if len(data) >= 2:
+            if len(data) >= 1:
                 tanks = []
                 healers = []
                 melee_dps = []

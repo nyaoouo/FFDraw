@@ -307,7 +307,7 @@ class RaidHelper(FFDrawPlugin):
             )
         shape = special_actions[action_id] if action_id in special_actions else get_shape_default_by_action_type(effect_type)
         if not shape:
-            self.logger.debug(f'#simple_cast {source.name} cast {action.text}#{action_id} with unknown shape {effect_type} got {shape}')
+            # self.logger.debug(f'#simple_cast {source.name} cast {action.text}#{action_id} with unknown shape {effect_type} got {shape}')
             return
         scale = glm.vec3(effect_width if raid_utils.is_shape_rect(shape) else effect_range, 1, effect_range)
         is_circle = raid_utils.is_shape_circle(shape)

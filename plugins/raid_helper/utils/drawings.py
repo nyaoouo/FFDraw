@@ -1,3 +1,5 @@
+import typing
+
 import glm
 
 from ff_draw.omen import Line
@@ -579,14 +581,21 @@ class Waypoint:
 
     def __init__(self, l: 'WaypointList', pos: glm.vec3, pop_mode=POP_WHEN_REACH, reach_dis=REACH_DIS, auto_pop=-1., surface_color: glm.vec3 = None, line_color: glm.vec3 = None):
         self.l = l
-        self.pos = pos
+        self._pos = pos
         self.pop_mode = pop_mode
         self.reach_dis = reach_dis
         self.auto_pop = auto_pop
         self.surface_color = surface_color or self.DEFAULT_SURFACE_COLOR
         self.line_color = line_color or self.DEFAULT_LINE_COLOR
         if auto_pop > 0:
+            self.pop_at = time.time() + auto_pop
             new_thread(self._delay_pop)()
+        else:
+            self.pop_at = 1e+99
+
+    @property
+    def pos(self):
+        return self._pos(self) if callable(self._pos) else self._pos
 
     def _delay_pop(self):
         if self.auto_pop > 0:
@@ -622,8 +631,17 @@ class Waypoint:
 class WaypointList(list):
     last_tid = -1
 
-    def append_waypoint(self, pos: glm.vec3, pop_mode=Waypoint.POP_WHEN_REACH, reach_dis=Waypoint.REACH_DIS, auto_pop=-1., surface_color: glm.vec3 = None, line_color: glm.vec3 = None):
-        self.append(w := Waypoint(self, pos, pop_mode, reach_dis, auto_pop, surface_color, line_color))
+    def append_waypoint(self, pos: glm.vec3 | typing.Callable[[Waypoint], glm.vec3], pop_mode=Waypoint.POP_MANUAL, reach_dis=Waypoint.REACH_DIS, auto_pop=-1., surface_color: glm.vec3 = None, line_color: glm.vec3 = None):
+        w = Waypoint(self, pos, pop_mode, reach_dis, auto_pop, surface_color, line_color)
+        if not self or auto_pop <= 0:
+            self.append(w)
+        else:
+            for i, _w in enumerate(self):
+                if _w.pop_at <= 0 or _w.pop_at > w.pop_at:
+                    self.insert(i + 1, w)
+                    break
+            else:
+                self.append(w)
         return w
 
     def set_waypoint(self, *pos: glm.vec3, pop_mode=Waypoint.POP_WHEN_REACH):
