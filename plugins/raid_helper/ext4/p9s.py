@@ -29,6 +29,7 @@ center = glm.vec3(100, 0, 100)
 logger = logging.getLogger('raid_helper/p9s')
 
 is_enable = p9s.add_value(raid_utils.BoolCheckBox('default/enable', True))
+enable_waypoints = p9s.add_value(raid_utils.BoolCheckBox('default/waypoints/1.enable', False))
 p9s.decorators.append(lambda f: (lambda *args, **kwargs: f(*args, **kwargs) if is_enable.value else None))
 
 
@@ -71,11 +72,22 @@ class ScaleTo(Effector):
         return s + self.d_scale * self.delta
 
 
+# mt, st, h1, h2, d1, d2, d3, d4
+pos_rad_2 = [-math.pi / 2, math.pi / 2, -math.pi / 2, math.pi / 2, -math.pi / 2, math.pi / 2, -math.pi / 2, math.pi / 2, ]
+pos_rad_4 = [math.pi, 0, -math.pi / 2, math.pi / 2, -math.pi / 2, 0, math.pi, math.pi / 2, ]  # type[+], for type[x] , add math.pi/4
+pos_rad_8 = [math.pi, 0, -math.pi / 2, math.pi / 2, -math.pi / 2 + math.pi / 4, 0 + math.pi / 4, math.pi + math.pi / 4, math.pi / 2 + math.pi / 4, ]
+
+
 class DualSpell:
     fire_omens: list[raid_utils.OmenGroup] = None
     lightning_omens: list[BaseOmen] = None
     ice_omen: BaseOmen = None
     dur = 12.8
+
+    fire_type = p9s.add_value(raid_utils.Select('default/waypoints/2.DualSpellFireType', [('+', 0), ('x', 1), ], 0))
+    PATTERN_ICE = 0
+    PATTERN_FIRE = 2
+    PATTERN_LIGHTNING = 4
 
     def __init__(self):
         p9s.on_effect(33058)(self.on_fire_sp)
@@ -83,25 +95,92 @@ class DualSpell:
         p9s.on_effect(33116)(self.on_lightning_sp)
         p9s.on_cast(33108, 33156)(self.on_cast_fire_ice)
         p9s.on_cast(33109, 33157)(self.on_cast_ice_lightning)
+        p9s.on_reset(self.on_reset)
+        self.pattern = 0
+        p9s.add_value(raid_utils.ClickButton('default/waypoints/test/DualSpell_fire_P_ice', raid_utils.new_thread(lambda: self.on_select_test(
+            (1 << self.PATTERN_ICE) | (1 << self.PATTERN_FIRE) | (1 << (self.PATTERN_ICE + 1))
+        ))))
+        p9s.add_value(raid_utils.ClickButton('default/waypoints/test/DualSpell_P_fire_ice', raid_utils.new_thread(lambda: self.on_select_test(
+            (1 << self.PATTERN_ICE) | (1 << self.PATTERN_FIRE) | (1 << (self.PATTERN_FIRE + 1))
+        ))))
+        p9s.add_value(raid_utils.ClickButton('default/waypoints/test/DualSpell_P_ice_lightning', raid_utils.new_thread(lambda: self.on_select_test(
+            (1 << self.PATTERN_ICE) | (1 << self.PATTERN_LIGHTNING) | (1 << (self.PATTERN_ICE + 1))
+        ))))
+        p9s.add_value(raid_utils.ClickButton('default/waypoints/test/DualSpell_ice_P_lightning', raid_utils.new_thread(lambda: self.on_select_test(
+            (1 << self.PATTERN_ICE) | (1 << self.PATTERN_LIGHTNING) | (1 << (self.PATTERN_LIGHTNING + 1))
+        ))))
+
+    def on_select_test(self, pattern, dur=5):
+        self.pattern = 0
+        self.dur = dur
+        if pattern & (1 << self.PATTERN_FIRE):
+            self.make_fires()
+        if pattern & (1 << self.PATTERN_ICE):
+            self.make_ice()
+        if pattern & (1 << self.PATTERN_LIGHTNING):
+            self.make_lightnings()
+        self.add_wp()
+        time.sleep(dur / 2)
+        if pattern & (1 << (self.PATTERN_FIRE + 1)):
+            self.on_fire_sp(None)
+        if pattern & (1 << (self.PATTERN_ICE + 1)):
+            self.on_ice_sp(None)
+        if pattern & (1 << (self.PATTERN_LIGHTNING + 1)):
+            self.on_lightning_sp(None)
+
+    def get_way_point(self, w: raid_utils.Waypoint):
+        if not self.pattern:
+            w.pop()
+            return center
+        me = raid_utils.get_me()
+        role_idx = raid_utils.role_idx(me.id)
+        if role_idx == 99:  # fail to get role
+            logger.warning('fail to get role idx when play waypoints on DualSpell')
+            w.pop()
+            return center
+        if self.pattern & (1 << self.PATTERN_FIRE):
+            rad = pos_rad_4[role_idx]
+            if self.fire_type.value == 1:  # is type[x]
+                rad += math.pi / 4
+        elif self.pattern & (1 << self.PATTERN_LIGHTNING):
+            rad = pos_rad_8[role_idx]
+        else:
+            logger.warning(f'pattern is not fire or lightning when play waypoints on DualSpell, got {self.pattern:#b}')
+            w.pop()
+            return center
+        dis = 6 if self.pattern & (1 << (self.PATTERN_ICE + 1)) else 13
+        return glm.vec3(math.sin(rad), 0, math.cos(rad)) * dis + center
+
+    def add_wp(self):
+        if enable_waypoints.value:
+            raid_utils.raid_helper.waypoints.append_waypoint(self.get_way_point, auto_pop=self.dur)
+
+    def on_reset(self, _):
+        self.pattern = 0
 
     def on_cast_fire_ice(self, evt: 'raid_utils.NetworkMessage[zone_server.ActorCast]'):
         self.dur = 12.8 if evt.message.action_id == 33108 else 8.15
-        self.make_fires(), self.make_ice()
+        self.pattern = 0
+        self.make_fires(), self.make_ice(), self.add_wp()
 
     def on_cast_ice_lightning(self, evt: 'raid_utils.NetworkMessage[zone_server.ActorCast]'):
         self.dur = 12.8 if evt.message.action_id == 33109 else 8.15
-        self.make_ice(), self.make_lightnings()
+        self.pattern = 0
+        self.make_ice(), self.make_lightnings(), self.add_wp()
 
     def on_fire_sp(self, _):
+        self.pattern |= 1 << (self.PATTERN_FIRE + 1)
         if not self.fire_omens: return
         for omen in self.fire_omens:
             omen[0].apply_effect(ScaleTo, glm.vec3(12, 1, 12))
 
     def on_ice_sp(self, _):
+        self.pattern |= 1 << (self.PATTERN_ICE + 1)
         if not self.ice_omen: return
         self.ice_omen.apply_effect(ScaleTo, glm.vec3(40, 1, 40))
 
     def on_lightning_sp(self, _):
+        self.pattern |= 1 << (self.PATTERN_LIGHTNING + 1)
         if not self.lightning_omens: return
         for omen in self.lightning_omens:
             omen.apply_effect(ScaleTo, glm.vec3(16, 1, 40))
@@ -118,6 +197,7 @@ class DualSpell:
         return res
 
     def make_fires(self):
+        self.pattern |= 1 << self.PATTERN_FIRE
         self.fire_omens = [self.make_fire(a.id) for a in raid_utils.iter_main_party(False)]
 
     def make_lightning(self, actor_id):
@@ -130,9 +210,11 @@ class DualSpell:
         )
 
     def make_lightnings(self):
+        self.pattern |= 1 << self.PATTERN_LIGHTNING
         self.lightning_omens = [self.make_lightning(a.id) for a in raid_utils.iter_main_party(False)]
 
     def make_ice(self):
+        self.pattern |= 1 << self.PATTERN_ICE
         self.ice_omen = raid_utils.draw_circle(
             radius=70,
             pos=glm.vec3(100, 0, 100),
@@ -207,21 +289,63 @@ class Combination:
         self.draw(actor, a3, 4)
 
 
-@p9s.on_cast(33119)
-def on_cast_archaic_rockbreaker(_):
-    def _draw(actor_id):
-        actor = raid_utils.NActor.by_id(actor_id)
-        color = glm.vec4(1, .3, .3, .3) if raid_utils.is_class_job_dps(actor.class_job) else glm.vec4(.3, .3, 1, .3)
-        line_color = color + glm.vec4(0, 0, 0, .5)
-        res = raid_utils.OmenGroup(
-            raid_utils.draw_circle(radius=6, pos=actor, surface_color=color, line_color=line_color, duration=7.8)
-        ) + raid_utils.draw_share(radius=6, pos=actor, surface_color=color, line_color=line_color, duration=7.8)
-        for omen in res:
-            omen.apply_effect(HideWhenActorDead, actor_id)
-        return res
+class UpliftAndArchaicRockBreaker:
+    LIFT_TYPE_A = 1  # +
+    LIFT_TYPE_B = 2  # x
 
-    for a in raid_utils.iter_main_party(False):
-        _draw(a.id)
+    def __init__(self):
+        p9s.on_map_effect(self.on_map_effect)
+        p9s.on_cast(33119)(self.on_cast_archaic_rockbreaker)
+        self.lift_type = 0
+        p9s.add_value(raid_utils.ClickButton('default/waypoints/test/UpliftAndArchaicRockBreaker_A', raid_utils.new_thread(lambda: self.test(self.LIFT_TYPE_A))))
+        p9s.add_value(raid_utils.ClickButton('default/waypoints/test/UpliftAndArchaicRockBreaker_B', raid_utils.new_thread(lambda: self.test(self.LIFT_TYPE_B))))
+
+    def test(self, lift_type):
+        self.lift_type = lift_type
+        self._on_cast_archaic_rockbreaker(center, 5)
+
+    def on_map_effect(self, msg: NetworkMessage[zone_server.MapEffect]):
+        _msg = msg.message
+        if _msg.state == 0x1 and _msg.play_state == 0x2:
+            if _msg.index == 0x2:
+                logger.debug('lift type A')
+                self.lift_type = self.LIFT_TYPE_A
+            elif _msg.index == 0x3:
+                logger.debug('lift type B')
+                self.lift_type = self.LIFT_TYPE_B
+
+    def get_knock_way_point(self, w: raid_utils.Waypoint):
+        role_idx = raid_utils.role_idx(raid_utils.get_me().id)
+        if role_idx == 99:  # fail to get role
+            logger.warning('fail to get role idx when play waypoints on UpliftAndArchaicRockBreaker')
+            w.pop()
+            return center
+        rad = pos_rad_2[role_idx]
+        if self.lift_type == self.LIFT_TYPE_B:
+            rad += math.pi / 4
+        return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 7 + center
+
+    def on_cast_archaic_rockbreaker(self, msg: NetworkMessage[zone_server.ActorCast]):
+        self._on_cast_archaic_rockbreaker(msg.message.pos, msg.message.cast_time)
+
+    def _on_cast_archaic_rockbreaker(self, pos, cast_time):
+        def _draw_share(actor_id):
+            actor = raid_utils.NActor.by_id(actor_id)
+            color = glm.vec4(1, .3, .3, .3) if raid_utils.is_class_job_dps(actor.class_job) else glm.vec4(.3, .3, 1, .3)
+            line_color = color + glm.vec4(0, 0, 0, .5)
+            res = raid_utils.OmenGroup(
+                raid_utils.draw_circle(radius=6, pos=actor, surface_color=color, line_color=line_color, duration=7.8)
+            ) + raid_utils.draw_share(radius=6, pos=actor, surface_color=color, line_color=line_color, duration=7.8)
+            for omen in res:
+                omen.apply_effect(HideWhenActorDead, actor_id)
+            return res
+
+        if enable_waypoints.value:
+            raid_utils.raid_helper.waypoints.append_waypoint(self.get_knock_way_point, auto_pop=cast_time + 1.5)
+
+        raid_utils.draw_knock_predict_circle(radius=4, pos=pos, knock_distance=21, duration=cast_time + 1.5)
+        for a in raid_utils.iter_main_party(False):
+            _draw_share(a.id)
 
 
 class Levinstrike:
@@ -401,6 +525,7 @@ class ChimericSuccession:
 
 dual_spell = DualSpell()
 combination = Combination()
+up_lift_and_archaic_rock_breaker = UpliftAndArchaicRockBreaker()
 levinstrike = Levinstrike()
 chimeric_succession = ChimericSuccession()
 p9s.clear_decorators()
