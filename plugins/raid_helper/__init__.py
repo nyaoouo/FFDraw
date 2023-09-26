@@ -34,8 +34,8 @@ def get_shape_default_by_action_type(t):
 
 def set_raid_helper_instance(raid_helper: 'RaidHelper'):
     from . import utils
-    from .utils import trigger, logic
-    utils.raid_helper = trigger.raid_helper = logic.raid_helper = RaidHelper.instance = raid_helper
+    from .utils import trigger, logic, drawings
+    utils.raid_helper = trigger.raid_helper = logic.raid_helper = drawings.raid_helper = RaidHelper.instance = raid_helper
     for t_val_cb in trigger.TValue._cache_need_init:
         t_val_cb()
 
@@ -101,6 +101,9 @@ class RaidHelper(FFDrawPlugin):
             h.append(c.play)
 
         # simple cast
+        self.cmn_cfg = self.data.setdefault('cmn_cfg', {})
+        self.game_style = self.cmn_cfg.setdefault('game_style', False)
+
         self.simple_cast_cfg = self.data.setdefault('simple_cast', {})
         self.enable_simple_cast = self.simple_cast_cfg.setdefault('enable_simple_cast', True)
         self.show_friend = self.simple_cast_cfg.setdefault('show_friend', True)
@@ -175,6 +178,12 @@ class RaidHelper(FFDrawPlugin):
         imgui.text(f'{self.waypoints}')
         # if imgui.button('test waypoint list'):
         #     self.test_waypoint_list()
+        if imgui.tree_node('config'):
+            clicked, self.game_style = imgui.checkbox("game_style", self.game_style)
+            if clicked:
+                self.cmn_cfg['game_style'] = self.game_style
+                self.storage.save()
+            imgui.tree_pop()
         if imgui.tree_node('simple cast'):
             clicked, self.enable_simple_cast = imgui.checkbox("enable_simple_cast", self.enable_simple_cast)
             if clicked:
@@ -270,9 +279,9 @@ class RaidHelper(FFDrawPlugin):
                 surface_color = _color
             line_color = _line_color[0] if _line_color else surface_color + glm.vec4(0, 0, 0, .5)
         elif self.is_enemy(self.main.mem.actor_table.me, source):
-            color = 'enemy'
+            color = raid_utils.default_color(True)
         elif self.show_friend:
-            color = 'friend'
+            color = raid_utils.default_color(False)
         else:
             return
         if data.display_delay:

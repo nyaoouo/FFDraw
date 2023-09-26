@@ -7,7 +7,7 @@ from .trigger import new_thread
 from .typing import *
 
 main = FFDraw.instance
-
+raid_helper: 'RaidHelper|None' = None
 circle_shape = lambda: 0x10000
 rect_shape = lambda t=0: 0x20000 | t
 fan_shape = lambda degree: 0x50000 | degree
@@ -21,10 +21,16 @@ def default_color(is_enemy=True):
     """
     返回敌友字符串
     """
-    if is_enemy:
-        return 'enemy'
+    if raid_helper.game_style:
+        if is_enemy:
+            return 'g_enemy'
+        else:
+            return 'g_friend'
     else:
-        return 'friend'
+        if is_enemy:
+            return 'enemy'
+        else:
+            return 'friend'
 
 
 def pos_tracker(actor: Actor):
