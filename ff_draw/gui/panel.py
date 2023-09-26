@@ -1,4 +1,6 @@
+import base64
 import logging
+import struct
 import threading
 import tkinter.filedialog
 import typing
@@ -7,6 +9,7 @@ import urllib.parse
 import glfw
 import glm
 import imgui
+from nylib.utils.imgui import select
 from . import proxy_test
 from .default_style import set_style, pop_style, text_tip, set_default_color, set_color
 from .i18n import *
@@ -23,6 +26,14 @@ gl_src_alpha_types = [
     'GL_ONE_MINUS_DST_ALPHA',
     'GL_SRC_ALPHA_SATURATE',
 ]
+
+
+def serialize_color(*colors: glm.vec4):
+    return base64.b64encode(b''.join(c.to_bytes() for c in colors)).decode('utf-8')
+
+
+def deserialize_color(s: str):
+    return [glm.vec4(*c) for c in struct.iter_unpack('ffff', base64.b64decode(s.encode('utf-8')))]
 
 
 class FFDPanel:
@@ -51,6 +62,7 @@ class FFDPanel:
             self.proxy_port = str(url_info.port or '')
 
         # 初始化
+        self.texts = {}
         self.lang_idx = self.main.config.setdefault('language', 0)
         i18n.current_lang = self.lang_idx
         self.style_color = set_default_color(self.main.config.setdefault('style_color', {}))
@@ -162,8 +174,8 @@ class FFDPanel:
                 imgui.end_combo()
 
             imgui.columns(3)
-            imgui.set_column_width(0, 150)
-            imgui.set_column_width(1, 600)
+            imgui.set_column_width(0, 120)
+            imgui.set_column_width(1, 450)
             imgui.text(i18n(Name))
             imgui.next_column()
             imgui.text(i18n(Color))
@@ -176,13 +188,46 @@ class FFDPanel:
                 if line_color is None: line_color = glm.vec4()
 
                 imgui.text(k)
+
                 imgui.next_column()
                 changed, new_surface_color = imgui.color_edit4(f'##{k}_surface_color', *surface_color)
                 if changed: self.apply_color(k, False, new_surface_color)
                 imgui.same_line()
                 imgui.text(i18n(Padding))
+
                 imgui.next_column()
-                if imgui.button(f'reset##{k}_reset'):
+
+                saved = self.main.config.setdefault('omen', {}).setdefault('preset_colors_save', {}).setdefault(k, {})
+
+                _k = f'##{k}_save_name'
+                _, self.texts[_k] = imgui.input_text(_k, self.texts.setdefault(_k, ''), 256)
+                imgui.same_line()
+                if imgui.button(i18n(Save) + f'##{k}_save') and self.texts[_k]:
+                    saved[self.texts[_k]] = serialize_color(surface_color, line_color)
+                    self.main.save_config()
+                    self.texts[_k] = ''
+
+                imgui.same_line()
+                changed, selected = select(f'##{k}_load', saved, None, i18n(Load))
+                if changed:
+                    try:
+                        c1, c2 = deserialize_color(selected)
+                        self.apply_color(k, False, tuple(c1))
+                        self.apply_color(k, True, tuple(c2))
+                    except Exception as e:
+                        self.logger.error(f'error when load color: {e}', exc_info=e)
+                imgui.same_line()
+
+                changed, selected = select(f'##{k}_delete', list(saved.keys()), None, i18n(Delete))
+                if changed:
+                    try:
+                        saved.pop(selected,None)
+                        self.main.save_config()
+                    except Exception as e:
+                        self.logger.error(f'error when delete color: {e}', exc_info=e)
+                imgui.same_line()
+
+                if imgui.button(i18n(Reset) + f'##{k}_reset'):
                     new_surface_color, new_line_color = preset_colors.get(k, [None, None])
                     self.apply_color(k, False, new_surface_color)
                     self.apply_color(k, True, new_line_color)
@@ -193,6 +238,23 @@ class FFDPanel:
                 imgui.same_line()
                 imgui.text(i18n(Border))
                 imgui.next_column()
+
+                _k = f'##{k}_import'
+                _, self.texts[_k] = imgui.input_text(_k, self.texts.setdefault(_k, ''), 1024)
+                imgui.same_line()
+                if imgui.button(i18n(IMPORT) + f'##{k}_import') and self.texts[_k]:
+                    try:
+                        c1, c2 = deserialize_color(self.texts[_k])
+                        self.apply_color(k, False, tuple(c1))
+                        self.apply_color(k, True, tuple(c2))
+                    except Exception as e:
+                        self.logger.error(f'error when import color: {e}', exc_info=e)
+                    else:
+                        self.texts[_k] = ''
+                imgui.same_line()
+                if imgui.button(i18n(Export) + f'##{k}_export'):
+                    self.texts[_k] = serialize_color(surface_color, line_color)
+
                 imgui.next_column()
             imgui.columns(1)
 
