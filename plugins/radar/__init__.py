@@ -72,6 +72,26 @@ class Radar(FFDrawPlugin):
             self.data['show_target'] = self.show_target
             self.storage.save()
 
+        clicked, self.color_player = imgui.color_edit3("player", *self.color_player)
+        if clicked:
+            self.colors_data['player'] = self.color_player
+            self.storage.save()
+
+        clicked, self.color_npc = imgui.color_edit3("npc", *self.color_npc)
+        if clicked:
+            self.colors_data['npc'] = self.color_npc
+            self.storage.save()
+
+        clicked, self.color_me = imgui.color_edit3("me", *self.color_me)
+        if clicked:
+            self.colors_data['me'] = self.color_me
+            self.storage.save()
+
+        clicked, self.color_focus = imgui.color_edit3("focus", *self.color_focus)
+        if clicked:
+            self.colors_data['focus'] = self.color_focus
+            self.storage.save()
+
     def update(self, main):
         if self.hit_box_model is None:
             self.hit_box_model = HitBox()
