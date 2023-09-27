@@ -247,7 +247,14 @@ class FateStart:
 class FateEnd:
     pass
 
+
 @type_map.set(ActorControlId.SetMoveFlag2)
 @dataclasses.dataclass
 class SetMoveFlag2:
     flag_2: int
+
+
+@type_map.set(ActorControlId.SetRestExp)
+@dataclasses.dataclass
+class SetRestExp:
+    value: int
