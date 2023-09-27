@@ -412,8 +412,8 @@ class TriggerGroup:
     # region on_actor_control
     # add event support for overall actor control
     def _recv_on_actor_control(self, msg: ActorControlMessage):
-        for c in self._on_cancel_channel.get(msg.id, ()): call_safe(c, msg)
-        for c in self._on_cancel_channel.get(None, ()):  call_safe(c, msg)  # pair all
+        for c in self._on_actor_control.get(msg.id, ()): call_safe(c, msg)
+        for c in self._on_actor_control.get(None, ()):  call_safe(c, msg)  # pair all
 
     def on_actor_control(self, *actor_control_id):
         self.hook_map.set(main.sniffer.on_actor_control.any_call, self._recv_on_actor_control)
