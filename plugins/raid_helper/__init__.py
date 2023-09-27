@@ -215,6 +215,7 @@ class RaidHelper(FFDrawPlugin):
                         if role == _role: continue
                         if imgui.selectable(f'Set as {_role.name}')[1]:
                             role_datas[_role.value], role_datas[role.value] = role_datas[role.value], role_datas[_role.value]
+                            self.party_role.update_role_map()
                     imgui.pop_id()
                     imgui.end_popup()
             imgui.tree_pop()
