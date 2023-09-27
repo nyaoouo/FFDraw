@@ -192,8 +192,8 @@ class DualSpell:
 
     def make_fire(self, actor_id):
         actor = raid_utils.NActor.by_id(actor_id)
-        color = glm.vec4(1, .3, .3, .3) if raid_utils.is_class_job_dps(actor.class_job) else glm.vec4(.3, .3, 1, .3)
-        line_color = color + glm.vec4(0, 0, 0, .5)
+        color = glm.vec4(1, .3, .3, .1) if raid_utils.is_class_job_dps(actor.class_job) else glm.vec4(.3, .3, 1, .1)
+        line_color = color + glm.vec4(0, 0, 0, .7)
         res = raid_utils.OmenGroup(
             raid_utils.draw_circle(radius=6, pos=actor, surface_color=color, line_color=line_color, duration=self.dur)
         ) + raid_utils.draw_share(radius=6, pos=actor, surface_color=color, line_color=line_color, duration=self.dur)
@@ -319,12 +319,10 @@ class UpliftAndArchaicRockBreaker:
                 logger.debug('lift type B')
                 self.lift_type = self.LIFT_TYPE_B
 
-    def get_knock_way_point(self, w: raid_utils.Waypoint):
+    def get_knock_way_point(self):
         role_idx = raid_utils.role_idx(raid_utils.get_me().id)
         if role_idx == 99:  # fail to get role
-            logger.warning('fail to get role idx when play waypoints on UpliftAndArchaicRockBreaker')
-            w.pop()
-            return center
+            raise Exception('fail to get role idx when play waypoints on UpliftAndArchaicRockBreaker')
         rad = pos_rad_2[role_idx]
         if self.lift_type == self.LIFT_TYPE_B:
             rad += pi_4
@@ -336,8 +334,8 @@ class UpliftAndArchaicRockBreaker:
     def _on_cast_archaic_rockbreaker(self, pos, cast_time):
         def _draw_share(actor_id):
             actor = raid_utils.NActor.by_id(actor_id)
-            color = glm.vec4(1, .3, .3, .3) if raid_utils.is_class_job_dps(actor.class_job) else glm.vec4(.3, .3, 1, .3)
-            line_color = color + glm.vec4(0, 0, 0, .5)
+            color = glm.vec4(1, .3, .3, .1) if raid_utils.is_class_job_dps(actor.class_job) else glm.vec4(.3, .3, 1, .1)
+            line_color = color + glm.vec4(0, 0, 0, .7)
             res = raid_utils.OmenGroup(
                 raid_utils.draw_circle(radius=6, pos=actor, surface_color=color, line_color=line_color, duration=7.8)
             ) + raid_utils.draw_share(radius=6, pos=actor, surface_color=color, line_color=line_color, duration=7.8)
@@ -346,7 +344,7 @@ class UpliftAndArchaicRockBreaker:
             return res
 
         if enable_waypoints.value:
-            raid_utils.raid_helper.waypoints.append_waypoint(self.get_knock_way_point, auto_pop=cast_time + 1.5)
+            raid_utils.raid_helper.waypoints.append_waypoint(self.get_knock_way_point(), auto_pop=cast_time + 1.5)
 
         raid_utils.draw_knock_predict_circle(radius=4, pos=pos, knock_distance=21, duration=cast_time + 1.5)
         for a in raid_utils.iter_main_party(False):
@@ -525,32 +523,100 @@ def on_cast_archaic_demolis(evt: 'raid_utils.NetworkMessage[zone_server.ActorCas
             )
 
 
-@p9s.on_cast(33145)
-def on_cast_thunderbolt(evt: 'raid_utils.NetworkMessage[zone_server.ActorCast]'):
-    source_actor = raid_utils.NActor.by_id(evt.header.source_id)
+class EclipticMeteor:
+    order_type = p9s.add_value(raid_utils.Select('default/waypoints/4.EclipticMeteorOrder', [('TN share first', 0), ('DPS share first', 1), ], 1))
 
-    def _draw(_i):
-        raid_utils.draw_fan(
-            degree=60, radius=40,
-            pos=source_actor,
-            facing=lambda _: glm.polar(raid_utils.get_actor_by_dis(source_actor, _i).pos - source_actor.update().pos).y,
-            duration=evt.message.cast_time,
+    def __init__(self):
+        p9s.on_cast(33145)(self.on_cast_thunderbolt)
+
+        self.comets = {}
+        p9s.on_npc_spawn(16090)(self.on_comet_spawn)
+        p9s.on_actor_control(ActorControlId.SetTimelineModelSkin)(self.on_set_timeline_model_skin)
+        p9s.on_cast(33140)(self.on_comet_cast_burst)
+        p9s.on_reset(lambda _: self.comets.clear())
+
+    def on_comet_cast_burst(self, evt: NetworkMessage[zone_server.ActorCast]):
+        self.comets.pop(evt.header.source_id, None)
+        logger.debug(f'comet burst: {evt.header.source_id:x}')
+        logger.debug(';'.join(f'{k:x}:{v}' for k, v in self.comets.items()))
+
+    def on_set_timeline_model_skin(self, evt: ActorControlMessage[actor_control.SetTimelineModelSkin]):
+        if evt.source_id in self.comets:
+            self.comets[evt.source_id] = 1  # should be 1
+            logger.debug(f'comet skin: {evt.source_id:x}')
+            logger.debug(';'.join(f'{k:x}:{v}' for k, v in self.comets.items()))
+
+    def on_comet_spawn(self, evt: NetworkMessage[zone_server.NpcSpawn]):
+        self.comets[evt.header.source_id] = 0
+        logger.debug(f'comet spawn: {evt.header.source_id:x}')
+        logger.debug(';'.join(f'{k:x}:{v}' for k, v in self.comets.items()))
+
+    def get_wp_share(self):
+        comet_pos_to_share = [actor.pos for actor in raid_utils.find_actor_by_base_id(16090) if self.comets.get(actor.id)]
+        if not comet_pos_to_share:
+            raise Exception('fail to find comet when play waypoints on EclipticMeteor')
+        pos = max(comet_pos_to_share, key=(lambda pos: pi if (rad := glm.polar(pos - center).y) < (-pi - .1) else rad))
+        return glm.normalize(pos - center) * 13 + center
+
+    def get_wp_fan(self):
+        role_idx = raid_utils.role_idx(raid_utils.get_me().id)
+        if role_idx == 99:  # fail to get role
+            raise Exception('fail to get role idx when play waypoints on UpliftAndArchaicRockBreaker')
+        rad = pos_rad_2[role_idx]
+        is_x = glm.polar(next(raid_utils.find_actor_by_base_id(16090)).pos - center).y % pi_2 > .5
+        if is_x: rad += pi_4
+        return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 6.5 + center
+
+    def push_wp(self, dur_fan, dur_share):
+        if enable_waypoints.value:
+            me = raid_utils.get_me()
+            if me.status.has_status(3323):  # 暗属性耐性大幅降低/已吃分摊
+                raid_utils.raid_helper.waypoints.append_waypoint(self.get_wp_fan(), auto_pop=dur_fan)
+            elif me.status.has_status(33146):  # 雷属性耐性大幅降低/已吃扇形
+                raid_utils.raid_helper.waypoints.append_waypoint(self.get_wp_share(), auto_pop=dur_share)
+            elif raid_utils.is_class_job_dps(me.class_job) == (self.order_type.value == 1):  # dps share first and me is dps/ tn share first and me is tn
+                raid_utils.raid_helper.waypoints.append_waypoint(self.get_wp_share(), auto_pop=dur_share)
+            else:
+                raid_utils.raid_helper.waypoints.append_waypoint(self.get_wp_fan(), auto_pop=dur_fan)
+
+    def on_cast_thunderbolt(self, evt: NetworkMessage[zone_server.ActorCast]):
+        source_actor = raid_utils.NActor.by_id(evt.header.source_id)
+
+        def _draw(_i):
+            raid_utils.draw_fan(
+                degree=60, radius=40,
+                pos=source_actor,
+                facing=lambda _: glm.polar(raid_utils.get_actor_by_dis(source_actor, _i).pos - source_actor.update().pos).y,
+                duration=evt.message.cast_time,
+            )
+
+        for i in range(4): _draw(i)
+
+        share_cast = evt.message.cast_time + 2
+        self.push_wp(evt.message.cast_time, share_cast)
+        raid_utils.draw_circle(
+            radius=6,
+            pos=lambda _: raid_utils.get_actor_by_dis(source_actor, -1).pos,
+            duration=share_cast,
+        )
+        raid_utils.sleep(share_cast - 5)
+        raid_utils.draw_share(
+            radius=6,
+            pos=lambda _: raid_utils.get_actor_by_dis(source_actor, -1).pos,
+            duration=min(share_cast, 5),
         )
 
-    for i in range(4): _draw(i)
 
-    share_cast = evt.message.cast_time + 2
-    raid_utils.draw_circle(
-        radius=6,
-        pos=lambda _: raid_utils.get_actor_by_dis(source_actor, -1).pos,
-        duration=share_cast,
-    )
-    raid_utils.sleep(share_cast - 5)
-    raid_utils.draw_share(
-        radius=6,
-        pos=lambda _: raid_utils.get_actor_by_dis(source_actor, -1).pos,
-        duration=min(share_cast, 5),
-    )
+def calc_circle_intersect(center_a: glm.vec2, center_b: glm.vec2, ra: float, rb: float):
+    dis = glm.distance(center_a, center_b)
+    if dis > ra + rb or dis < abs(ra - rb) or dis == 0: return []
+    a = (ra ** 2 - rb ** 2 + dis ** 2) / (2 * dis)
+    h = (ra ** 2 - a ** 2) ** .5
+    p0 = center_a + (center_b - center_a) * a / dis
+    if h == 0: return [p0]
+    i1 = glm.vec2(p0.x + h * (center_b.y - center_a.y) / dis, p0.y - h * (center_b.x - center_a.x) / dis)
+    i2 = glm.vec2(p0.x - h * (center_b.y - center_a.y) / dis, p0.y + h * (center_b.x - center_a.x) / dis)
+    return [i1, i2]
 
 
 class ChimericSuccession:
@@ -564,6 +630,7 @@ class ChimericSuccession:
     # 19.714 effect ice 4 # 33170
     # 20.881 effect combo[1] swing kick # 34709/34710
     ice: list[int | None]
+    guild_order = raid_utils.make_role_rule("h2h1d4d3d2d1stmt")
 
     def __init__(self):
         self.enable = False
@@ -571,24 +638,96 @@ class ChimericSuccession:
         p9s.on_lockon(0x4f, 0x50, 0x51, 0x52)(self.on_lockon_ice)
         p9s.on_effect(33155, 33168, 33169)(self.on_icemeld)
 
-    def on_start_cast(self, _):
+    def get_wp_guide(self, min_dis=None, max_dis=None):
+        def f(w: raid_utils.Waypoint):
+            target = current_pos = raid_utils.get_me().pos
+            try:
+                boss_pos = next(raid_utils.find_actor_by_base_id(16087)).pos
+            except StopIteration:
+                w.pop()
+                logger.warning('fail to find boss when play waypoints on ChimericSuccession')
+                return
+            distance = glm.distance(current_pos, boss_pos)
+            fix_dis = 0
+            if min_dis is not None and distance < min_dis:
+                fix_dis = min_dis + 1
+            elif max_dis is not None and distance > max_dis:
+                fix_dis = max_dis - 1
+            if fix_dis:
+                target = boss_pos + glm.normalize(current_pos - boss_pos) * fix_dis
+                # check that should not be too far to center
+                if glm.distance(target, center) > 19:
+                    _pts = calc_circle_intersect(center.xz, boss_pos.xz, 19, fix_dis)
+                    pts = [glm.vec3(p.x, 0, p.y) for p in _pts]
+                    target = min(pts, key=lambda p: glm.distance(p, current_pos))
+            return target
+
+        return f
+
+    def set_guide_wp(self, dur):
+        if enable_waypoints.value:
+            guid_actors = sorted((a.id for a in raid_utils.iter_main_party(False)), key=lambda a_id: raid_utils.role_key(self.guild_order, a_id))
+            try:
+                me_idx = guid_actors.index(raid_utils.get_me().id)
+            except ValueError:
+                raise Exception(f"fail to find me in guid_actors: {guid_actors=}")
+            match me_idx:
+                case 0:  # dis {14,}
+                    pos = self.get_wp_guide(min_dis=14)
+                case 1:  # dis {11,13}
+                    pos = self.get_wp_guide(min_dis=11, max_dis=13)
+                case 2 | 3:  # dis {8,10}
+                    pos = self.get_wp_guide(min_dis=8, max_dis=10)
+                case _:  # dis {,7}
+                    pos = self.get_wp_guide(max_dis=7)
+            raid_utils.raid_helper.waypoints.append_waypoint(pos, auto_pop=dur)
+
+    def on_start_cast(self, evt: NetworkMessage[zone_server.ActorCast]):
         self.enable = True
         levinstrike.enable = False
         self.ice = [None for _ in range(4)]
+        self.set_guide_wp(evt.message.cast_time)
+
+    def get_fire_wp(self, w: raid_utils.Waypoint):
+        try:
+            boss_pos = next(raid_utils.find_actor_by_base_id(16087)).pos
+        except StopIteration:
+            w.pop()
+            logger.warning('fail to find boss when play waypoints on ChimericSuccession')
+            return
+        return glm.normalize(center - boss_pos) * 19 + center
+
+    def set_fire_wp(self, dur=15):
+        if not enable_waypoints.value: return
+        me_id = raid_utils.get_me().id
+        if me_id in self.ice: return
+        raid_utils.raid_helper.waypoints.append_waypoint(self.get_fire_wp, auto_pop=dur)
 
     def on_lockon_ice(self, evt: 'raid_utils.ActorControlMessage[actor_control.SetLockOn]'):
         if not self.enable: return
         self.ice[i := evt.param.lockon_id - 0x4f] = evt.source_id
         if i == 0: self.draw_ice(0, 10)
+        if all(self.ice):
+            self.set_fire_wp()
 
     def on_icemeld(self, evt: 'raid_utils.NetworkMessage[zone_server.ActionEffect]'):
         if not self.enable: return
         self.draw_ice([33155, 33168, 33169].index(evt.message.action_id) + 1, 3)
 
+    def get_ice_wp(self, w: raid_utils.Waypoint):
+        me_pos = raid_utils.get_me().pos
+        return glm.normalize(me_pos - center) * 19 + center
+
+    def set_ice_wp(self, dur):
+        if not enable_waypoints.value: return
+        raid_utils.raid_helper.waypoints.append_waypoint(self.get_ice_wp, auto_pop=dur)
+
     def draw_ice(self, idx, dur):
         target_id = self.ice[idx]
         if not target_id:
             return logger.warning(f"ice[{idx}] is None: {target_id=:x}")
+        if target_id == raid_utils.get_me().id:
+            self.set_ice_wp(dur)
         return raid_utils.draw_circle(
             radius=20,
             pos=raid_utils.NActor.by_id(target_id),
@@ -600,5 +739,6 @@ dual_spell = DualSpell()
 combination = Combination()
 up_lift_and_archaic_rock_breaker = UpliftAndArchaicRockBreaker()
 levinstrike = Levinstrike()
+ecliptic_meteor = EclipticMeteor()
 chimeric_succession = ChimericSuccession()
 p9s.clear_decorators()
