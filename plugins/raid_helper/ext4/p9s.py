@@ -72,10 +72,14 @@ class ScaleTo(Effector):
         return s + self.d_scale * self.delta
 
 
+pi = math.pi
+pi2 = pi * 2
+pi_2 = pi / 2
+pi_4 = pi / 4
 # mt, st, h1, h2, d1, d2, d3, d4
-pos_rad_2 = [-math.pi / 2, math.pi / 2, -math.pi / 2, math.pi / 2, -math.pi / 2, math.pi / 2, -math.pi / 2, math.pi / 2, ]
-pos_rad_4 = [math.pi, 0, -math.pi / 2, math.pi / 2, -math.pi / 2, 0, math.pi, math.pi / 2, ]  # type[+], for type[x] , add math.pi/4
-pos_rad_8 = [math.pi, 0, -math.pi / 2, math.pi / 2, -math.pi / 2 + math.pi / 4, 0 + math.pi / 4, math.pi + math.pi / 4, math.pi / 2 + math.pi / 4, ]
+pos_rad_2 = [-pi_2, pi_2, -pi_2, pi_2, -pi_2, pi_2, -pi_2, pi_2, ]
+pos_rad_4 = [pi, 0, -pi_2, pi_2, -pi_2, 0, pi, pi_2, ]  # type[+], for type[x] , add pi/4
+pos_rad_8 = [pi, 0, -pi_2, pi_2, -pi_2 + pi_4, 0 + pi_4, pi + pi_4, pi_2 + pi_4, ]
 
 
 class DualSpell:
@@ -141,14 +145,15 @@ class DualSpell:
         if self.pattern & (1 << self.PATTERN_FIRE):
             rad = pos_rad_4[role_idx]
             if self.fire_type.value == 1:  # is type[x]
-                rad += math.pi / 4
+                rad += pi_4
         elif self.pattern & (1 << self.PATTERN_LIGHTNING):
             rad = pos_rad_8[role_idx]
         else:
             logger.warning(f'pattern is not fire or lightning when play waypoints on DualSpell, got {self.pattern:#b}')
             w.pop()
             return center
-        dis = 6 if self.pattern & (1 << (self.PATTERN_ICE + 1)) else 13
+        # dis = 6.5 if self.pattern & (1 << (self.PATTERN_ICE + 1)) else 13
+        dis = 13 if self.pattern & (1 << (self.PATTERN_FIRE + 1)) or self.pattern & (1 << (self.PATTERN_LIGHTNING + 1)) else 6.5
         return glm.vec3(math.sin(rad), 0, math.cos(rad)) * dis + center
 
     def add_wp(self):
@@ -272,7 +277,7 @@ class Combination:
                 degree=180,
                 radius=40,
                 pos=actor_pos,
-                facing=actor.facing + math.pi,
+                facing=actor.facing + pi,
                 duration=dur,
             )
 
@@ -322,7 +327,7 @@ class UpliftAndArchaicRockBreaker:
             return center
         rad = pos_rad_2[role_idx]
         if self.lift_type == self.LIFT_TYPE_B:
-            rad += math.pi / 4
+            rad += pi_4
         return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 7 + center
 
     def on_cast_archaic_rockbreaker(self, msg: NetworkMessage[zone_server.ActorCast]):
@@ -368,6 +373,8 @@ class Levinstrike:
     fire: list[int | None]
     ice: list[int]
 
+    solve_type = p9s.add_value(raid_utils.Select('default/waypoints/3.Levinstrike', [('马拉松', 0), ('定点', 1), ], 0))
+
     def __init__(self):
         self.enable = False
         p9s.on_cast(33148)(self.on_start_cast)
@@ -406,6 +413,7 @@ class Levinstrike:
             self.draw_ball(0, 6.65)
             self.draw_ice(0, 9)
             self.draw_fire(0, 9)
+            self.push_wp(0, 9)
 
     def on_icemeld(self, evt: 'raid_utils.NetworkMessage[zone_server.ActionEffect]'):
         if not self.enable: return
@@ -413,6 +421,71 @@ class Levinstrike:
         self.draw_ball(i, 3.36)
         self.draw_ice(i, 5.7)
         self.draw_fire(i, 5.7)
+        self.push_wp(i, 5.7)
+
+    def type_1_find_top(self, phase, near=True):
+        a, b = self.ball[:2] if phase else self.ball[2:]  # 第一二次取球1,2 第三四次取球3,4
+        rad_a = glm.polar(a - center).y
+        rad_b = glm.polar(b - center).y
+        center_a = (rad_a + rad_b) / 2
+        center_b = center_a + pi
+        center_a = (center_a + pi) % pi2 - pi
+        center_b = (center_b + pi) % pi2 - pi
+        dis_a = abs((center_a - rad_a)) % pi2
+        dis_b = abs((center_b - rad_b)) % pi2
+        return center_a if near == dis_a < dis_b else center_b
+
+    def wp_ice_active(self, idx):
+        if self.solve_type == 0:  # 马拉松
+            ball = self.ball[idx]
+            return glm.normalize(ball - center) * 2 + ball  # 球的位置往后退2
+        else:  # 定点
+            top = self.type_1_find_top(idx < 2)  # 去校正后的十二点 远端
+            return glm.vec3(math.sin(top), 0, math.cos(top)) * 18 + center
+
+    def wp_ice_idle(self, idx):
+        if self.solve_type == 0:  # 马拉松
+            return self.ball[(idx + 1) % 4]  # 下一个球的位置
+        else:  # 定点
+            rad = self.type_1_find_top(idx < 2, False)
+            return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 7 + center
+
+    def wp_fire_active(self, idx):
+        if self.solve_type == 0:  # 马拉松
+            if ball_pos := self.ball[idx]:
+                rad = glm.polar(center - ball_pos).y - pi_4  # 塔的位置顺时针旋转45度
+                return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 18 + center
+        else:  # 定点
+            rad = self.type_1_find_top(idx < 2, False)
+            return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 18 + center
+
+    def wp_fire_tower(self, idx):
+        if ball_pos := self.ball[idx]:
+            return center + glm.normalize(center - ball_pos) * 16
+
+    def wp_fire_idle(self, idx):
+        if self.solve_type == 0:  # 马拉松
+            if ball_pos := self.ball[idx]:  # 塔前面
+                return center + glm.normalize(center - ball_pos) * 7
+        else:  # 定点
+            rad = self.type_1_find_top(idx < 2, False)
+            return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 7 + center
+
+    def push_wp(self, idx, dur):
+        if not enable_waypoints.value: return
+        me_id = raid_utils.get_me().id
+        if me_id in self.fire:
+            fire_idx = self.fire.index(me_id)
+            if fire_idx == idx:
+                raid_utils.raid_helper.waypoints.append_waypoint(self.wp_fire_active(idx), auto_pop=dur)
+            elif fire_idx == (idx + 2) % 4:
+                raid_utils.raid_helper.waypoints.append_waypoint(self.wp_fire_tower(idx), auto_pop=dur)
+            else:
+                raid_utils.raid_helper.waypoints.append_waypoint(self.wp_fire_idle(idx), auto_pop=dur)
+        elif self.ice[idx] == me_id:
+            raid_utils.raid_helper.waypoints.append_waypoint(self.wp_ice_active(idx), auto_pop=dur)
+        else:
+            raid_utils.raid_helper.waypoints.append_waypoint(self.wp_ice_idle(idx), auto_pop=dur)
 
     def draw_ball(self, idx, dur):
         source_pos = self.ball[idx]
