@@ -436,7 +436,7 @@ class Levinstrike:
         return center_a if near == dis_a < dis_b else center_b
 
     def wp_ice_active(self, idx):
-        if self.solve_type == 0:  # 马拉松
+        if self.solve_type.value == 0:  # 马拉松
             ball = self.ball[idx]
             return glm.normalize(ball - center) * 2 + ball  # 球的位置往后退2
         else:  # 定点
@@ -444,14 +444,14 @@ class Levinstrike:
             return glm.vec3(math.sin(top), 0, math.cos(top)) * 18 + center
 
     def wp_ice_idle(self, idx):
-        if self.solve_type == 0:  # 马拉松
+        if self.solve_type.value == 0:  # 马拉松
             return self.ball[(idx + 1) % 4]  # 下一个球的位置
         else:  # 定点
             rad = self.type_1_find_top(idx < 2, False)
             return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 7 + center
 
     def wp_fire_active(self, idx):
-        if self.solve_type == 0:  # 马拉松
+        if self.solve_type.value == 0:  # 马拉松
             if ball_pos := self.ball[idx]:
                 rad = glm.polar(center - ball_pos).y - pi_4  # 塔的位置顺时针旋转45度
                 return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 18 + center
@@ -464,7 +464,7 @@ class Levinstrike:
             return center + glm.normalize(center - ball_pos) * 16
 
     def wp_fire_idle(self, idx):
-        if self.solve_type == 0:  # 马拉松
+        if self.solve_type.value == 0:  # 马拉松
             if ball_pos := self.ball[idx]:  # 塔前面
                 return center + glm.normalize(center - ball_pos) * 7
         else:  # 定点
