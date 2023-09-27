@@ -11,7 +11,8 @@ def install(key='hook_sniff'):
     zone_pop_recv_packet_addr, = main.mem.scanner.find_point("48 ? ? ? ? 4c 89 6c 24 ? 4c 89 6c 24 ? e8 * * * * 84")
     chat_push_send_packet_addr, = main.mem.scanner.find_point("e8 * * * * 48 ? ? ? ? 0f ? ? e8 ? ? ? ? 48 ? ? ? e8 ? ? ? ? 0f")
     zone_push_send_packet_addr, = main.mem.scanner.find_point("e8 * * * * 84 ? 74 ? 48 ? ? c7 87")
-    replay_pop_load_packet_addr, = main.mem.scanner.find_point("e8 * * * * 48 ? ? 48 ? ? 0f 84 ? ? ? ? 8b ? ? 0f ? ? 0f")
+    # replay_pop_load_packet_addr, = main.mem.scanner.find_point("e8 * * * * 48 ? ? 48 ? ? 0f 84 ? ? ? ? 8b ? ? 0f ? ? 0f")
+    replay_parse_packet_addr, = main.mem.scanner.find_point("e8 * * * * 80 bb ? ? ? ? ? 77")
     me_id_addr, = main.mem.scanner.find_point("39 15 * * * * 49")
     empty_ipc = bytearray(16)
 
@@ -30,7 +31,7 @@ chat_pop_recv_packet_addr = {chat_pop_recv_packet_addr}
 zone_pop_recv_packet_addr = {zone_pop_recv_packet_addr}
 chat_push_send_packet_addr = {chat_push_send_packet_addr}
 zone_push_send_packet_addr = {zone_push_send_packet_addr}
-replay_pop_load_packet_addr = {replay_pop_load_packet_addr}
+replay_parse_packet_addr = {replay_parse_packet_addr}
 me_id_addr = {me_id_addr} 
 def try_hook():
     if hasattr(inject_server, {key!r}):
