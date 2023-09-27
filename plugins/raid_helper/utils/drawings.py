@@ -576,8 +576,6 @@ class Waypoint:
     REACH_DIS = 1
     POP_WHEN_REACH = 0
     POP_MANUAL = 1
-    DEFAULT_SURFACE_COLOR = glm.vec3(.5, .5, 1)
-    DEFAULT_LINE_COLOR = glm.vec3(.3, .3, 1)
 
     def __init__(self, l: 'WaypointList', pos: glm.vec3, pop_mode=POP_WHEN_REACH, reach_dis=REACH_DIS, auto_pop=-1., surface_color: glm.vec3 = None, line_color: glm.vec3 = None):
         self.l = l
@@ -585,8 +583,8 @@ class Waypoint:
         self.pop_mode = pop_mode
         self.reach_dis = reach_dis
         self.auto_pop = auto_pop
-        self.surface_color = surface_color or self.DEFAULT_SURFACE_COLOR
-        self.line_color = line_color or self.DEFAULT_LINE_COLOR
+        self.surface_color = surface_color
+        self.line_color = line_color
         if auto_pop > 0:
             self.pop_at = time.time() + auto_pop
             new_thread(self._delay_pop)()
@@ -628,6 +626,20 @@ class Waypoint:
 
     def __repr__(self):
         return f'<Waypoint {self.pos}>'
+
+
+def color_gradient(timestamp):
+    # 设置渐变周期为1秒
+    period = 1
+    # 计算归一化时间
+    t = timestamp % period / period
+    # 计算红色分量
+    red = (math.sin(2 * math.pi * t) + 1) / 2
+    # 计算绿色分量
+    green = (math.sin(2 * math.pi * (t + 1 / 3)) + 1) / 2
+    # 计算蓝色分量
+    blue = (math.sin(2 * math.pi * (t + 2 / 3)) + 1) / 2
+    return glm.vec3(red, green, blue)
 
 
 class WaypointList(list[Waypoint]):
@@ -673,31 +685,35 @@ class WaypointList(list[Waypoint]):
         if not (me := get_me()): return
         prev_pt = me_pos = me.pos
         i = 0
-        cos_a = (math.cos(time.time() * 4) + 1) * .3 + .1
+        current = time.time()
+        cos_a = (math.cos(current * 4) + 1) * .3 + .1
+        default_color = color_gradient(current)
         while i < len(self):
             next_wp: Waypoint = self[i]
             wp_pos = next_wp.pos
             if wp_pos is None:
                 i += 1
                 continue
+            surface_color = next_wp.surface_color or default_color
+            line_color = next_wp.line_color or default_color
             if next_wp.is_reach(me_pos):
                 main.gui.add_3d_shape(
                     circle_shape(),
                     glm.translate(wp_pos) * glm.scale(glm.vec3(next_wp.reach_dis)),
-                    surface_color=glm.vec4(*next_wp.surface_color, .35), line_color=glm.vec4(*next_wp.line_color, .7)
+                    surface_color=glm.vec4(surface_color, .35), line_color=glm.vec4(line_color, .7)
                 )
             else:
                 main.gui.add_3d_shape(
                     donut_shape(.5, 1),
                     glm.translate(wp_pos) * glm.scale(glm.vec3(next_wp.reach_dis)),
-                    surface_color=glm.vec4(*next_wp.surface_color, cos_a / 2), line_color=glm.vec4(*next_wp.line_color, cos_a),
+                    surface_color=glm.vec4(surface_color, cos_a / 2), line_color=glm.vec4(line_color, cos_a),
                 )
-                main.gui.add_line(prev_pt, wp_pos, glm.vec4(*next_wp.line_color, .7))
+                main.gui.add_line(prev_pt, wp_pos, glm.vec4(line_color, .7), width=5)
                 if i == 0:
                     main.gui.add_3d_shape(
                         0x1010000,
                         glm.translate(prev_pt) * glm.rotate(glm.polar(wp_pos - me_pos).y, glm.vec3(0, 1, 0)),
-                        surface_color=glm.vec4(*next_wp.surface_color, .35), line_color=glm.vec4(*next_wp.line_color, .7),
+                        surface_color=glm.vec4(surface_color, .35), line_color=glm.vec4(line_color, .7),
                     )
             prev_pt = wp_pos
             i += 1
