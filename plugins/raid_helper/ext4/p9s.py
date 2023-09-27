@@ -1,14 +1,13 @@
 import logging
+
+import glm
 import math
 import time
 
-import glm
-
 from ff_draw.omen.effector import Effector, ScaleInEffector, FadeOutEffector
-
 from raid_helper import utils as raid_utils
-from raid_helper.utils.typing import *
 from raid_helper.data import special_actions, delay_until
+from raid_helper.utils.typing import *
 
 special_actions[33337] = 0
 special_actions[33336] = 0
@@ -153,7 +152,7 @@ class DualSpell:
             w.pop()
             return center
         # dis = 6.5 if self.pattern & (1 << (self.PATTERN_ICE + 1)) else 13
-        dis = 13 if self.pattern & (1 << (self.PATTERN_FIRE + 1)) or self.pattern & (1 << (self.PATTERN_LIGHTNING + 1)) else 6.5
+        dis = 13 if self.pattern & (1 << (self.PATTERN_FIRE + 1)) or self.pattern & (1 << (self.PATTERN_LIGHTNING + 1)) else 7
         return glm.vec3(math.sin(rad), 0, math.cos(rad)) * dis + center
 
     def add_wp(self):
@@ -323,7 +322,7 @@ class UpliftAndArchaicRockBreaker:
         role_idx = raid_utils.role_idx(raid_utils.get_me().id)
         if role_idx == 99:  # fail to get role
             raise Exception('fail to get role idx when play waypoints on UpliftAndArchaicRockBreaker')
-        rad = pos_rad_2[role_idx]
+        rad = pos_rad_4[role_idx]
         if self.lift_type == self.LIFT_TYPE_B:
             rad += pi_4
         return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 7 + center
@@ -430,8 +429,12 @@ class Levinstrike:
         center_a = (center_a + pi) % pi2 - pi
         center_b = (center_b + pi) % pi2 - pi
         dis_a = abs((center_a - rad_a)) % pi2
-        dis_b = abs((center_b - rad_b)) % pi2
-        return center_a if near == dis_a < dis_b else center_b
+        dis_b = abs((center_b - rad_a)) % pi2
+        if dis_a > pi: dis_a = pi2 - dis_a
+        if dis_b > pi: dis_b = pi2 - dis_b
+        res = center_a if near == (dis_a < dis_b) else center_b
+        logger.debug(f'find top is_first_phase={phase} near={near} {rad_a/pi=:.2f} {rad_b/pi=:.2f} {center_a/pi=:.2f} {dis_a/pi=:.2f} {center_b/pi=:.2f} {dis_b/pi=:.2f} {res/pi=:.2f}')
+        return res
 
     def wp_ice_active(self, idx):
         if self.solve_type.value == 0:  # 马拉松
@@ -562,9 +565,10 @@ class EclipticMeteor:
         role_idx = raid_utils.role_idx(raid_utils.get_me().id)
         if role_idx == 99:  # fail to get role
             raise Exception('fail to get role idx when play waypoints on UpliftAndArchaicRockBreaker')
-        rad = pos_rad_2[role_idx]
-        is_x = glm.polar(next(raid_utils.find_actor_by_base_id(16090)).pos - center).y % pi_2 > .5
-        if is_x: rad += pi_4
+        rad = pos_rad_4[role_idx]
+        comet_rad = glm.polar(next(raid_utils.find_actor_by_base_id(16090)).pos - center).y % pi2
+        if is_x:=comet_rad % pi_2 < .5: rad += pi_4
+        logger.debug(f'{pos_rad_4[role_idx]/pi=:.2f} {rad/pi=:.2f} {is_x:=} {comet_rad/pi=:.2f}')
         return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 6.5 + center
 
     def push_wp(self, dur_fan, dur_share):
