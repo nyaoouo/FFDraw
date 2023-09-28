@@ -5,7 +5,7 @@ import typing
 import glm
 from ff_draw.main import FFDraw
 from ff_draw.mem.actor import Actor
-from .party_role import make as make_role_rule
+from .party_role import make as make_role_rule, Role
 
 if typing.TYPE_CHECKING:
     from .. import RaidHelper
@@ -169,17 +169,26 @@ class NActor(Actor):
         raise KeyError(f'actor {aid:X} is not exists')
 
 
-def role_idx(actor_id):
+def role_idx(actor_id, override_mt=None):
+    """
+    over_ride_mt: actor who override mt role
+    """
+    if override_mt == actor_id: return Role.mt.value
+    if override_mt is not None:
+        if (override_role := raid_helper.party_role.role_map.get(override_mt, 99)) != Role.mt.value:
+            if override_target := raid_helper.party_role.data[override_role]:
+                if override_target['id'] == actor_id:
+                    return override_role
     return raid_helper.party_role.role_map.get(actor_id, 99)
 
 
-def role_key(rule: list | str, actor_id):
+def role_key(rule: list | str, actor_id, over_ride_mt=None):
     """
     usage: actors.sort(key=lambda a: raid_utils.role_key(rule, a.id))
     rule: 'h1tdh2', 'thd' order of role, use `make_role_rule` to precompile
     """
     if isinstance(rule, str):
         rule = make_role_rule(rule)
-    idx = role_idx(actor_id)
+    idx = role_idx(actor_id, over_ride_mt)
     if idx == 99: return 99
     return rule[idx]
