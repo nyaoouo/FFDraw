@@ -445,7 +445,8 @@ class NetLogger:
             import pprint
             s = pprint.pformat(self.display_data[self.select_idx].data_serialized, sort_dicts=False, )
             glfw.set_clipboard_string(None, s)
-        imgui_render_data(self.display_data[self.select_idx].data_serialized)
+        if self.select_idx < len(self.display_data):
+            imgui_render_data(self.display_data[self.select_idx].data_serialized)
 
     def render(self):
         imgui.columns(2)
