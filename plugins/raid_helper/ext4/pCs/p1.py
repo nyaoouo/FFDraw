@@ -81,10 +81,10 @@ class TrinityOfSouls:
         self.lr_types = [0, 0, 0]
         self.top_first = False
         pCs.on_add_status(3572)(self.on_add_status_3572)
-        pCs.on_effect(33505, 33506)(lambda evt: self.apply_omen(raid_utils.NActor.by_id(evt.header.source_id), False, 1))  # no_rev 1
-        pCs.on_effect(33507, 33508)(lambda evt: self.apply_omen(raid_utils.NActor.by_id(evt.header.source_id), False, 2))  # no_rev
-        pCs.on_effect(33511, 33512)(lambda evt: self.apply_omen(raid_utils.NActor.by_id(evt.header.source_id), True, 1))  # rev 1
-        pCs.on_effect(33513, 33514)(lambda evt: self.apply_omen(raid_utils.NActor.by_id(evt.header.source_id), True, 0))  # rev 2
+        pCs.on_effect(33505, 33506)(lambda evt: self.apply_omen(raid_utils.NActor.by_id(evt.header.source_id), evt.message.facing, False, 1))  # no_rev 1
+        pCs.on_effect(33507, 33508)(lambda evt: self.apply_omen(raid_utils.NActor.by_id(evt.header.source_id), evt.message.facing, False, 2))  # no_rev
+        pCs.on_effect(33511, 33512)(lambda evt: self.apply_omen(raid_utils.NActor.by_id(evt.header.source_id), evt.message.facing, True, 1))  # rev 1
+        pCs.on_effect(33513, 33514)(lambda evt: self.apply_omen(raid_utils.NActor.by_id(evt.header.source_id), evt.message.facing, True, 0))  # rev 2
 
     def on_add_status_3572(self, evt: 'ActorControlMessage[actor_control.AddStatus]'):
         match evt.param.param:
@@ -101,8 +101,8 @@ class TrinityOfSouls:
             case 24:
                 self.lr_types[2] = self.RIGHT  # bottom right
 
-    def apply_omen(self, source_actor: 'raid_utils.NActor', is_reverse, next_idx, dur=2.6):
-        facing = source_actor.facing + math.radians(90 if (self.lr_types[next_idx] == self.LEFT) != is_reverse else -90)
+    def apply_omen(self, source_actor: 'raid_utils.NActor', facing, is_reverse, next_idx, dur=2.6):
+        facing += math.radians(90 if (self.lr_types[next_idx] == self.LEFT) != is_reverse else -90)
         raid_utils.draw_fan(degree=180, radius=60, pos=source_actor, facing=facing, duration=dur)
 
 
