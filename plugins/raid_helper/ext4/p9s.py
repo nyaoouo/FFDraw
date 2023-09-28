@@ -297,6 +297,8 @@ class UpliftAndArchaicRockBreaker:
     LIFT_TYPE_A = 1  # +
     LIFT_TYPE_B = 2  # x
 
+    mt_override = p9s.add_value(raid_utils.BoolCheckBox('default/waypoints/5.Uplift Mt Override', False))
+
     def __init__(self):
         p9s.on_map_effect(self.on_map_effect)
         p9s.on_cast(33119)(self.on_cast_archaic_rockbreaker)
@@ -319,7 +321,13 @@ class UpliftAndArchaicRockBreaker:
                 self.lift_type = self.LIFT_TYPE_B
 
     def get_knock_way_point(self):
-        role_idx = raid_utils.role_idx(raid_utils.get_me().id)
+        override_mt = None
+        if self.mt_override.value:
+            try:
+                override_mt = next(raid_utils.find_actor_by_base_id(16087)).target_id
+            except StopIteration:
+                logger.warning('fail to find boss when finding override mt for UpliftAndArchaicRockBreaker')
+        role_idx = raid_utils.role_idx(raid_utils.get_me().id, override_mt=override_mt)
         if role_idx == 99:  # fail to get role
             raise Exception('fail to get role idx when play waypoints on UpliftAndArchaicRockBreaker')
         rad = pos_rad_4[role_idx]
@@ -567,7 +575,7 @@ class EclipticMeteor:
             raise Exception('fail to get role idx when play waypoints on UpliftAndArchaicRockBreaker')
         rad = pos_rad_4[role_idx]
         comet_rad = glm.polar(next(raid_utils.find_actor_by_base_id(16090)).pos - center).y % pi2
-        if is_x:=comet_rad % pi_2 < .5: rad += pi_4
+        if is_x := comet_rad % pi_2 < .5: rad += pi_4
         logger.debug(f'{pos_rad_4[role_idx]/pi=:.2f} {rad/pi=:.2f} {is_x:=} {comet_rad/pi=:.2f}')
         return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 6.5 + center
 
