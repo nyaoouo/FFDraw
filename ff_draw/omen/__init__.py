@@ -175,8 +175,8 @@ class BaseOmen:
             if self._surface_line_color is None:
                 surface_color = self.get_maybe_callable(self._surface_color)
                 line_color = self.get_maybe_callable(self._line_color)
-                self.surface_color = self.get_color(self.preset_colors.get(surface_color)[0] if surface_color in self.preset_colors else surface_color)
-                self.line_color = self.get_color(self.preset_colors.get(line_color)[1] if line_color in self.preset_colors else line_color)
+                self.surface_color = self.get_color(self.preset_colors.get(surface_color)[0] if isinstance(surface_color,typing.Hashable) and surface_color in self.preset_colors else surface_color)
+                self.line_color = self.get_color(self.preset_colors.get(line_color)[1] if isinstance(surface_color,typing.Hashable) and line_color in self.preset_colors else line_color)
             else:
                 slc = self.get_maybe_callable(self._surface_line_color)
                 self.surface_color, self.line_color = map(self.get_color, self.preset_colors.get(slc) if isinstance(slc, str) else (slc, None))
