@@ -575,7 +575,7 @@ class EclipticMeteor:
             raise Exception('fail to get role idx when play waypoints on UpliftAndArchaicRockBreaker')
         rad = pos_rad_4[role_idx]
         comet_rad = glm.polar(next(raid_utils.find_actor_by_base_id(16090)).pos - center).y % pi2
-        if is_x := comet_rad % pi_2 < .5: rad += pi_4
+        if is_x := abs((comet_rad % pi_2) - pi_4) > .3: rad += pi_4
         logger.debug(f'{pos_rad_4[role_idx]/pi=:.2f} {rad/pi=:.2f} {is_x:=} {comet_rad/pi=:.2f}')
         return glm.vec3(math.sin(rad), 0, math.cos(rad)) * 6.5 + center
 
