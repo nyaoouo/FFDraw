@@ -329,6 +329,7 @@ class Dps(FFDrawPlugin):
         self._world_sheet = self.main.sq_pack.sheets.world_sheet
 
         self.main.sniffer.on_action_effect.append(self.on_effect)
+        self.main.sniffer.on_reset.append(self.on_reset)
         self.main.sniffer.on_actor_control[ActorControlId.StatusEffect].append(self.on_actor_control_status_effect)
         self.main.sniffer.on_actor_control[ActorControlId.Death].append(self.on_actor_control_death)
 
