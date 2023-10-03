@@ -22,7 +22,7 @@ def get_shape_default_by_action_type(t):
         3: raid_utils.fan_shape(90),  # fan
         4: raid_utils.rect_shape(),  # rect
         5: raid_utils.circle_shape(),  # circle
-        6: raid_utils.circle_shape(),  # circle
+        # 6: raid_utils.circle_shape(),  # circle ?
         7: raid_utils.circle_shape(),  # circle
         # 8: 0x20000,  # rect to target
         10: raid_utils.donut_shape(1, 2),  # donut

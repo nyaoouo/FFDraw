@@ -164,7 +164,7 @@ action_type_to_shape_default = {
     3: 0x50000 | 90,  # fan
     4: 0x20000,  # rect
     5: 0x10000,  # circle
-    6: 0x10000,  # circle
+    # 6: 0x10000,  # circle ?
     7: 0x10000,  # circle
     # 8: 0x20000,  # rect to target
     10: 0x10000 | int(.5 * 0xffff),  # donut
