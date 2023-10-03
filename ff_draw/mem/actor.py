@@ -4,6 +4,7 @@ import typing
 import glm
 from fpt4.utils.se_string import SeString
 from nylib.utils.win32 import memory as ny_mem
+from nylib.utils import LazyClassAttr
 from .utils import direct_mem_property, WinAPIError, struct_mem_property
 
 if typing.TYPE_CHECKING:
@@ -33,6 +34,14 @@ class Channeling:
 
 
 class StatusManager:
+    @LazyClassAttr
+    def MAX_STATUS(self):
+        from . import XivMem
+        if XivMem.instance.game_version >= (6, 5, 0):
+            return 60
+        else:
+            return 30
+
     def __init__(self, handle, address):
         self.handle = handle
         self.address = address
@@ -44,7 +53,7 @@ class StatusManager:
     def __iter__(self):
         """id,param,remain,source_id"""
         try:
-            for i in range(30):
+            for i in range(self.MAX_STATUS):
                 yield status_struct.unpack(
                     ny_mem.read_bytes(self.handle, self.address + 8 + (i * status_struct.size), status_struct.size)
                 )
@@ -166,6 +175,29 @@ class ActorOffsets640(ActorOffsets):
     cast_info = 0x1D10
 
 
+class ActorOffsets650(ActorOffsets):
+    current_hp = 0x1BC
+    max_hp = 0x1C0
+    current_mp = 0x1C4
+    max_mp = 0x1C8
+    current_gp = 0x1CC
+    max_gp = 0x1CE
+    current_cp = 0x1D0
+    max_cp = 0x1D2
+    class_job = 0x1DA
+    level = 0x1DB
+    model_attr = 0x1DE
+    mount_id = 0x688
+    pc_target_id = 0xD00
+    channeling = 0x1390
+    b_npc_target_id = 0x1B58
+    current_world = 0x1BB0
+    home_world = 0x1BB2
+    shield = 0x1E6
+    status = 0x1C10
+    cast_info = 0x1F00
+
+
 class Actor:
     offsets = ActorOffsets
 
@@ -261,7 +293,9 @@ class ActorTable:
         self.sorted_count_address = self.base_address + main.scanner.find_val('44 ? ? * * * * 45 ? ? 41 ? ? ? 48 ? ? 78')[0]
         self.me_ptr = main.scanner.find_point('48 ? ? * * * * 49 39 87')[0]
 
-        if main.game_version >= (6, 4, 0):
+        if main.game_version >= (6, 5, 0):
+            Actor.offsets = ActorOffsets650
+        elif main.game_version >= (6, 4, 0):
             Actor.offsets = ActorOffsets640
         else:
             Actor.offsets = ActorOffsets

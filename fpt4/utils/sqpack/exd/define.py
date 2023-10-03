@@ -553,6 +553,34 @@ class AetherialWheel(DataRow):
 
 
 class Aetheryte(DataRow):
+    _sign = b'Aetheryte|eJwrzivOQwJpQG4amAUAjFcKvg=='
+    sheet_name = 'Aetheryte'
+    _display = 'telepo_name'
+    text_sgl: str_t = RowData(0)
+    text_sgg: int_t = RowData(1)
+    text_plr: str_t = RowData(2)
+    text_plg: int_t = RowData(3)
+    text_vow: int_t = RowData(4)
+    text_cnt: int_t = RowData(5)
+    text_gen: int_t = RowData(6)
+    text_def_: int_t = RowData(7)
+    telepo_name: 'PlaceName' = RowForeign(8, 'PlaceName')
+    transfer_name: 'PlaceName' = RowForeign(9, 'PlaceName')
+    territory_type: 'TerritoryType' = RowForeign(10, 'TerritoryType')
+    pop_range: List[int_t] = ListData(ir((11, 4, 1)), RowData)
+    telepo: bool_t = RowData(15)
+    telepo_package_category: int_t = RowData(16)
+    script: str_t = RowData(17)
+    town: int_t = RowData(18)
+    is_bonus: bool_t = RowData(19)
+    unlock_quest: 'Quest' = RowForeign(20, 'Quest')
+    map: 'Map' = RowForeign(21, 'Map')
+    cost_pos_x: int_t = RowData(22)
+    cost_pos_y: int_t = RowData(23)
+    sort_key: int_t = RowData(24)
+
+
+class Aetheryte(DataRow):
     _sign = b'Aetheryte|eJwrzivOQwJpxXlpYAYAgZYKUA=='
     sheet_name = 'Aetheryte'
     _display = 'telepo_name'
@@ -1306,6 +1334,31 @@ class BeastReputationRank(DataRow):
 
 
 class BeastTribe(DataRow):
+    _sign = b'BeastTribe|eJxLy4OBYiAE0wBRdAgy'
+    sheet_name = 'BeastTribe'
+    _display = 'sort_id'
+    fix_exp: bool_t = RowData(0)
+    fix_exp_base_level_limit: int_t = RowData(1)
+    rank_bonus: 'BeastRankBonus' = RowForeign(2, 'BeastRankBonus')
+    reputation_icon: 'Icon' = IconRow(3)
+    reward_icon: 'Icon' = IconRow(4)
+    last_rank: int_t = RowData(5)
+    category: 'ExVersion' = RowForeign(6, 'ExVersion')
+    extra_quest: 'Item' = RowForeign(7, 'Item')
+    currency: int_t = RowData(8)
+    sort_id: int_t = RowData(9)
+    text_sgl: str_t = RowData(10)
+    text_sgg: int_t = RowData(11)
+    text_plr: str_t = RowData(12)
+    text_plg: int_t = RowData(13)
+    text_vow: int_t = RowData(14)
+    text_cnt: int_t = RowData(15)
+    text_gen: int_t = RowData(16)
+    text_def_: int_t = RowData(17)
+    text_reputation_value: str_t = RowData(18)
+
+
+class BeastTribe(DataRow):
     _sign = b'BeastTribe|eJxLy4OCYiAE0wBJUQfE'
     sheet_name = 'BeastTribe'
     _display = 'text_sgl'
@@ -1516,6 +1569,16 @@ class Cabinet(DataRow):
 
 
 class CabinetCategory(DataRow):
+    _sign = b'CabinetCategory|eJzLy8vLAwAEUAG5'
+    sheet_name = 'CabinetCategory'
+    _display = 'text'
+    ui_sort: int_t = RowData(0)
+    ui_group: int_t = RowData(1)
+    icon: 'Icon' = IconRow(2)
+    text: 'Addon' = RowForeign(3, 'Addon')
+
+
+class CabinetCategory(DataRow):
     _sign = b'CabinetCategory|eJzLy8sDAAKXAUs='
     sheet_name = 'CabinetCategory'
     _display = 'text'
@@ -1551,6 +1614,20 @@ class Channeling(DataRow):
 
 
 class CharaCardBase(DataRow):
+    _sign = b'CharaCardBase|eJzLy0tKygOCYgASyAPM'
+    sheet_name = 'CharaCardBase'
+    _display = 'text'
+    icon: 'Icon' = IconRow(0)
+    text_color: int_t = RowData(1)
+    layout: List[bool_t] = ListData(ir((2, 2, 1)), RowData)
+    design_type: int_t = RowData(4)
+    obtain_condition: 'BannerCondition' = RowForeign(5, 'BannerCondition')
+    category: int_t = RowData(6)
+    sort_id: int_t = RowData(7)
+    text: str_t = RowData(8)
+
+
+class CharaCardBase(DataRow):
     _sign = b'CharaCardBase|eJzLy0tKysvLKwYADwEDXg=='
     sheet_name = 'CharaCardBase'
     _display = 'text'
@@ -1559,6 +1636,20 @@ class CharaCardBase(DataRow):
     layout: List[bool_t] = ListData(ir((2, 2, 1)), RowData)
     design_type: int_t = RowData(4)
     obtain_condition: 'BannerCondition' = RowForeign(5, 'BannerCondition')
+    sort_id: int_t = RowData(6)
+    text: str_t = RowData(7)
+
+
+class CharaCardDecoration(DataRow):
+    _sign = b'CharaCardDecoration|eJzLywODYgAPhQN2'
+    sheet_name = 'CharaCardDecoration'
+    _display = 'text'
+    type: int_t = RowData(0)
+    sub_type: int_t = RowData(1)
+    icon: 'Icon' = IconRow(2)
+    design_type: int_t = RowData(3)
+    obtain_condition: 'BannerCondition' = RowForeign(4, 'BannerCondition')
+    category: int_t = RowData(5)
     sort_id: int_t = RowData(6)
     text: str_t = RowData(7)
 
@@ -1574,6 +1665,13 @@ class CharaCardDecoration(DataRow):
     obtain_condition: 'BannerCondition' = RowForeign(4, 'BannerCondition')
     sort_id: int_t = RowData(5)
     text: str_t = RowData(6)
+
+
+class CharaCardDesignCategory(DataRow):
+    _sign = b'CharaCardDesignCategory|eJzLKwYAAVEA4g=='
+    sheet_name = 'CharaCardDesignCategory'
+    sort_id: int_t = RowData(0)
+    text: str_t = RowData(1)
 
 
 class CharaCardDesignPreset(DataRow):
@@ -1614,6 +1712,22 @@ class CharaCardHeader(DataRow):
     obtain_condition: 'BannerCondition' = RowForeign(6, 'BannerCondition')
     sort_id: int_t = RowData(7)
     text: str_t = RowData(8)
+
+
+class CharaCardHeader(DataRow):
+    _sign = b'CharaCardHeader|eJzLy4OCYgAXsQRS'
+    sheet_name = 'CharaCardHeader'
+    _display = 'text'
+    header_icon: 'Icon' = IconRow(0)
+    footer_icon: 'Icon' = IconRow(1)
+    header_text_color: int_t = RowData(2)
+    footer_text_color: int_t = RowData(3)
+    move_collision_type: int_t = RowData(4)
+    design_type: int_t = RowData(5)
+    obtain_condition: int_t = RowData(6)
+    category: int_t = RowData(7)
+    sort_id: int_t = RowData(8)
+    text: str_t = RowData(9)
 
 
 class CharaCardPlayStyle(DataRow):
@@ -1915,6 +2029,14 @@ class ClassJobCategory(DataRow):
     _display = 'text'
     text: str_t = RowData(0)
     class_job: List[bool_t] = ListData(ir((1, 41, 1)), RowData)
+
+
+class ClassJobCategory(DataRow):
+    _sign = b'ClassJobCategory|eJwrTiIeAAB+IxDq'
+    sheet_name = 'ClassJobCategory'
+    _display = 'text'
+    text: str_t = RowData(0)
+    class_job: List[bool_t] = ListData(ir((1, 43, 1)), RowData)
 
 
 class ClassJobResident(DataRow):
@@ -2451,6 +2573,58 @@ class ContentRewardCondition(DataRow):
 
 
 class ContentRoulette(DataRow):
+    _sign = b'ContentRoulette|eJwrLgaCvLy0tLy0PEwAFksDAhATSAIAz38Thg=='
+    sheet_name = 'ContentRoulette'
+    _display = 'text_name'
+    text_name: str_t = RowData(0)
+    text_short_name: str_t = RowData(1)
+    text_uniq_name: str_t = RowData(2)
+    text_description: str_t = RowData(3)
+    text_contents: str_t = RowData(4)
+    ex_version: int_t = RowData(5)
+    effective_time: int_t = RowData(6)
+    hide_notification: bool_t = RowData(7)
+    enable_finder: bool_t = RowData(8)
+    open_rule: 'ContentRouletteOpenRule' = RowForeign(9, 'ContentRouletteOpenRule')
+    pvp: bool_t = RowData(10)
+    level: int_t = RowData(11)
+    level_max: int_t = RowData(12)
+    item_level: int_t = RowData(13)
+    item_level_max: int_t = RowData(14)
+    param_table: int_t = RowData(15)
+    image: 'Icon' = IconRow(16)
+    role_bonus: 'ContentRouletteRoleBonus' = RowForeign(17, 'ContentRouletteRoleBonus')
+    clear_reward_a: int_t = RowData(18)
+    clear_reward_b: int_t = RowData(19)
+    clear_reward_c: int_t = RowData(20)
+    clear_reward_pvp_exp: int_t = RowData(21)
+    clear_reward_wolf_mark: int_t = RowData(22)
+    clear_reward_pvp_series_exp: int_t = RowData(23)
+    sortkey: int_t = RowData(24)
+    accept_class_job_category: int_t = RowData(25)
+    member_type: 'ContentMemberType' = RowForeign(26, 'ContentMemberType')
+    finder_party_condition: int_t = RowData(27)
+    entry_party_member_num: int_t = RowData(28)
+    reward: int_t = RowData(29)
+    accept_client_request: bool_t = RowData(30)
+    ui_type: int_t = RowData(31)
+    ui_category: int_t = RowData(32)
+    timelimit: int_t = RowData(33)
+    timelimit_max: int_t = RowData(34)
+    enable_using_item: bool_t = RowData(35)
+    halfway: bool_t = RowData(36)
+    rate_match: bool_t = RowData(37)
+    rate_change: bool_t = RowData(38)
+    loot_mode: int_t = RowData(39)
+    instance_content_reward: 'InstanceContent' = RowForeign(40, 'InstanceContent')
+    net_cafe: bool_t = RowData(41)
+    random_select: int_t = RowData(42)
+    only_home_world: bool_t = RowData(43)
+    is_dkt: bool_t = RowData(44)
+    penalty_type: int_t = RowData(45)
+
+
+class ContentRoulette(DataRow):
     _sign = b'ContentRoulette|eJwrLgaCvLy0tLy0PAwAFkoDAhATSAIAu7kTGA=='
     sheet_name = 'ContentRoulette'
     _display = 'text_name'
@@ -2671,6 +2845,15 @@ class ContentsTutorial(DataRow):
     page: List[int_t] = ListData(ir((2, 8, 1)), RowData)
 
 
+class ContentsTutorial(DataRow):
+    _sign = b'ContentsTutorial|eJzLy4OA4mIAF7sEVw=='
+    sheet_name = 'ContentsTutorial'
+    _display = 'page'
+    page: List[int_t] = ListData(ir((0, 8, 1)), RowData)
+    title_title: str_t = RowData(8)
+    title_sub_title: str_t = RowData(9)
+
+
 class ContentsTutorialPage(DataRow):
     _sign = b'ContentsTutorialPage|eJzLKwYAAVEA4g=='
     sheet_name = 'ContentsTutorialPage'
@@ -2887,6 +3070,19 @@ class CutScreenImage(DataRow):
     type: int_t = RowData(0)
     icon: int_t = RowData(1)
     jingle: int_t = RowData(2)
+
+
+class Cutscene(DataRow):
+    _sign = b'Cutscene|eJwrzstLywOBNAAXngRC'
+    sheet_name = 'Cutscene'
+    _display = 'path'
+    path: str_t = RowData(0)
+    class_job: int_t = RowData(1)
+    cutscene_type: int_t = RowData(2)
+    sp_select: bool_t = RowData(3)
+    branch_condition_quest: List[int_t] = ListData(ir((4, 4, 1)), RowData)
+    incomp_quest: int_t = RowData(8)
+    seamless_play: bool_t = RowData(9)
 
 
 class Cutscene(DataRow):
@@ -4151,6 +4347,23 @@ class FishParameter(DataRow):
 
 
 class FishParameter(DataRow):
+    _sign = b'FishParameter|eJwrzgOCNDAGABxeBLA='
+    sheet_name = 'FishParameter'
+    _display = 'item_id'
+    text: str_t = RowData(0)
+    item_id: int_t = RowData(1)
+    level: 'GatheringItemLevelConvertTable' = RowForeign(2, 'GatheringItemLevelConvertTable')
+    level_star: int_t = RowData(3)
+    sort_id: int_t = RowData(4)
+    is_mask_condition: bool_t = RowData(5)
+    record_type: 'FishingRecordType' = RowForeign(6, 'FishingRecordType')
+    typical_fishing_spot: int_t = RowData(7)
+    folklore: 'GatheringSubCategory' = RowForeign(8, 'GatheringSubCategory')
+    is_fish_print: bool_t = RowData(9)
+    guardian_achievement_count: int_t = RowData(10)
+
+
+class FishParameter(DataRow):
     _sign = b'FishParameter|eJwrzsvLSwNjABeeBEI='
     sheet_name = 'FishParameter'
     _display = 'item_id'
@@ -4994,6 +5207,20 @@ class GeneralAction(DataRow):
 
 
 class GilShop(DataRow):
+    _sign = b'GilShop|eJwrzgOCtLw8AA+QA24='
+    sheet_name = 'GilShop'
+    _display = 'text'
+    text: str_t = RowData(0)
+    map_icon: 'Icon' = IconRow(1)
+    disclosure_reward_or_quest: 'Quest' = RowForeign(2, 'Quest')
+    qualified_talk: 'DefaultTalk' = RowForeign(3, 'DefaultTalk')
+    unqualified_talk: 'DefaultTalk' = RowForeign(4, 'DefaultTalk')
+    system: bool_t = RowData(5)
+    festival: int_t = RowData(6)
+    festival_phase: int_t = RowData(7)
+
+
+class GilShop(DataRow):
     _sign = b'GilShop|eJwrzgOCtDwADCIDAA=='
     sheet_name = 'GilShop'
     _display = 'text'
@@ -5040,6 +5267,19 @@ class GimmickBill(DataRow):
     _sign = b'GimmickBill|eJwrBgAAdAB0'
     sheet_name = 'GimmickBill'
     text: str_t = RowData(0)
+
+
+class GimmickJump(DataRow):
+    _sign = b'GimmickJump|eJzLy8vLS0vLywMAD0gDYQ=='
+    sheet_name = 'GimmickJump'
+    fall_damage: int_t = RowData(0)
+    height: int_t = RowData(1)
+    loop_motion: 'ActionTimeline' = RowForeign(2, 'ActionTimeline')
+    end_motion: 'ActionTimeline' = RowForeign(3, 'ActionTimeline')
+    start_client: bool_t = RowData(4)
+    over_write: bool_t = RowData(5)
+    max_move_speed: int_t = RowData(6)
+    move_accel: int_t = RowData(7)
 
 
 class GimmickJump(DataRow):
@@ -5952,6 +6192,63 @@ class IndividualWeather(DataRow):
 
 
 class InstanceContent(DataRow):
+    _sign = b'InstanceContent|eJzLy8tLywMDKEUESEOl0/IACWsdfw=='
+    sheet_name = 'InstanceContent'
+    type: 'InstanceContentType' = RowForeign(0, 'InstanceContentType')
+    reward_type: int_t = RowData(1)
+    time: int_t = RowData(2)
+    name: bool_t = RowData(3)
+    music: 'BGM' = RowForeign(4, 'BGM')
+    clear_music: 'BGM' = RowForeign(5, 'BGM')
+    start_cutscene: 'Cutscene' = RowForeign(6, 'Cutscene')
+    entrance_rect: int_t = RowData(7)
+    content_finder_condition: int_t = RowData(8)
+    colosseum: 'Colosseum' = RowForeign(9, 'Colosseum')
+    disable_complete_text: bool_t = RowData(10)
+    boss_message: 'List[InstanceContentTextData]' = ListData(ir((11, 2, 1)), RowForeign, 'InstanceContentTextData')
+    boss_name: 'BNpcBase' = RowForeign(13, 'BNpcBase')
+    content_text_start: 'InstanceContentTextData' = RowForeign(14, 'InstanceContentTextData')
+    content_text_end: 'InstanceContentTextData' = RowForeign(15, 'InstanceContentTextData')
+    sortkey: int_t = RowData(16)
+    reward_beginner_bonus_gil: int_t = RowData(17)
+    reward_beginner_bonus_exp: int_t = RowData(18)
+    reward_beginner_bonus_a: int_t = RowData(19)
+    reward_beginner_bonus_b: int_t = RowData(20)
+    reward_clear_exp: int_t = RowData(21)
+    reward_clear_bonus_exp: int_t = RowData(22)
+    reward_clear_a: int_t = RowData(23)
+    reward_clear_b: int_t = RowData(24)
+    reward_clear_c: int_t = RowData(25)
+    reward_middle_exp: List[int_t] = ListData(ir((26, 5, 1)), RowData)
+    reward_middle_a: List[int_t] = ListData(ir((31, 5, 1)), RowData)
+    reward_middle_b: List[int_t] = ListData(ir((36, 5, 1)), RowData)
+    reward_middle_c: List[int_t] = ListData(ir((41, 5, 1)), RowData)
+    reward_total_exp: int_t = RowData(46)
+    reward_total_gil: int_t = RowData(47)
+    reward_clear_item: 'InstanceContentRewardItem' = RowForeign(48, 'InstanceContentRewardItem')
+    reward_random_bonus_rate: int_t = RowData(49)
+    reward_index: int_t = RowData(50)
+    instance_buff: 'InstanceContentBuff' = RowForeign(51, 'InstanceContentBuff')
+    force_buff: bool_t = RowData(52)
+    open_flag_index: 'InstanceContent' = RowForeign(53, 'InstanceContent')
+    raid_progress: int_t = RowData(54)
+    ui_category: int_t = RowData(55)
+    qte: int_t = RowData(56)
+    qte2: int_t = RowData(57)
+    content_gauge: int_t = RowData(58)
+    content_attribute_rect: int_t = RowData(59)
+    link_dead_kill: bool_t = RowData(60)
+    data_index: int_t = RowData(61)
+    shared_group: int_t = RowData(62)
+    todo: int_t = RowData(63)
+    faith_content_buff: int_t = RowData(64)
+    tourism_construct: int_t = RowData(65)
+    common_content_flag: int_t = RowData(66)
+    battle_shared_group_action_clip: bool_t = RowData(67)
+    event_item: int_t = RowData(68)
+
+
+class InstanceContent(DataRow):
     _sign = b'InstanceContent|eJzLy8tLywMDKEUESEOjAOvNHRE='
     sheet_name = 'InstanceContent'
     type: 'InstanceContentType' = RowForeign(0, 'InstanceContentType')
@@ -6360,6 +6657,15 @@ class Knockback(DataRow):
 
 
 class LFGExtensionContent(DataRow):
+    _sign = b'LFGExtensionContent|eJzLy8vLAwAEUAG5'
+    sheet_name = 'LFGExtensionContent'
+    category: int_t = RowData(0)
+    type: int_t = RowData(1)
+    value: int_t = RowData(2)
+    sort: int_t = RowData(3)
+
+
+class LFGExtensionContent(DataRow):
     _sign = b'LFGExtensionContent|eJzLy8sDAAKXAUs='
     sheet_name = 'LFGExtensionContent'
     category: int_t = RowData(0)
@@ -6654,6 +6960,12 @@ class MJICraftworksPopularity(DataRow):
 
 
 class MJICraftworksPopularity(DataRow):
+    _sign = b'MJICraftworksPopularity|eJzLy6MZAAAHcCcb'
+    sheet_name = 'MJICraftworksPopularity'
+    item: List[int_t] = ListData(ir((0, 91, 1)), RowData)
+
+
+class MJICraftworksPopularity(DataRow):
     _sign = b'MJICraftworksPopularity|eJzLy6MKAABKyx6D'
     sheet_name = 'MJICraftworksPopularity'
     item: List[int_t] = ListData(ir((0, 71, 1)), RowData)
@@ -6848,6 +7160,27 @@ class MJIKeyItem(DataRow):
 
 
 class MJILandmark(DataRow):
+    _sign = b'MJILandmark|eJzLyyMAAPEvDi8='
+    sheet_name = 'MJILandmark'
+    need_development: int_t = RowData(0)
+    need_rank: int_t = RowData(1)
+    reward: int_t = RowData(2)
+    shared_group: 'ExportedSG' = RowForeign(3, 'ExportedSG')
+    unfinished_signboard_shared_group: int_t = RowData(4)
+    signboard_shared_group: int_t = RowData(5)
+    lively: int_t = RowData(6)
+    construction_shared_group: 'List[ExportedSG]' = ListData(ir((7, 4, 2)), RowForeign, 'ExportedSG')
+    construction_lively: List[int_t] = ListData(ir((8, 4, 2)), RowData)
+    construction_grow_time: List[int_t] = ListData(ir((15, 4, 1)), RowData)
+    grow_time: int_t = RowData(19)
+    material: List[int_t] = ListData(ir((20, 5, 1)), RowData)
+    material_num: List[int_t] = ListData(ir((25, 5, 1)), RowData)
+    name_id: 'MJIText' = RowForeign(30, 'MJIText')
+    help_id: int_t = RowData(31)
+    icon: 'Icon' = IconRow(32)
+
+
+class MJILandmark(DataRow):
     _sign = b'MJILandmark|eJzLy8MLANU/DVM='
     sheet_name = 'MJILandmark'
     need_development: int_t = RowData(0)
@@ -6864,6 +7197,18 @@ class MJILandmark(DataRow):
     name_id: 'MJIText' = RowForeign(28, 'MJIText')
     help_id: int_t = RowData(29)
     icon: 'Icon' = IconRow(30)
+
+
+class MJILandmarkPlace(DataRow):
+    _sign = b'MJILandmarkPlace|eJzLywMDAAwPAwM='
+    sheet_name = 'MJILandmarkPlace'
+    place: int_t = RowData(0)
+    signboard_e_obj: 'EObjName' = RowForeign(1, 'EObjName')
+    signboard_shared_group: 'ExportedSG' = RowForeign(2, 'ExportedSG')
+    ground_shared_group: int_t = RowData(3)
+    need_development: int_t = RowData(4)
+    pos_x: int_t = RowData(5)
+    pos_z: int_t = RowData(6)
 
 
 class MJILandmarkPlace(DataRow):
@@ -6918,6 +7263,22 @@ class MJIName(DataRow):
     text_cnt: int_t = RowData(5)
     text_gen: int_t = RowData(6)
     text_def_: int_t = RowData(7)
+
+
+class MJIProgress(DataRow):
+    _sign = b'MJIProgress|eJwrLi7OwwIAd/kJ8g=='
+    sheet_name = 'MJIProgress'
+    text_development_goal: str_t = RowData(0)
+    text_directive: str_t = RowData(1)
+    text_arrival_message: str_t = RowData(2)
+    need_item: List[int_t] = ListData(ir((3, 5, 3)), RowData)
+    need_item_num: List[int_t] = ListData(ir((4, 5, 3)), RowData)
+    gathering_item: List[int_t] = ListData(ir((5, 5, 3)), RowData)
+    hud_mode: int_t = RowData(18)
+    map_marker_pos_x: int_t = RowData(19)
+    map_marker_pos_z: int_t = RowData(20)
+    map_marker_range: int_t = RowData(21)
+    map_marker_map_type: int_t = RowData(22)
 
 
 class MJIProgress(DataRow):
@@ -6992,6 +7353,13 @@ class MJIVillageAppearanceSG(DataRow):
     sheet_name = 'MJIVillageAppearanceSG'
     shared_group_appearance_sg: List[int_t] = ListData(ir((0, 4, 1)), RowData)
     shared_group_name_id: List[int_t] = ListData(ir((4, 4, 1)), RowData)
+
+
+class MJIVillageAppearanceSG(DataRow):
+    _sign = b'MJIVillageAppearanceSG|eJzLy4MBABesBE0='
+    sheet_name = 'MJIVillageAppearanceSG'
+    shared_group_appearance_sg: List[int_t] = ListData(ir((0, 5, 1)), RowData)
+    shared_group_name_id: List[int_t] = ListData(ir((5, 5, 1)), RowData)
 
 
 class MJIVillageAppearanceSG(DataRow):
@@ -7579,6 +7947,32 @@ class ModelAttribute(DataRow):
     _sign = b'ModelAttribute|eJwrBgAAdAB0'
     sheet_name = 'ModelAttribute'
     name: str_t = RowData(0)
+
+
+class ModelChara(DataRow):
+    _sign = b'ModelChara|eJzLywOBtDQQBoK8NBAXAGDfCMc='
+    sheet_name = 'ModelChara'
+    model_type: int_t = RowData(0)
+    skeleton_id: int_t = RowData(1)
+    pattern_id: int_t = RowData(2)
+    ime_chan_id: int_t = RowData(3)
+    se_pack: int_t = RowData(4)
+    pap_variation: int_t = RowData(5)
+    no_shadow: bool_t = RowData(6)
+    nameplate_in_offset_range: bool_t = RowData(7)
+    nameplate_camera_offset: int_t = RowData(8)
+    nameplate_y_offset: int_t = RowData(9)
+    dead_clear_action_timeline: bool_t = RowData(10)
+    force_visible: bool_t = RowData(11)
+    larger_than_radius: bool_t = RowData(12)
+    vfx_decal: bool_t = RowData(13)
+    disable_selected_edge: bool_t = RowData(14)
+    alpha: int_t = RowData(15)
+    disable_look_at: bool_t = RowData(16)
+    add_damage_weight_rate: int_t = RowData(17)
+    condition_clip_stop: int_t = RowData(18)
+    radius: float_t = RowData(19)
+    offset_y: float_t = RowData(20)
 
 
 class ModelChara(DataRow):
@@ -8866,6 +9260,19 @@ class QuestClassJobReward(DataRow):
 
 
 class QuestClassJobSupply(DataRow):
+    _sign = b'QuestClassJobSupply|eJzLywOCtLw8AA9oA2k='
+    sheet_name = 'QuestClassJobSupply'
+    class_job_category: 'ClassJobCategory' = RowForeign(0, 'ClassJobCategory')
+    sequence: int_t = RowData(1)
+    supply_target: 'ENpcResident' = RowForeign(2, 'ENpcResident')
+    supply_item: 'Item' = RowForeign(3, 'Item')
+    supply_item_num: int_t = RowData(4)
+    is_hq: bool_t = RowData(5)
+    additional_map_marker: int_t = RowData(6)
+    additional_link_marker: int_t = RowData(7)
+
+
+class QuestClassJobSupply(DataRow):
     _sign = b'QuestClassJobSupply|eJzLywOCNAAJBAKN'
     sheet_name = 'QuestClassJobSupply'
     class_job_category: 'ClassJobCategory' = RowForeign(0, 'ClassJobCategory')
@@ -8963,6 +9370,18 @@ class QuestLinkMarkerIcon(DataRow):
     _sign = b'QuestLinkMarkerIcon|eJzLAwAAbwBv'
     sheet_name = 'QuestLinkMarkerIcon'
     link_icon: 'Icon' = IconRow(0)
+
+
+class QuestLinkMarkerSet(DataRow):
+    _sign = b'QuestLinkMarkerSet|eJzLywOCtDQAC/cC8w=='
+    sheet_name = 'QuestLinkMarkerSet'
+    link_marker: int_t = RowData(0)
+    quest: int_t = RowData(1)
+    sequence_begin: int_t = RowData(2)
+    sequence_end: int_t = RowData(3)
+    todo: int_t = RowData(4)
+    is_offer: bool_t = RowData(5)
+    disable_lock: bool_t = RowData(6)
 
 
 class QuestLinkMarkerSet(DataRow):
@@ -10019,6 +10438,21 @@ class SpearfishingItem(DataRow):
 
 
 class SpearfishingItem(DataRow):
+    _sign = b'SpearfishingItem|eJwrzsvLSwNhABNcA9Q='
+    sheet_name = 'SpearfishingItem'
+    _display = 'item_id'
+    text: str_t = RowData(0)
+    item_id: 'Item' = RowForeign(1, 'Item')
+    level: 'GatheringItemLevelConvertTable' = RowForeign(2, 'GatheringItemLevelConvertTable')
+    sort_id: int_t = RowData(3)
+    is_mask_condition: bool_t = RowData(4)
+    record_type: 'FishingRecordType' = RowForeign(5, 'FishingRecordType')
+    typical_spearfishing_spot: int_t = RowData(6)
+    folklore: int_t = RowData(7)
+    is_fish_print: bool_t = RowData(8)
+
+
+class SpearfishingItem(DataRow):
     _sign = b'SpearfishingItem|eJwrzstLywNiAA94A2Y='
     sheet_name = 'SpearfishingItem'
     _display = 'item_id'
@@ -10068,6 +10502,43 @@ class SpearfishingSilhouette(DataRow):
     _sign = b'SpearfishingSilhouette|eJzLAwAAbwBv'
     sheet_name = 'SpearfishingSilhouette'
     shadow_width: int_t = RowData(0)
+
+
+class SpecialShop(DataRow):
+    _sign = b'SpecialShop|eJwrzhuCIIkCMNBuJweMNP+OglEwCkbBKKAxSANhADlva80='
+    sheet_name = 'SpecialShop'
+    _display = 'text'
+    text: str_t = RowData(0)
+    item_item_id: List[List[int_t]] = ListData(ir(((1, 2, 240), 60, 1)), ListData, RowData)
+    item_set_num: List[List[int_t]] = ListData(ir(((61, 2, 240), 60, 1)), ListData, RowData)
+    item_category: List[List[int_t]] = ListData(ir(((121, 2, 240), 60, 1)), ListData, RowData)
+    item_is_item_hq: List[List[bool_t]] = ListData(ir(((181, 2, 240), 60, 1)), ListData, RowData)
+    item_currency: List[List[int_t]] = ListData(ir(((481, 3, 240), 60, 1)), ListData, RowData)
+    item_num_of_currency: List[List[int_t]] = ListData(ir(((541, 3, 240), 60, 1)), ListData, RowData)
+    item_currency_type: List[List[int_t]] = ListData(ir(((601, 3, 240), 60, 1)), ListData, RowData)
+    item_currency_masterpiece: List[List[int_t]] = ListData(ir(((661, 3, 240), 60, 1)), ListData, RowData)
+    item_quest: List[List[int_t]] = ListData(ir(((1201, 2, 60), 60, 1)), ListData, RowData)
+    item_quest_sequence: List[List[int_t]] = ListData(ir(((1321, 2, 60), 60, 1)), ListData, RowData)
+    item_quest_display_type: List[int_t] = ListData(ir((1441, 60, 1)), RowData)
+    item_quest_log_message: List[int_t] = ListData(ir((1501, 60, 1)), RowData)
+    item_instance_content: List[int_t] = ListData(ir((1561, 60, 1)), RowData)
+    item_instance_content_display_type: List[int_t] = ListData(ir((1621, 60, 1)), RowData)
+    item_instance_content_log_message: List[int_t] = ListData(ir((1681, 60, 1)), RowData)
+    item_achievement: List[int_t] = ListData(ir((1741, 60, 1)), RowData)
+    item_achievement_display_type: List[int_t] = ListData(ir((1801, 60, 1)), RowData)
+    item_achievement_log_message: List[int_t] = ListData(ir((1861, 60, 1)), RowData)
+    item_sort: List[int_t] = ListData(ir((1921, 60, 1)), RowData)
+    item_added_version: List[int_t] = ListData(ir((1981, 60, 1)), RowData)
+    shop_type_pattern: int_t = RowData(2041)
+    disclosure_reward_or_quest: int_t = RowData(2042)
+    qualified_talk: int_t = RowData(2043)
+    unqualified_talk: int_t = RowData(2044)
+    item_obtain_event: int_t = RowData(2045)
+    system: bool_t = RowData(2046)
+    festival: int_t = RowData(2047)
+    festival_phase: int_t = RowData(2048)
+    content: int_t = RowData(2049)
+    content_completed: bool_t = RowData(2050)
 
 
 class SpecialShop(DataRow):
@@ -10203,6 +10674,23 @@ class StatusHitEffect(DataRow):
     sheet_name = 'StatusHitEffect'
     _display = 'hit_effect'
     hit_effect: 'VFX' = RowForeign(0, 'VFX')
+
+
+class StatusLoopVFX(DataRow):
+    _sign = b'StatusLoopVFX|eJzLy4OAtLQ0ABw3BKM='
+    sheet_name = 'StatusLoopVFX'
+    _display = 'vfx'
+    vfx: 'VFX' = RowForeign(0, 'VFX')
+    stack2: int_t = RowData(1)
+    vfx2: 'VFX' = RowForeign(2, 'VFX')
+    stack3: int_t = RowData(3)
+    vfx3: 'VFX' = RowForeign(4, 'VFX')
+    vfx__e: int_t = RowData(5)
+    slot: int_t = RowData(6)
+    priority: int_t = RowData(7)
+    control_chara_only: bool_t = RowData(8)
+    vfx_high_priority: bool_t = RowData(9)
+    hide_transformation: bool_t = RowData(10)
 
 
 class StatusLoopVFX(DataRow):
@@ -10374,6 +10862,14 @@ class TelepoRelay(DataRow):
     relay_point_relay_territory_source: List[int_t] = ListData(ir((0, 6, 1)), RowData)
     relay_point_relay_territory_destination: List[int_t] = ListData(ir((6, 6, 1)), RowData)
     relay_point_cost: List[int_t] = ListData(ir((12, 6, 1)), RowData)
+
+
+class TelepoRelay(DataRow):
+    _sign = b'TelepoRelay|eJzLy8MCAGNXCQc='
+    sheet_name = 'TelepoRelay'
+    relay_point_relay_territory_source: List[int_t] = ListData(ir((0, 7, 1)), RowData)
+    relay_point_relay_territory_destination: List[int_t] = ListData(ir((7, 7, 1)), RowData)
+    relay_point_cost: List[int_t] = ListData(ir((14, 7, 1)), RowData)
 
 
 class TerritoryChatRule(DataRow):
@@ -11276,6 +11772,15 @@ class World(DataRow):
     user_type: int_t = RowData(3)
     dc_group: 'WorldDCGroupType' = RowForeign(4, 'WorldDCGroupType')
     public: bool_t = RowData(5)
+
+
+class WorldDCGroupType(DataRow):
+    _sign = b'WorldDCGroupType|eJwrzksDAAKeAUg='
+    sheet_name = 'WorldDCGroupType'
+    _display = 'name'
+    name: str_t = RowData(0)
+    region_group: int_t = RowData(1)
+    is_cloud: bool_t = RowData(2)
 
 
 class WorldDCGroupType(DataRow):
