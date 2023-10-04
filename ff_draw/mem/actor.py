@@ -126,12 +126,12 @@ class CastInfo:
     used_action_type = direct_mem_property(ctypes.c_uint16)
 
 
-class ActorOffsets:
+class ActorOffsets640:
     name = 0x30
     id = 0x74
     base_id = 0x80
     owner_id = 0x84
-    actor_type = 0x8c
+    actor_type = 0x8C
     status_flag = 0x95
     pos = 0xB0
     facing = 0xC0
@@ -146,21 +146,6 @@ class ActorOffsets:
     max_gp = 0x1D6
     current_cp = 0x1D8
     max_cp = 0x1DA
-    class_job = 0x1E0
-    level = 0x1E1
-    model_attr = 0x1E4
-    mount_id = 0x668
-    pc_target_id = 0xC80
-    channeling = 0x1A20
-    b_npc_target_id = 0x1A88
-    current_world = 0x1AF4
-    home_world = 0x1AF6
-    shield = 0x1B17
-    status = 0x1B60
-    cast_info = 0x1CF0
-
-
-class ActorOffsets640(ActorOffsets):
     class_job = 0x1E2
     level = 0x1E3
     model_attr = 0x1E6
@@ -173,9 +158,21 @@ class ActorOffsets640(ActorOffsets):
     shield = 0x1ED
     status = 0x1B80
     cast_info = 0x1D10
+    name_id = 0x1B00
 
 
-class ActorOffsets650(ActorOffsets):
+class ActorOffsets650:
+    name = 0x30
+    id = 0x74
+    base_id = 0x80
+    owner_id = 0x84
+    actor_type = 0x8C
+    status_flag = 0x95
+    pos = 0xB0
+    facing = 0xC0
+    radius = 0xD0
+    draw_object = 0x100
+    hide_flag = 0x114
     current_hp = 0x1BC
     max_hp = 0x1C0
     current_mp = 0x1C4
@@ -196,10 +193,11 @@ class ActorOffsets650(ActorOffsets):
     shield = 0x1E6
     status = 0x1C10
     cast_info = 0x1F00
+    name_id = 0x1B98
 
 
 class Actor:
-    offsets = ActorOffsets
+    offsets = ActorOffsets640
 
     def __init__(self, handle, address):
         self.handle = handle
@@ -280,7 +278,7 @@ class Actor:
 
     status = struct_mem_property(StatusManager)
     cast_info = struct_mem_property(CastInfo)
-
+    name_id = direct_mem_property(ctypes.c_uint32)
 
 class ActorTable:
     cache: dict[int, Actor]
@@ -295,10 +293,8 @@ class ActorTable:
 
         if main.game_version >= (6, 5, 0):
             Actor.offsets = ActorOffsets650
-        elif main.game_version >= (6, 4, 0):
-            Actor.offsets = ActorOffsets640
         else:
-            Actor.offsets = ActorOffsets
+            Actor.offsets = ActorOffsets640
 
         self.table_size = main.scanner.find_val('81 bf ? ? ? ? * * * * 72 ? 44 89 b7')[0]
         self.use_brute_search = False

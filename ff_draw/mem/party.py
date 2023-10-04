@@ -26,6 +26,20 @@ class MemberOffset:
     shield = 0x207
 
 
+class MemberOffset650:
+    status = 0x0
+    pos = 0x2F0
+    character_id = 0x300
+    id = 0x308
+    current_hp = 0x314
+    max_hp = 0x318
+    current_mp = 0x31C
+    max_mp = 0x31E
+    class_job = 0x365
+    level = 0x366
+    shield = 0x367
+
+
 class Member:
     offsets = MemberOffset
 
@@ -103,6 +117,11 @@ class PartyManager:
         replay_party_address = real_party_address + main.scanner.find_val('74 ? f6 05 ? ? ? ? ? 48 ? ? * * * * 75')[0]
         self.real_party = Party(self.main.handle, real_party_address)
         self.replay_party = Party(self.main.handle, replay_party_address)
+
+        if main.game_version >= (6, 5, 0):
+            Member.offsets = MemberOffset650
+        else:
+            Member.offsets = MemberOffset
 
     @property
     def party_list(self):
