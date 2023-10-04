@@ -1,4 +1,6 @@
+import csv
 import datetime
+import io
 import re
 
 import glfw
@@ -158,7 +160,7 @@ def imgui_render_data(data):
         data = hex(data)
     elif isinstance(data, float):
         data = f'{data:.3f}'
-    elif isinstance(data, bytes):
+    elif isinstance(data, (bytes, bytearray)):
         data = data.hex(' ')
     elif not isinstance(data, str):
         data = str(data)
@@ -180,6 +182,13 @@ def calc_imgui_render_data_height(data):
     return imgui.get_text_line_height_with_spacing()
 
 
+def imgui_window_max_line():
+    line_height = imgui.get_text_line_height_with_spacing()
+    y_space = imgui.get_style().item_spacing.y
+    height_can_use = imgui.get_window_height() - line_height - y_space * 2
+    return max(int(height_can_use / (line_height + y_space)), 0)
+
+
 class NetLogger:
     display_data: list
     data: list
@@ -198,15 +207,16 @@ class NetLogger:
         self._only_show_filtered = False
         self._only_show_defined = True
         self._lock_bottom = True
+        self.as_text = False
+        self._shown_text = ''
 
         self.display_idx = 0
+        self.max_idx = 0
         self.select_idx = -1
         self.is_scroll_bar_active = False
 
-        self.table_widths = [0, 0, 0]
+        self.table_widths = [0, 0, 0, 0]
         self.render_frame_cnt = 0
-        self.show_cnt = 0
-        self.touch_bottom = False
 
     def _is_display_data(self, data):
         return (not self._only_show_filtered or (data.is_select != self.filter_reverse)) and not (self._only_show_defined and isinstance(data.data, (bytes, bytearray)))
@@ -279,15 +289,14 @@ class NetLogger:
 
     @property
     def display_percent(self):
-        return self.display_idx / len(self.display_data)
+        return min(self.display_idx / self.max_idx, 1) if self.max_idx else 0
 
     @display_percent.setter
     def display_percent(self, value):
-        ddl = len(self.display_data)
-        self.display_idx = min(max(int(value * ddl), 0), ddl - 1)
+        self.display_idx = int(value * self.max_idx)
 
     def go_bottom(self):
-        self.display_idx = max(len(self.display_data) - self.show_cnt, 0) if self.touch_bottom else 0
+        self.display_idx = self.max_idx
 
     @property
     def lock_bottom(self):
@@ -298,75 +307,69 @@ class NetLogger:
         self._lock_bottom = value
         if value: self.go_bottom()
 
-    def update_scroll(self):
-        io = imgui.get_io()
-        wheel_delta = int(io.mouse_wheel)
-        if wheel_delta != 0:
-            ctx_x, ctx_y = imgui.get_window_position()
-            ctx_w, ctx_h = imgui.get_window_size()
-            mouse_x, mouse_y = io.mouse_pos
-            if ctx_x <= mouse_x <= ctx_x + ctx_w and ctx_y <= mouse_y <= ctx_y + ctx_h:
-                self.display_idx = min(max(self.display_idx - wheel_delta, 0), len(self.display_data) - 1)
-        return self.display_idx
-
     def render_datas(self):
-        idx = self.update_scroll()
         start_x, start_y = imgui.get_cursor_screen_pos()
-        max_y = imgui.get_window_height() - imgui.get_text_line_height_with_spacing() - imgui.get_style().item_spacing.y
-        show_cnt = 0
         display_len = len(self.display_data)
-        imgui.columns(5)  # select, datetime, source, key, data
-        x_spacing = imgui.get_style().item_spacing.x * 2
-        imgui.set_column_width(0, x_spacing + imgui.get_text_line_height_with_spacing())
-        for i in range(3):
-            imgui.set_column_width(1 + i, self.table_widths[i] + x_spacing * 2) if self.table_widths[i] else None
+        if (sw := sum(self.table_widths) + 300) < imgui.get_window_width(): sw = 0
+        with imguictx.Child('##outter_datas', 0, 0, False, imgui.WINDOW_HORIZONTAL_SCROLLING_BAR), imguictx.Child('##inner_datas', sw, 0, False):
+            max_line_ = max_line = imgui_window_max_line()
+            self.max_idx = max(len(self.display_data) - max_line - 1, 0)
 
-        # imgui.text('select')
-        imgui.next_column()
-        imgui.text('datetime')
-        imgui.next_column()
-        imgui.text('source')
-        imgui.next_column()
-        imgui.text('key')
-        imgui.next_column()
-        imgui.text('data')
-        imgui.next_column()
-        imgui.separator()
-        table_widths = [0, 0, 0]
-        while idx < display_len:
-            if imgui.get_cursor_screen_pos()[1] >= max_y:
-                break
-            data: _IMessage = self.display_data[idx]
-            style = text_selected if self._filter and (data.is_select != self.filter_reverse) else text_unselected
-            changed, var = imgui.checkbox(f'##select[{idx}]', self.select_idx == idx)
-            if changed: self.select_idx = idx if var else -1
+            io = imgui.get_io()
+            wheel_delta = int(io.mouse_wheel)
+            if wheel_delta != 0:
+                ctx_x, ctx_y = imgui.get_window_position()
+                ctx_w, ctx_h = imgui.get_window_size()
+                mouse_x, mouse_y = io.mouse_pos
+                if ctx_x <= mouse_x <= ctx_x + ctx_w and ctx_y <= mouse_y <= ctx_y + ctx_h:
+                    self.display_idx -= wheel_delta
+                    if self.display_idx < 0:
+                        self.display_idx = 0
+            idx = self.display_idx = min(self.display_idx, self.max_idx)
+
+            imgui.columns(5)  # select, datetime, source, key, data
+            x_spacing = imgui.get_style().item_spacing.x * 2
+            imgui.set_column_width(0, x_spacing + imgui.get_text_line_height_with_spacing())
+            for i in range(3):
+                if self.table_widths[i]:
+                    imgui.set_column_width(1 + i, self.table_widths[i] + x_spacing * 2)
+            # imgui.text('select')
             imgui.next_column()
-            table_widths[0] = max(table_widths[0], imgui.calc_text_size(data.timestamp_str)[0])
-            table_widths[1] = max(table_widths[1], imgui.calc_text_size(data.source_str)[0])
-            table_widths[2] = max(table_widths[2], imgui.calc_text_size(data.key)[0])
-            if data.byte_size is None:
-                data.byte_size = [
-                    len(data.timestamp_str.encode('utf-8')) + 0x1,
-                    len(data.source_str.encode('utf-8')) + 0x1,
-                    len(data.key.encode('utf-8')) + 0x1,
-                    len(data.data_str.encode('utf-8')) + 0x1
-                ]
-            with style:
-                with auto_item_width: imgui.input_text(f'##ts[{idx}]', data.timestamp_str, data.byte_size[0], imgui.INPUT_TEXT_READ_ONLY)
+            imgui.text('datetime')
+            imgui.next_column()
+            imgui.text('source')
+            imgui.next_column()
+            imgui.text('key')
+            imgui.next_column()
+            imgui.text('data')
+            imgui.next_column()
+            imgui.separator()
+            table_widths = [0, 0, 0, 0]
+            while idx < display_len and max_line > 0:
+                data: _IMessage = self.display_data[idx]
+                style = text_selected if self._filter and (data.is_select != self.filter_reverse) else text_unselected
+                changed, var = imgui.checkbox(f'##select[{idx}]', self.select_idx == idx)
+                if changed: self.select_idx = idx if var else -1
                 imgui.next_column()
-                with auto_item_width: imgui.input_text(f'##src[{idx}]', data.source_str, data.byte_size[1], imgui.INPUT_TEXT_READ_ONLY)
-                imgui.next_column()
-                with auto_item_width: imgui.input_text(f'##key[{idx}]', data.key, data.byte_size[2], imgui.INPUT_TEXT_READ_ONLY)
-                imgui.next_column()
-                with auto_item_width: imgui.input_text(f'##data[{idx}]', data.data_str, data.byte_size[3], imgui.INPUT_TEXT_READ_ONLY)
-                imgui.next_column()
-            idx += 1
-            show_cnt += 1
-        self.show_cnt = show_cnt
-        self.touch_bottom = imgui.get_cursor_screen_pos()[1] + imgui.get_text_line_height_with_spacing() >= max_y
-        self.table_widths = table_widths
-        imgui.columns(1)
-        if show_cnt and show_cnt < display_len:
+                table_widths[0] = max(table_widths[0], imgui.calc_text_size(data.timestamp_str)[0])
+                table_widths[1] = max(table_widths[1], imgui.calc_text_size(data.source_str)[0])
+                table_widths[2] = max(table_widths[2], imgui.calc_text_size(data.key)[0])
+                table_widths[3] = max(table_widths[3], imgui.calc_text_size(data.data_str)[0])
+                with style:
+                    with auto_item_width: imgui.input_text(f'##ts[{idx}]', data.timestamp_str, -1, imgui.INPUT_TEXT_READ_ONLY)
+                    imgui.next_column()
+                    with auto_item_width: imgui.input_text(f'##src[{idx}]', data.source_str, -1, imgui.INPUT_TEXT_READ_ONLY)
+                    imgui.next_column()
+                    with auto_item_width: imgui.input_text(f'##key[{idx}]', data.key, -1, imgui.INPUT_TEXT_READ_ONLY)
+                    imgui.next_column()
+                    with auto_item_width: imgui.input_text(f'##data[{idx}]', data.data_str, -1, imgui.INPUT_TEXT_READ_ONLY)
+                    imgui.next_column()
+                idx += 1
+                max_line -= 1
+            self.table_widths = table_widths
+            imgui.columns(1)
+
+        if max_line_ < display_len:
             with imguictx.PushCursor():
                 # draw a scrollbar
                 draw_list = imgui.get_window_draw_list()
@@ -374,6 +377,7 @@ class NetLogger:
                 draw_sb_size = sb_size if self.is_scroll_bar_active else sb_size * 0.5
                 scrollbar_x = imgui.get_window_width() - sb_size - imgui.get_style().window_padding.x + start_x
                 start_y += imgui.get_style().item_spacing.y
+                max_y = start_y + imgui.get_window_height() - imgui.get_style().item_spacing.y * 2
 
                 mx, my = imgui.get_mouse_pos()
                 _is_sb_active = (scrollbar_x <= mx <= scrollbar_x + sb_size and start_y <= my <= max_y)
@@ -388,16 +392,13 @@ class NetLogger:
                 draw_sb_x = imgui.get_window_width() - draw_sb_size - imgui.get_style().window_padding.x + start_x
                 imgui.set_cursor_screen_pos((draw_sb_x, start_y))
                 imgui.invisible_button('##scrollbar_inv', draw_sb_size, max_y - start_y)
+                draw_list.add_rect_filled(draw_sb_x, start_y, draw_sb_x + draw_sb_size, max_y, imgui.get_color_u32_rgba(0.2, 0.2, 0.2, 0.5 if self.is_scroll_bar_active else 0.2))
+                sb_height = max_y - start_y
+                btn_height = max(int(sb_height * max_line_ / display_len), 24)
+                btn_start_y = start_y + (sb_height - btn_height) * self.display_percent
                 draw_list.add_rect_filled(
-                    draw_sb_x, start_y,
-                    draw_sb_x + draw_sb_size, max_y,
-                    imgui.get_color_u32_rgba(0.2, 0.2, 0.2, 0.5 if self.is_scroll_bar_active else 0.2)
-                )
-                btn_height = max((max_y - start_y) * show_cnt / display_len, 24)
-                btn_y = start_y + (max_y - start_y - btn_height) * self.display_percent
-                draw_list.add_rect_filled(
-                    draw_sb_x, btn_y,
-                    draw_sb_x + draw_sb_size, btn_y + btn_height,
+                    draw_sb_x, btn_start_y,
+                    draw_sb_x + draw_sb_size, btn_start_y + btn_height,
                     imgui.get_color_u32_rgba(0.7, 0.7, 0.7, 0.7)
                 )
 
@@ -440,6 +441,21 @@ class NetLogger:
             if imgui.button('->', btn_width, 0):
                 self.display_idx = next((i for i in range(self.display_idx + 1, len(self.display_data)) if self.display_data[i].is_select), self.display_idx)
 
+        imgui.text('as text: ')
+        imgui.same_line()
+        changed, self.as_text = imgui.checkbox('##as_text', self.as_text)
+        if changed:
+            if self.as_text:
+                self._shown_text = self.dump_text()
+            else:
+                self._shown_text = ''
+
+    def dump_text(self, sep='\t'):
+        writer = csv.writer(buf := io.StringIO(), delimiter=sep)
+        for row in self.display_data:
+            writer.writerow([row.timestamp_str, row.source_str, row.key, row.data_str])
+        return buf.getvalue()
+
     def render_detail(self):
         if imgui.button('copy', -1):
             import pprint
@@ -448,8 +464,11 @@ class NetLogger:
         if self.select_idx < len(self.display_data):
             imgui_render_data(self.display_data[self.select_idx].data_serialized)
 
+    def render_text(self):
+        imgui.input_text_multiline('##text', self._shown_text, -1, -1, imgui.INPUT_TEXT_READ_ONLY)
+
     def render(self):
-        imgui.columns(2)
+        imgui.columns(2,'##main', True)
         if self.render_frame_cnt < 2:
             imgui.set_column_width(0, 300)
         with imguictx.Child('##Left', 0, 0):
@@ -458,8 +477,12 @@ class NetLogger:
                 with imguictx.Child('##selected_detail', 0, 0, True):
                     self.render_detail()
         imgui.next_column()
-        with imguictx.Child('##Right', 0, 0):
-            self.render_datas()
+        if self.as_text:
+            with imguictx.Child('##Right', 0, 0, False):
+                self.render_text()
+        else:
+            with imguictx.Child('##Right', 0, 0, False, imgui.WINDOW_NO_SCROLLBAR | imgui.WINDOW_NO_SCROLL_WITH_MOUSE):
+                self.render_datas()
         imgui.next_column()
-        imgui.columns(1)
+        imgui.columns(1,'##main', True)
         self.render_frame_cnt += 1
