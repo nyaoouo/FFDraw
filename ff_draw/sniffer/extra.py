@@ -1,5 +1,7 @@
+import ctypes
 import dataclasses
 import logging
+import time
 import typing
 
 from . import enums
@@ -14,6 +16,39 @@ RESTART_EVENT_DIRECTOR = {
     actor_control.EventDirectorType.Restart.value,
     actor_control.EventDirectorType.PvpReady.value,
 }
+
+
+class PingResFinder:
+    logger = logging.getLogger('PingResFinder')
+
+    def __init__(self, sniffer: 'Sniffer'):
+        self.sniffer = sniffer
+        sniffer.on_zone_client_message[enums.ZoneClient.PingReq].append(self.on_ping_req)
+        sniffer.on_zone_server_message.any_call.append(self.find_ping_res)
+
+        self.last_ping_pre = b''
+        self.last_ping_at = 0
+        self.ping_res_size = ctypes.sizeof(zone_server.PingRes)
+
+    def uninstall(self):
+        self.sniffer.on_zone_client_message[enums.ZoneClient.PingReq].remove(self.on_ping_req)
+        self.sniffer.on_zone_server_message.any_call.remove(self.find_ping_res)
+
+    def find_ping_res(self, msg: message.NetworkMessage):
+        raw = msg.raw_message.raw_data[0x10:]
+        pno = msg.proto_no
+        if not isinstance(pno, int): return
+        if len(raw) != self.ping_res_size: return
+        if raw[:4] != self.last_ping_pre: return
+        if time.time() - self.last_ping_at > 1: return
+        self.logger.debug(f'found ping res {pno}')
+        self.sniffer._zone_server_pno_map[pno] = enums.ZoneServer.PingRes
+        self.sniffer.zone_server_pno['PingRes'] = [pno]
+        self.uninstall()
+
+    def on_ping_req(self, msg: message.NetworkMessage):
+        self.last_ping_pre = msg.raw_message.raw_data[0x10:][:4]
+        self.last_ping_at = time.time()
 
 
 class SnifferExtra:
@@ -38,6 +73,8 @@ class SnifferExtra:
         # sniffer.on_zone_server_message[enums.ZoneServer.EffectResult16].append(self.on_effect_result)
         sniffer.on_actor_control[enums.ActorControlId.PlayActionTimeLine].append(self.on_actor_control_play_action_timeline)
         sniffer.on_actor_control[enums.ActorControlId.EventDirector].append(self.on_actor_control_event_director)
+
+        self.ping_res_finder = PingResFinder(sniffer)
 
     def on_effect_result(self, msg: message.NetworkMessage[zone_server.EffectResult]):
         for eff in msg.message:

@@ -647,3 +647,10 @@ class RetainerInformation(Structure):
     @property
     def name(self) -> str:
         return self._name.split(b'\0', 1)[0].decode('utf-8', errors='ignore')
+
+
+@type_map.set(ZoneServer.PingRes)
+@set_fields_from_annotations
+class PingRes(Structure):
+    _size_ = 0X20
+    time_ms: 'fctypes.c_uint32' = eval('0X0')

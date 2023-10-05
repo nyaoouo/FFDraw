@@ -56,6 +56,7 @@ class ZoneServer(enum.Enum):
     NpcYell = enum.auto()
     ObjectSpawn = enum.auto()
     PartyUpdate = enum.auto()
+    PingRes = enum.auto()
     PlaceFieldMarker = enum.auto()
     PlaceFieldMarkerPreset = enum.auto()
     PlayerSetup = enum.auto()
@@ -109,6 +110,7 @@ class ZoneClient(enum.Enum):
     InventoryModifyHandler = enum.auto()
     MarketBoardPurchaseHandler = enum.auto()
     MarketBoardQueryItemCount = enum.auto()
+    PingReq = enum.auto()
     SetSearchInfoHandler = enum.auto()
     UpdatePositionHandler = enum.auto()
     UpdatePositionInstance = enum.auto()
@@ -157,7 +159,6 @@ class ActorControlId(enum.Enum):
     FateStart = 0X934
     FateEnd = 0X935
     FateProgress = 0X93C
-
 
 
 class ClientTriggerId(enum.Enum):

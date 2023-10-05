@@ -91,3 +91,10 @@ class ClientTrigger(Structure):
     arg2: 'fctypes.c_uint32' = eval('0XC')
     arg3: 'fctypes.c_uint32' = eval('0X10')
     target_common_id: 'fctypes.c_uint64' = eval('0X18')
+
+
+@type_map.set(ZoneClient.PingReq)
+@set_fields_from_annotations
+class PingReq(Structure):
+    _size_ = 0X18
+    time_ms: 'fctypes.c_uint32' = eval('0X0')
