@@ -37,6 +37,8 @@ class NetLog(FFDrawPlugin):
             actor = self.get_actor(msg.header.source_id)
             actor.pos = msg.message.pos
             actor.facing = msg.message.facing
+        if msg.proto_no == ZoneServer.PingRes:
+            return #  don't record pings
         key = msg.proto_no if isinstance(msg.proto_no, int) else msg.proto_no.name
         self.nl.append_data(net_log_imgui.ZoneServerIpc(self.nl, msg.raw_message.bundle_header.timestamp_ms, msg.header.source_id, key, msg.message))
 
@@ -46,6 +48,8 @@ class NetLog(FFDrawPlugin):
             actor.pos = msg.message.pos
             actor.facing = msg.message.facing
             return  # don't record send change pos packet, because it's too many
+        if msg.proto_no == ZoneClient.PingReq:
+            return  # don't record pings
         key = msg.proto_no if isinstance(msg.proto_no, int) else msg.proto_no.name
         self.nl.append_data(net_log_imgui.ZoneClientIpc(self.nl, msg.raw_message.bundle_header.timestamp_ms, msg.header.source_id, key, msg.message))
 
