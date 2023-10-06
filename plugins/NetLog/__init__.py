@@ -38,7 +38,7 @@ class NetLog(FFDrawPlugin):
             actor.pos = msg.message.pos
             actor.facing = msg.message.facing
         if msg.proto_no == ZoneServer.PingRes:
-            return #  don't record pings
+            return  # don't record pings
         key = msg.proto_no if isinstance(msg.proto_no, int) else msg.proto_no.name
         self.nl.append_data(net_log_imgui.ZoneServerIpc(self.nl, msg.raw_message.bundle_header.timestamp_ms, msg.header.source_id, key, msg.message))
 
@@ -104,7 +104,9 @@ class NetLog(FFDrawPlugin):
         imgui.columns(2, 'NetLog', False)
         imgui.set_column_width(0, imgui.calc_text_size('2000-01-01 00:00:00')[0] + style.window_padding[0] * 6)
         with imgui_ctx.Child('History', 0, 0, border=False):
-            main_height = imgui.get_window_height() - style.window_padding[1] * 4 - imgui.get_text_line_height_with_spacing()
+            if imgui.button('New', -1):
+                self.reset()
+            main_height = imgui.get_window_height() - (style.window_padding[1] * 4 + imgui.get_text_line_height_with_spacing()) * 2
             with imgui_ctx.Child('HistoryMain', 0, main_height, border=True):
                 for i, (t, nl) in enumerate(self.nls):
                     if i == self.display_nl:
@@ -113,7 +115,10 @@ class NetLog(FFDrawPlugin):
                     else:
                         if imgui.button(f'{t}##sel_{i}', -1):
                             self.display_nl = i
-            if imgui.button('Reset', -1): self.reset()
+            if imgui.button('Clear', -1):
+                self.reset()
+                self.nls = [self.nls[-1]]
+                self.display_nl = 0
         imgui.next_column()
         with imgui_ctx.Child('NL', 0, 0):
             self.nls[self.display_nl][1].render()
