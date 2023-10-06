@@ -22,6 +22,7 @@ class DataReader(Generic[_T]):
 def simple_struct_reader(struct_format: str):
     def func(buffer: bytearray, row: 'DataRow', col: 'Column'):
         return unpack_from(struct_format, buffer, row.row_base.row_offset + col.offset)[0]
+
     func.__name__ = f"simple_struct_reader[{struct_format}]"
     return func
 
@@ -34,7 +35,7 @@ def bit_field_reader(bit_offset: int):
     return func
 
 
-def string_reader(buffer: bytearray, row: 'DataRow', col: 'Column'):
+def bytes_reader(buffer: bytearray, row: 'DataRow', col: 'Column'):
     end_of_fixed = row.row_base.row_offset + row.row_base.sheet.header.header.binary_data_length
     # print(buffer[row.row_base.row_offset + col.offset:row.row_base.row_offset + col.offset+4].hex(' '))
     start = end_of_fixed + unpack_from(">l", buffer, row.row_base.row_offset + col.offset)[0]
@@ -42,10 +43,16 @@ def string_reader(buffer: bytearray, row: 'DataRow', col: 'Column'):
     # return buffer[BEGIN:buffer.find(b'\0', BEGIN)]
     if (buf := buffer[start:buffer.find(b'\0', start)]).startswith(b'_rsv_'):
         return row.row_base.sheet.mgr.rsv_string.get(s := buf.decode('utf-8', errors='ignore'), s)
-    return SeString.from_buffer(buf)
+    return buf
+
+
+def string_reader(buffer: bytearray, row: 'DataRow', col: 'Column'):
+    if buf := bytes_reader(buffer, row, col):
+        return SeString.from_buffer(buf)
 
 
 DATA_READERS: 'Dict[int,Callable[[bytearray,DataRow,Column],Any]]' = {
+    -1: bytes_reader,
     0x0000: string_reader,
     0x0001: lambda d, r, c: d[r.row_base.row_offset + c.offset] != 0,
     0x0002: simple_struct_reader(">b"),
@@ -62,6 +69,6 @@ for i in range(0, 8):
     DATA_READERS[0x19 + i] = bit_field_reader(i)
 
 
-def read_data(buffer: bytearray, row: 'DataRow', col: 'Column'):
+def read_data(buffer: bytearray, row: 'DataRow', col: 'Column', type_=None):
     # print(row.row_offset, col.offset)
-    return DATA_READERS[col.type](buffer, row, col)
+    return DATA_READERS[col.type if type_ is None else type_](buffer, row, col)

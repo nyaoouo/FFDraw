@@ -43,6 +43,23 @@ class RowBase:
             for key in keys
         }
 
+    def get_row(self, key, type_=None):
+        if isinstance(key, str):
+            attr = getattr(self.row.__class__, key, None)
+            if (col_id := getattr(attr, 'col_id', None)) is not None:
+                return self.get_row(col_id, type_)
+            elif (cols := getattr(attr, 'cols', None)) is not None:
+                return tuple(self.get_row(key, type_) for key in cols)
+            else:
+                raise KeyError(key)
+        if not isinstance(key, int): raise KeyError(f'not support key type {type(key)}')
+        val = read_data(self.buffer, self.row, self.column[key], type_)
+        if isinstance(type_, str):
+            sheet = self.sheet.mgr.get_sheet_raw(type_)
+            lang = self.lang_sheet.lang
+            val = sheet.get_row(key, lang if lang.value else None)
+        return val
+
 
 class DataRow(Generic[_T]):
     _sign: bytes

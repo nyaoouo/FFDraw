@@ -61,7 +61,7 @@ class File:
     @property
     def data_buffer(self) -> bytearray:
         if self._data_buffer is None:
-            self.logger.log(9, 'reading %s...', self.info.full_path)
+            self.logger.debug('reading %s...', self.info.full_path)
             self._data_buffer = self.get_data_buffer(self.data_stream)
         return self._data_buffer
 

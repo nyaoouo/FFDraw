@@ -1,3 +1,4 @@
+import inspect
 from typing import Generic, TypeVar, TYPE_CHECKING, Callable, Tuple, Type, Iterable
 
 from nylib.utils import Counter
@@ -13,7 +14,7 @@ counter = Counter()
 
 
 class RowData(Generic[_T]):
-    def __init__(self, col_id: int):
+    def __init__(self, col_id: int, *args):
         self.col_id = col_id
         self.offset = 0
 
@@ -23,7 +24,7 @@ class RowData(Generic[_T]):
 
 
 class RowForeign(Generic[_T]):
-    def __init__(self, col_id: int, sheet: str):
+    def __init__(self, col_id: int, sheet: str, *args):
         self.col_id = col_id
         self.sheet = sheet
         self.cache_key = f'__cached_{counter.get()}'
@@ -64,7 +65,7 @@ class Icon:
 
 
 class IconRow:
-    def __init__(self, col_id: int):
+    def __init__(self, col_id: int, *args):
         self.col_id = col_id
 
     def __get__(self, instance: 'DataRow | None', owner) -> 'Icon | IconRow|None':
@@ -75,16 +76,17 @@ class IconRow:
 
 
 class DynamicForeign(Generic[_T]):
-    def __init__(self, col_id: int, sheet_determiner: 'Callable[[DataRow,int],Sheet|str]'):
+    def __init__(self, col_id: int, sheet_determiner: 'Callable[[DataRow, int, tuple],Sheet|str]', *args):
         self.col_id = col_id
         self.func = sheet_determiner
         self.cache_key = f'__cached_{counter.get()}'
+        self.args = args
 
     def __get__(self, instance: 'DataRow | None', owner) -> '_T | None | RowForeign':
         if instance is None: return self
         if not hasattr(instance, self.cache_key):
             key = instance[self.col_id]
-            sheet = self.func(instance, key)
+            sheet = self.func(instance, key, self.args)
             if sheet is None:
                 item = key
             else:
@@ -101,7 +103,7 @@ class DynamicForeign(Generic[_T]):
 
 class ListData(Generic[_T]):
     def __init__(self, cols: Iterable, _t, *args):
-        self.cols = [_t(col, *args) for col in cols]
+        self.cols = [_t(col, *args, i) for i, col in enumerate(cols)]
         self.cache_key = f'__cached_{counter.get()}'
 
     def __get__(self, instance: 'DataRow | None', owner) -> 'List[_T] | ListData':
@@ -134,10 +136,19 @@ class ComplexSheetMask:
         self.func[lang] = func = lambda key: index.get(key & self.mask)
         return func
 
-    def __call__(self, row: 'DataRow', key: int):
+    def __call__(self, row: 'DataRow', key: int, args):
         lang = row.row_base.lang_sheet.lang
         if not lang.value: lang = None
         return (self.func.get(lang) or self.make_func(row, lang))(key)
+
+
+def get_idx(val, idxs):
+    for idx in idxs:
+        try:
+            val = val[idx]
+        except TypeError:
+            return val
+    return val
 
 
 class ComplexSheetKey:
@@ -149,10 +160,11 @@ class ComplexSheetKey:
     def make_func(self, row: 'DataRow'):
         value_sheet_map = {v: row.row_base.sheet.mgr.get_sheet_raw(_s) for v, _s in self.cond}
         if isinstance(self.key, int):
-            self.func = lambda _row: value_sheet_map.get(_row[self.key])
+            _get_var = lambda _row: _row[self.key]
         else:
-            self.func = lambda _row: value_sheet_map.get(getattr(row, self.key))
+            _get_var = lambda _row: getattr(_row, self.key)
+        self.func = lambda _row, args: value_sheet_map.get(get_idx(_get_var(_row), args))
         return self.func
 
-    def __call__(self, row: 'DataRow', key: int):
-        return (self.func or self.make_func(row))(row)
+    def __call__(self, row: 'DataRow', key: int, args):
+        return (self.func or self.make_func(row))(row, args)
