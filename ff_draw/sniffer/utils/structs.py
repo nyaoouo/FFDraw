@@ -23,6 +23,9 @@ class BundleHeader(Structure):
     compress_type: 'fctypes.c_uint8' = eval('0X21')
     size_before_compress: 'fctypes.c_uint32' = eval('0X24')
 
+    def __repr__(self):
+        return f'BundleHeader({self.timestamp_ms=}, {self.size=}, {self.proto_type=}, {self.element_count=}, {self.size_before_compress=})'
+
 
 @set_fields_from_annotations
 class ElementHeader(Structure):
@@ -33,6 +36,9 @@ class ElementHeader(Structure):
     target_id: 'fctypes.c_uint32' = eval('0X8')
     type: 'fctypes.c_uint16' = eval('0XC')
 
+    def __repr__(self):
+        return f'ElementHeader({self.size=}, {self.source_id=:#x}, {self.target_id=:#x}, {self.type=})'
+
 
 @set_fields_from_annotations
 class IpcHeader(Structure):
@@ -42,3 +48,6 @@ class IpcHeader(Structure):
     proto_no: 'fctypes.c_uint16' = eval('0X2')
     packet_count: 'fctypes.c_uint16' = eval('0X4')
     timestamp_s: 'fctypes.c_uint32' = eval('0X8')
+
+    def __repr__(self):
+        return f'IpcHeader({self.size=}, {self.proto_no=}, {self.packet_count=}, {self.timestamp_s=})'
