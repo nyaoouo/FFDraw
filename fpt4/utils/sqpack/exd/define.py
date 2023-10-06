@@ -11087,7 +11087,7 @@ class TerritoryType(DataRow):
     map: 'Map' = RowForeign(6, 'Map')
     loading_image: 'LoadingImage' = RowForeign(7, 'LoadingImage')
     exclusive_type: int_t = RowData(8)
-    intended_use: int_t = RowData(9)
+    intended_use: 'TerritoryIntendedUse' = RowForeign(9, 'TerritoryIntendedUse')
     content_finder_condition: 'ContentFinderCondition' = RowForeign(10, 'ContentFinderCondition')
     log_range_limit_off: bool_t = RowData(11)
     weather: int_t = RowData(12)
