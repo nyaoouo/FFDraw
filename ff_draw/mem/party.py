@@ -25,6 +25,8 @@ class MemberOffset:
     level = 0x206
     shield = 0x207
 
+    size_ = 0X230
+
 
 class MemberOffset650:
     status = 0x0
@@ -38,6 +40,8 @@ class MemberOffset650:
     class_job = 0x365
     level = 0x366
     shield = 0x367
+
+    size_ = 0X390
 
 
 class Member:
@@ -94,7 +98,7 @@ class Party:
     def __init__(self, handle, address):
         self.handle = handle
         self.address = address
-        self.members = [Member(self.handle, self.address + self.offsets.members + i * 0x230) for i in range(28)]
+        self.members = [Member(self.handle, self.address + self.offsets.members + i * Member.offsets.size_) for i in range(28)]
 
     def __iter__(self):
         for i in range(self.party_size):
@@ -115,13 +119,12 @@ class PartyManager:
         self.main = main
         real_party_address = main.scanner.find_point('48 ? ? * * * * 48 89 74 24 ? b2')[0]
         replay_party_address = real_party_address + main.scanner.find_val('74 ? f6 05 ? ? ? ? ? 48 ? ? * * * * 75')[0]
-        self.real_party = Party(self.main.handle, real_party_address)
-        self.replay_party = Party(self.main.handle, replay_party_address)
-
         if main.game_version >= (6, 5, 0):
             Member.offsets = MemberOffset650
         else:
             Member.offsets = MemberOffset
+        self.real_party = Party(self.main.handle, real_party_address)
+        self.replay_party = Party(self.main.handle, replay_party_address)
 
     @property
     def party_list(self):
