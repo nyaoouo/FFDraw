@@ -51,7 +51,7 @@ class RsData:
         rsf_headers = self.db_handler.list_rsf_header()
         rsv_strings = self.db_handler.list_rsv_string().wait()
         for k, v in rsv_strings:
-            self.main.sq_pack.exd.rsv_string[k] = SeString.from_buffer(v)
+            self.main.sq_pack.exd.rsv_string[k] = v
         mem.inject_handle.run(shell, {
             'p_secret_module': mem.scanner_v2.find_val("48 ? ? * * * * 48 83 78 ? ? 74 ? 40")[0],
             'p_load_rsv_string': mem.scanner_v2.find_address("40 ? 55 56 57 41 ? 41 ? 41 ? 41 ? 48 ? ? ? ? ? ? 48 ? ? ? ? ? ? 48 ? ? 48 89 84 24 ? ? ? ? 4d ? ? 48 ? ? 4c"),
