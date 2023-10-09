@@ -42,7 +42,7 @@ def bytes_reader(buffer: bytearray, row: 'DataRow', col: 'Column'):
     if start < 0: return None
     # return buffer[BEGIN:buffer.find(b'\0', BEGIN)]
     if (buf := buffer[start:buffer.find(b'\0', start)]).startswith(b'_rsv_'):
-        return row.row_base.sheet.mgr.rsv_string.get(s := buf.decode('utf-8', errors='ignore'), s)
+        return row.row_base.sheet.mgr.rsv_string.get(buf.decode('utf-8', errors='ignore'), buf)
     return buf
 
 
