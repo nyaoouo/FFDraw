@@ -4,6 +4,7 @@ import io
 import re
 
 import glfw
+import glm
 import imgui
 import nylib.utils.imgui.ctx as imguictx
 from .utils import *
@@ -385,7 +386,7 @@ class NetLogger:
                     if not imgui.get_io().want_capture_mouse or not imgui.is_mouse_down(0):
                         self.is_scroll_bar_active = _is_sb_active
                     else:
-                        self.display_percent = (my - start_y) / (max_y - start_y)
+                        self.display_percent = glm.clamp((my - start_y) / (max_y - start_y), 0, 1)
                 else:
                     self.is_scroll_bar_active = _is_sb_active
 
@@ -468,7 +469,7 @@ class NetLogger:
         imgui.input_text_multiline('##text', self._shown_text, -1, -1, imgui.INPUT_TEXT_READ_ONLY)
 
     def render(self):
-        imgui.columns(2,'##main', True)
+        imgui.columns(2, '##main', True)
         if self.render_frame_cnt < 2:
             imgui.set_column_width(0, 300)
         with imguictx.Child('##Left', 0, 0):
@@ -484,5 +485,5 @@ class NetLogger:
             with imguictx.Child('##Right', 0, 0, False, imgui.WINDOW_NO_SCROLLBAR | imgui.WINDOW_NO_SCROLL_WITH_MOUSE):
                 self.render_datas()
         imgui.next_column()
-        imgui.columns(1,'##main', True)
+        imgui.columns(1, '##main', True)
         self.render_frame_cnt += 1
