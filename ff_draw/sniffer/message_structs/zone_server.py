@@ -654,3 +654,9 @@ class RetainerInformation(Structure):
 class PingRes(Structure):
     _size_ = 0X20
     time_ms: 'fctypes.c_uint32' = eval('0X0')
+
+
+@type_map.set(ZoneServer.ContainerItemInfo)
+@set_fields_from_annotations
+class ContainerItemInfo(Structure):
+    _size_ = 0x18
