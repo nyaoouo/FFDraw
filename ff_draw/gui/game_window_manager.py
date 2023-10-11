@@ -35,6 +35,7 @@ class DrawWindow:
         gui = self.mgr.gui
         glfw.make_context_current(self.window)
         imgui.set_current_context(self.imgui_ctx)
+        self.imgui_renderer.process_inputs()
         imgui.new_frame()
         if self.mgr.imgui_font:
             imgui.push_font(self.mgr.imgui_font)
