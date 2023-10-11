@@ -63,16 +63,6 @@ class SetRecastGroupDuration:
     max_time = property(lambda self: self._max_time / 100)
 
 
-@type_map.set(ActorControlId.SetRecastGroupMax)  # 0X11
-@dataclasses.dataclass
-class SetRecastGroupMax:
-    recast_group_id: int
-    action_id: int
-    _max_time: int
-
-    max_time = property(lambda self: self._max_time / 100)
-
-
 @type_map.set(ActorControlId.AddStatus)  # 0X14
 @dataclasses.dataclass
 class AddStatus:

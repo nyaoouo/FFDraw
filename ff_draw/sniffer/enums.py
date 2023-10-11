@@ -133,7 +133,6 @@ class ActorControlId(enum.Enum):
     Death = 0x6
     CancelCast = 0XF
     SetRecastGroupDuration = 0X11
-    SetRecastGroupMax = 0X11
     AddStatus = 0X14
     RemoveStatus = 0X15
     SetStatusParam = 0X16
