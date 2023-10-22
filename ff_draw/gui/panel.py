@@ -439,7 +439,7 @@ class FFDPanel:
                 imgui.push_style_color(imgui.COLOR_BUTTON, *self.style_color['color_main_up'])
                 imgui.push_style_color(imgui.COLOR_BUTTON_ACTIVE, *self.style_color['color_main_up'])
                 imgui.push_style_color(imgui.COLOR_BUTTON_HOVERED, *self.style_color['color_main_up'])
-                imgui.button("", 10, button_h)
+                imgui.button("##color_main_up", 10, button_h)
                 imgui.pop_style_color(3)
 
                 imgui.same_line()
