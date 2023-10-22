@@ -86,6 +86,7 @@ class ZoneServer(enum.Enum):
 @auto_missing
 class ZoneClient(enum.Enum):
     ActionSend = enum.auto()
+    ActionSendPos = enum.auto()
     ChatHandler = enum.auto()
     ClientTrigger = enum.auto()
     EventAction = enum.auto()
