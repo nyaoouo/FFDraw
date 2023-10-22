@@ -92,6 +92,11 @@ class PartyOffset:
     party_size = 0x3d5c
 
 
+class PartyOffset650(PartyOffset):
+    members = 0X0
+    party_size = 0X63DC
+
+
 class Party:
     offsets = PartyOffset
 
@@ -120,8 +125,10 @@ class PartyManager:
         real_party_address = main.scanner.find_point('48 ? ? * * * * 48 89 74 24 ? b2')[0]
         replay_party_address = real_party_address + main.scanner.find_val('74 ? f6 05 ? ? ? ? ? 48 ? ? * * * * 75')[0]
         if main.game_version >= (6, 5, 0):
+            Party.offsets = PartyOffset650
             Member.offsets = MemberOffset650
         else:
+            Party.offsets = PartyOffset
             Member.offsets = MemberOffset
         self.real_party = Party(self.main.handle, real_party_address)
         self.replay_party = Party(self.main.handle, replay_party_address)
