@@ -41,7 +41,11 @@ class DrawWindow:
                 glfw.set_window_attrib(self.window, glfw.MOUSE_PASSTHROUGH, False)
             else:
                 glfw.set_window_attrib(self.window, glfw.MOUSE_PASSTHROUGH, True)
-                win32gui.SetForegroundWindow(self.game_hwnd)
+                try:
+                    win32gui.SetForegroundWindow(self.game_hwnd)
+                except:
+                    pass
+
 
     def update(self):
         gui = self.mgr.gui
