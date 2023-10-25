@@ -32,6 +32,15 @@ class GameMessageBuffer:
         yield from bundle.decode(self.buffer, self.oodle)
 
 
+class KeyRouteWithMap(KeyRoute):
+    def __init__(self, get_key=lambda v: v, get_map=lambda v: v):
+        super().__init__(get_key)
+        self.get_map = get_map
+
+    def __getitem__(self, item):
+        return super().__getitem__(self.get_map(item))
+
+
 class Sniffer:
     target: tuple[str, int] = None
     logger = logging.getLogger('Sniffer')
@@ -75,10 +84,10 @@ class Sniffer:
         self._zone_server_pno_map_size = len(self._zone_server_pno_map)
         self._zone_client_pno_map_size = len(self._zone_client_pno_map)
 
-        self.on_chat_server_message = KeyRoute(lambda m: m.proto_no)
-        self.on_chat_client_message = KeyRoute(lambda m: m.proto_no)
-        self.on_zone_server_message = KeyRoute(lambda m: m.proto_no)
-        self.on_zone_client_message = KeyRoute(lambda m: m.proto_no)
+        self.on_chat_server_message = KeyRouteWithMap(lambda m: m.proto_no, lambda k: self._chat_server_pno_map.get(k, k))
+        self.on_chat_client_message = KeyRouteWithMap(lambda m: m.proto_no, lambda k: self._chat_client_pno_map.get(k, k))
+        self.on_zone_server_message = KeyRouteWithMap(lambda m: m.proto_no, lambda k: self._zone_server_pno_map.get(k, k))
+        self.on_zone_client_message = KeyRouteWithMap(lambda m: m.proto_no, lambda k: self._zone_client_pno_map.get(k, k))
         self.on_actor_control = KeyRoute(lambda m: m.id)
         self.on_action_effect = BroadcastHook()
         self.on_add_status_by_action = BroadcastHook()
