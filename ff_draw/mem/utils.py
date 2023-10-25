@@ -140,6 +140,7 @@ def struct_mem_property(_type: typing.Type[_T], is_pointer=False, pass_self=Fals
 
 class struct_mem_property(typing.Generic[_T]):
     k = '__struct_mem_property__'
+    cache_k = '__struct_mem_property_cache__'
 
     def __init__(self, _type: typing.Type[_T], is_pointer=False, pass_self: bool | str = False, offset_key=None, is_static=False):
         self.type = _type
@@ -162,6 +163,8 @@ class struct_mem_property(typing.Generic[_T]):
 
     def __get__(self, instance, owner) -> _T | None:
         if instance is None: return self
+        cache = getattr(instance, self.cache_k, {})
+        if self.name in cache: return cache[self.name]
         addr = 0
         if not self.is_static and not (addr := instance.address): return None
         addr += getattr(self.owner.offsets, self.offset_key)
@@ -170,8 +173,20 @@ class struct_mem_property(typing.Generic[_T]):
         a1 = getattr(instance, self.pass_self) if isinstance(self.pass_self, str) else instance if self.pass_self else instance.handle
         res = self.type(a1, addr)
         if not self.is_pointer:
-            setattr(instance, self.name, res)
+            cache[self.name] = res
+            setattr(instance, self.cache_k, cache)
         return res
+
+    def __set__(self, instance, value):
+        if instance is None: return
+        addr = 0
+        if not self.is_static and not (addr := instance.address): return
+        addr += getattr(self.owner.offsets, self.offset_key)
+        if self.is_pointer:
+            ny_mem.write_address(instance.handle, addr, value.address)
+        else:
+            raise TypeError('cannot set value to a non-pointer struct')
+            # ny_mem.write_bytes(instance.handle, addr, value)
 
 
 def get_hwnd(pid):
