@@ -128,7 +128,7 @@ class ChatClient(enum.Enum):
     Unk = -1
 
 
-class ActorControlId(enum.Enum):
+class ActorControlId(enum.IntEnum):
     SetCombatState = 0X4
     ChangeClassJob = 0x5
     Death = 0x6
@@ -161,5 +161,5 @@ class ActorControlId(enum.Enum):
     FateProgress = 0X93C
 
 
-class ClientTriggerId(enum.Enum):
+class ClientTriggerId(enum.IntEnum):
     pass
