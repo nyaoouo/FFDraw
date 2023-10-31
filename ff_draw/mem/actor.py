@@ -50,15 +50,19 @@ class StatusManager:
     def actor(self):
         return Actor(self.handle, ny_mem.read_address(self.handle, self.address))
 
+    # def __iter__(self):
+    #     """id,param,remain,source_id"""
+    #     try:
+    #         for i in range(self.MAX_STATUS):
+    #             yield status_struct.unpack(
+    #                 ny_mem.read_bytes(self.handle, self.address + 8 + (i * status_struct.size), status_struct.size)
+    #             )
+    #     except WinAPIError:
+    #         pass
+
+    # load buffer once to speed up iteration
     def __iter__(self):
-        """id,param,remain,source_id"""
-        try:
-            for i in range(self.MAX_STATUS):
-                yield status_struct.unpack(
-                    ny_mem.read_bytes(self.handle, self.address + 8 + (i * status_struct.size), status_struct.size)
-                )
-        except WinAPIError:
-            pass
+        yield from status_struct.iter_unpack(ny_mem.read_bytes(self.handle, self.address + 8, status_struct.size * self.MAX_STATUS))
 
     def _iter_filter(self, status_id: int, source_id=0):
         for status_id_, param, remain, source_id_ in self:
@@ -279,6 +283,7 @@ class Actor:
     status = struct_mem_property(StatusManager)
     cast_info = struct_mem_property(CastInfo)
     name_id = direct_mem_property(ctypes.c_uint32)
+
 
 class ActorTable:
     cache: dict[int, Actor]
