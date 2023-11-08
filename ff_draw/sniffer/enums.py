@@ -16,11 +16,7 @@ class ZoneServer(enum.Enum):
     AirshipExplorationResult = enum.auto()
     AirshipStatus = enum.auto()
     AirshipStatusList = enum.auto()
-    Effect = enum.auto()
-    AoeEffect16 = Effect
-    AoeEffect24 = Effect
-    AoeEffect32 = Effect
-    AoeEffect8 = Effect
+    AoeEffect32 = AoeEffect24 = AoeEffect16 = AoeEffect8 = Effect = enum.auto()
     BossStatusEffectList = enum.auto()
     CEDirector = enum.auto()
     CFPreferredRole = enum.auto()
