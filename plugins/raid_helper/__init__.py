@@ -287,8 +287,7 @@ class RaidHelper(FFDrawPlugin):
         elif self.is_enemy(self.main.mem.actor_table.me, source):
             color = raid_utils.default_color(True)
         elif self.show_friend:
-            #color = raid_utils.default_color(False)
-            color = raid_utils.default_color(True)
+            color = raid_utils.default_color(False)
         else:
             return
         if data.display_delay:
