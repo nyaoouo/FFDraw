@@ -3,6 +3,7 @@ import typing
 import glm
 
 from ff_draw.omen import Line
+from ff_draw.omen.effector import Effector
 from nylib.utils import safe_lazy, safe
 from .logic import *
 from .trigger import new_thread
@@ -19,18 +20,35 @@ is_shape_rect = lambda shape: shape >> 16 == 2
 is_shape_fan = lambda shape: shape >> 16 == 5
 
 
+class TimeGradientEffector(Effector):
+    start = glm.vec3(1, 1, 0)  # color: yellow
+    percent = 0
+
+    def update(self):
+        if self.omen.duration <= 0: return False
+        self.percent = 1 - (self.omen.remaining_time - 1) / self.omen.duration
+        if self.percent >= 1: return False
+        return True
+
+    def color(self, c: glm.vec4):
+        return glm.vec4(*(
+            glm.mix(self.start[i], c[i], self.percent)
+            for i in range(3)
+        ), c.w)
+
+
 def default_color(is_enemy=True):
     """
     返回敌友字符串
     """
-    if raid_helper.game_style:
-        if is_enemy:
+    if is_enemy:
+        if raid_helper.game_style:
             return 'g_enemy'
         else:
-            return 'g_friend'
-    else:
-        if is_enemy:
             return 'enemy'
+    else:
+        if raid_helper.game_style:
+            return 'g_friend'
         else:
             return 'friend'
 
@@ -473,7 +491,7 @@ def create_game_omen(
         pos = pos_tracker(pos)
     elif facing is None:
         facing = 0
-    return BaseOmen(
+    omen = BaseOmen(
         main=main,
         pos=pos,
         shape=shape,
@@ -484,6 +502,9 @@ def create_game_omen(
         duration=duration,
         alpha=alpha
     )
+    if raid_helper.enemy_gradient and color in ('enemy', 'g_enemy'):
+        omen.apply_effect(TimeGradientEffector)
+    return omen
 
 
 def draw_line(

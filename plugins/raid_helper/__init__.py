@@ -103,6 +103,7 @@ class RaidHelper(FFDrawPlugin):
         # simple cast
         self.cmn_cfg = self.data.setdefault('cmn_cfg', {})
         self.game_style = self.cmn_cfg.setdefault('game_style', False)
+        self.enemy_gradient = self.cmn_cfg.setdefault('enemy_gradient', False)
 
         self.simple_cast_cfg = self.data.setdefault('simple_cast', {})
         self.enable_simple_cast = self.simple_cast_cfg.setdefault('enable_simple_cast', True)
@@ -182,6 +183,10 @@ class RaidHelper(FFDrawPlugin):
             clicked, self.game_style = imgui.checkbox("game_style", self.game_style)
             if clicked:
                 self.cmn_cfg['game_style'] = self.game_style
+                self.storage.save()
+            clicked, self.enemy_gradient = imgui.checkbox('enemy_gradient', self.enemy_gradient)
+            if clicked:
+                self.cmn_cfg['enemy_gradient'] = self.enemy_gradient
                 self.storage.save()
             imgui.tree_pop()
         if imgui.tree_node('simple cast'):
@@ -282,7 +287,8 @@ class RaidHelper(FFDrawPlugin):
         elif self.is_enemy(self.main.mem.actor_table.me, source):
             color = raid_utils.default_color(True)
         elif self.show_friend:
-            color = raid_utils.default_color(False)
+            #color = raid_utils.default_color(False)
+            color = raid_utils.default_color(True)
         else:
             return
         if data.display_delay:
@@ -294,16 +300,15 @@ class RaidHelper(FFDrawPlugin):
             if not (source and target): return
             if self.print_history:
                 self.logger.debug(f'#simple_cast {source.name} cast laser {action.text}#{action_id} to with width {effect_width}')
-            self.actor_omens[source_id] = raid_utils.BaseOmen(
-                main=self.main,
+            self.actor_omens[source_id] = raid_utils.create_game_omen(
                 pos=lambda _: source.pos,
                 shape=delay_until_dec(action_id, raid_utils.rect_shape()),
                 scale=lambda _: glm.vec3(effect_width, 1, glm.distance(source.pos, target.pos)),
                 facing=lambda _: glm.polar(target.pos - source.pos).y,
                 surface_color=surface_color,
                 line_color=line_color,
-                surface_line_color=color,
-                duration=data.cast_time + .5,
+                color=color,
+                duration=data.cast_time + .3,
                 alpha=alpha,
             )
         shape = special_actions[action_id] if action_id in special_actions else get_shape_default_by_action_type(effect_type)
@@ -323,13 +328,12 @@ class RaidHelper(FFDrawPlugin):
                 f'pos:{maybe_callable(pos)} facing:{maybe_callable(facing)} scale:{scale} '
                 f'color:{color} line_color:{line_color} surface_color:{surface_color}'
             )
-        self.actor_omens[source_id] = raid_utils.BaseOmen(
-            main=self.main,
+        self.actor_omens[source_id] = raid_utils.create_game_omen(
             pos=pos,
             shape=delay_until_dec(action_id, shape),
             scale=scale,
             facing=facing,
-            surface_line_color=color,
+            color=color,
             surface_color=surface_color,
             line_color=line_color,
             duration=data.cast_time + .3,
