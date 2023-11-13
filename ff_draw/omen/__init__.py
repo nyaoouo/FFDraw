@@ -132,6 +132,7 @@ class BaseOmen:
 
     @property
     def progress(self):
+        if not self.duration: return -1
         return 1 - self.remaining_time / self.duration
 
     def is_hit(self, dst: glm.vec3):
