@@ -26,6 +26,11 @@ special_actions[35708] = raid_utils.fan_shape(40)  # [1169]The Abyssal Fracture 
 special_actions[35709] = raid_utils.fan_shape(40)  # [1169]The Abyssal Fracture - The Abyssal Fracture (Extreme): Chasmic Nails
 
 special_actions[35676] = 0  # 陨石护眼
+special_actions[35710] = 0  # 地面小AOE护眼 #我觉得这个是不必要的绘制
+special_actions[35662] = 0  # 地面小AOE护眼 #我觉得这个是不必要的绘制
+special_actions[36415] = 0  # 地面小AOE护眼 #我觉得这个是不必要的绘制
+special_actions[36416] = 0  # 地面小AOE护眼 #我觉得这个是不必要的绘制
+
 
 delay_until[35650] = 8
 
@@ -92,6 +97,18 @@ def on_cast_fractured_eventide(evt: NetworkMessage[zone_server.ActorCast]):
         facing=facing,
         duration=evt.message.cast_time,
     )
+
+@map_ex.on_lockon(197)
+def on_lockon_dualfire(msg: ActorControlMessage[actor_control.SetLockOn]):
+
+    raid_utils.sleep(6.7)
+    actor = raid_utils.NActor.by_id(msg.source_id)
+    for i in range(5):
+        raid_utils.draw_circle(radius=10, pos=actor.pos, duration=5)
+        raid_utils.sleep(1)
+
+
+
 
 
 map_ex.clear_decorators()
