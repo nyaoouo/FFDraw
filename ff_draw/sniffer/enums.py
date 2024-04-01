@@ -55,6 +55,7 @@ class ZoneServer(enum.Enum):
     NpcSpawn2 = enum.auto()
     NpcYell = enum.auto()
     ObjectSpawn = enum.auto()
+    PartyFinderResult = enum.auto()
     PartyUpdate = enum.auto()
     PingRes = enum.auto()
     PlaceFieldMarker = enum.auto()
