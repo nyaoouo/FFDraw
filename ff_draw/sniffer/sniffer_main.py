@@ -177,12 +177,3 @@ class Sniffer:
             if clicked:
                 self.config['dump_zone_down_only'] = self.dump_zone_down_only
                 self.main.save_config()
-        clicked, self.auto_update = imgui.checkbox("auto_update", self.auto_update)
-        if clicked:
-            self.config['auto_update'] = self.auto_update
-            self.main.save_config()
-        if self.auto_update:
-            is_update, self.auto_update_host = imgui.input_text('auto_update_host', self.auto_update_host, 256)
-            if is_update:
-                self.config['auto_update_host'] = self.auto_update_host
-                self.main.save_config()
