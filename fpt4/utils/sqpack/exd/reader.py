@@ -1,8 +1,10 @@
+import logging
 from struct import unpack_from
 from typing import TYPE_CHECKING, Generic, TypeVar, Callable, Dict, Any
 from fpt4.utils.se_string import SeString
 
 _T = TypeVar("_T")
+logger = logging.getLogger('SqPack/ExdReader')
 
 if TYPE_CHECKING:
     from .row import DataRow
@@ -53,7 +55,7 @@ def string_reader(buffer: bytearray, row: 'DataRow', col: 'Column'):
 
 DATA_READERS: 'Dict[int,Callable[[bytearray,DataRow,Column],Any]]' = {
     -1: bytes_reader,
-    0x0000: string_reader,
+    # 0x0000: string_reader,
     0x0001: lambda d, r, c: d[r.row_base.row_offset + c.offset] != 0,
     0x0002: simple_struct_reader(">b"),
     0x0003: simple_struct_reader(">B"),
@@ -70,5 +72,20 @@ for i in range(0, 8):
 
 
 def read_data(buffer: bytearray, row: 'DataRow', col: 'Column', type_=None):
-    # print(row.row_offset, col.offset)
-    return DATA_READERS[col.type if type_ is None else type_](buffer, row, col)
+    type_ = col.type if type_ is None else type_
+    if type_ == 0:  # string
+        if buf := bytes_reader(buffer, row, col):
+            try:
+                buf = SeString.from_buffer(buf)
+            except Exception as e:
+                sheet = row.row_base.sheet
+                exd_mgr = sheet.mgr
+                if not (cache := getattr(exd_mgr, '_sheet_string_decode_warning', None)):
+                    exd_mgr._sheet_string_decode_warning = cache = {}
+                col_id = sheet.header.columns.index(col)
+                warn_key = (sheet.name, row.key, col_id)
+                if warn_key not in cache:
+                    logger.warning(f"Error in decode string {sheet.name} row {row.key} col {col_id}: {e}, raw="+bytes_reader(buffer, row, col).hex(' '))
+                    cache[warn_key] = True
+        return buf or None
+    return DATA_READERS[type_](buffer, row, col)

@@ -303,7 +303,7 @@ def encode_fixed(macro: Macro):
         completion_sheet = sq_pack.sheets.completion_sheet
         for row in completion_sheet:
             lt = str(row.lookup_table)
-            if lt and lt[0] != '@':
+            if lt and lt[0] != '@' and lt != 'None':
                 cache[row.group] = sq_pack.exd.get_sheet_raw(lt.split('[', 1)[0])
         setattr(sq_pack, '__completion_group_cache__', cache)
     else:
