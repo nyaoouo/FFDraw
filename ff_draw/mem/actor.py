@@ -188,8 +188,8 @@ class ActorOffsets650:
     class_job = 0x1DA
     level = 0x1DB
     model_attr = 0x1DE
-    timeline_model_skin = 0X2C0
-    timeline_model_flag = 0X2C1
+    timeline_model_skin = 0xc30
+    timeline_model_flag = 0xc31
     mount_id = 0x688
     pc_target_id = 0xD00
     channeling = 0x1390
