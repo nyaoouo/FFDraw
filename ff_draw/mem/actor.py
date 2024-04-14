@@ -199,6 +199,14 @@ class ActorOffsets650:
     cast_info = 0x1F00
     name_id = 0x1B98
 
+# from https://github.com/awgil/ffxiv_bossmod/blob/f447cd678ddde8a47fb7014cd8ea576f3db6741d/BossMod/Framework/Utils.cs#L112-L113
+    model_state = 0xC30
+# // see actor control 63 // 41 88 86 ? ? 00 00 49 8B CE 41 0F B6 ?
+
+    animation_state_1 = 0xC31
+    animation_state_2 = 0xC32
+# // see actor control 62 // 41 88 86 ? ? ? ? E8 ? ? ? ? 0F 28 CE (second, first one just second - 1 and the first one just above the second one)
+
 
 class Actor:
     offsets = ActorOffsets640
@@ -244,6 +252,11 @@ class Actor:
     current_world = direct_mem_property(ctypes.c_ushort)
     home_world = direct_mem_property(ctypes.c_ushort)
     shield = direct_mem_property(ctypes.c_ubyte)
+
+# from BossMod
+    model_state = direct_mem_property(ctypes.c_byte)
+    animation_state_1 = direct_mem_property(ctypes.c_byte)
+    animation_state_2 = direct_mem_property(ctypes.c_byte)
 
     def target_radian(self, target: 'Actor'):
         return glm.polar(target.pos - self.pos).y
