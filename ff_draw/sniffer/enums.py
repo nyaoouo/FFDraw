@@ -140,6 +140,7 @@ class ActorControlId(enum.IntEnum):
     SetStatusParam = 0X16
     StatusEffect = 0X17
     SetRestExp = 0X18
+    SetCharacterState = 0x1F
     SetLockOn = 0X22
     SetChanneling = 0X23
     RemoveChanneling = 0X2F

@@ -5,7 +5,7 @@ import glm
 from fpt4.utils.se_string import SeString
 from nylib.utils.win32 import memory as ny_mem
 from nylib.utils import LazyClassAttr
-from .utils import direct_mem_property, WinAPIError, struct_mem_property
+from .utils import direct_mem_property, WinAPIError, struct_mem_property, int8_arr
 
 if typing.TYPE_CHECKING:
     from . import XivMem
@@ -188,6 +188,8 @@ class ActorOffsets650:
     class_job = 0x1DA
     level = 0x1DB
     model_attr = 0x1DE
+    timeline_model_skin = 0X2C0
+    timeline_model_flag = 0X2C1
     mount_id = 0x688
     pc_target_id = 0xD00
     channeling = 0x1390
@@ -240,6 +242,8 @@ class Actor:
     class_job = direct_mem_property(ctypes.c_byte)
     level = direct_mem_property(ctypes.c_byte)
     model_attr = direct_mem_property(ctypes.c_byte)
+    timeline_model_skin = direct_mem_property(ctypes.c_byte)
+    timeline_model_flag = struct_mem_property(int8_arr[2])
     mount_id = direct_mem_property(ctypes.c_ushort)
     current_world = direct_mem_property(ctypes.c_ushort)
     home_world = direct_mem_property(ctypes.c_ushort)

@@ -248,3 +248,12 @@ class SetMoveFlag2:
 @dataclasses.dataclass
 class SetRestExp:
     value: int
+
+@type_map.set(ActorControlId.SetCharacterState)
+@dataclasses.dataclass
+class SetCharacterState:
+    timeline_model_skin: int # highest bit is `clear timeline state`, need to & 0x7fffffff
+    model_scale: int
+    model_attr: int
+    model_attr: int
+    timeline_model_flag: int
