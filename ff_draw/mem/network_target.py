@@ -21,7 +21,7 @@ class NetworkInfo:
         else:
             raise KeyError('Not found network_module_offset')
         self.p_p_framework = main.scanner.find_point('48 ? ? * * * * 41 39 b1')[0]
-        self.network_zone_offset = main.scanner.find_val("48 ? ? * * * * 48 ? ? 0f 84 ? ? ? ? 0f ? ? ? ? ? ? 45")[0]
+        self.network_zone_offset, = main.scanner_v2.find_val("48 ? ? <? ? ? ?> 48 ? ? 0f 84 ? ? ? ? 0f ? ? ? ? ? ? 45 ? ? 45")
 
     def get_target(self):
         addr = ny_mem.read_address(self.handle, self.p_p_framework)

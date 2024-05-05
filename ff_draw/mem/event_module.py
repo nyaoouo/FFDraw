@@ -53,43 +53,30 @@ class ContentInfoOffset:
 
 class ContentInfo:
     offsets = ContentInfoOffset
+    _offset_from_fw = -1
 
-    def __init__(self, event_module: 'EventModule'):
-        self.event_module = event_module
-        self.main = event_module.main
-        self.handle = event_module.main.handle
-
-        # mov     rax, [rcx+158h]
-        self._content_info_offset, = self.main.scanner_v2.find_val('e8 (* * * *:48 ? ? <? ? ? ?>) 4c ? ? 48 ? ? 74 ? 44 38 b0')
-
-    @property
-    def address(self):
-        if p_event := self.event_module._p_event:
-            return ny_mem.read_address(self.handle, p_event + self._content_info_offset)
-        return 0
+    def __init__(self, handle, address):
+        self.handle = handle
+        self.address = address
 
     handler_id = direct_mem_property(ctypes.c_uint32)
     content_id = direct_mem_property(ctypes.c_uint32)
 
     @property
     def title(self):
-        if not (addr := self.address): raise AttributeError('ContentInfo not found')
-        return read_utf8_string(self.handle, addr + self.offsets.title)
+        return read_utf8_string(self.handle, self.address + self.offsets.title)
 
     @property
     def text1(self):
-        if not (addr := self.address): raise AttributeError('ContentInfo not found')
-        return read_utf8_string(self.handle, addr + self.offsets.text1)
+        return read_utf8_string(self.handle, self.address + self.offsets.text1)
 
     @property
     def text2(self):
-        if not (addr := self.address): raise AttributeError('ContentInfo not found')
-        return read_utf8_string(self.handle, addr + self.offsets.text2)
+        return read_utf8_string(self.handle, self.address + self.offsets.text2)
 
     @property
     def todo_list(self):
-        if not (addr := self.address): raise AttributeError('ContentInfo not found')
-        return StdVector(self.handle, addr + self.offsets.todo_list, ContentTodo, 0x160)
+        return StdVector(self.handle, self.address + self.offsets.todo_list, ContentTodo, 0x160)
 
     def render_debug(self):
         try:
@@ -109,18 +96,59 @@ class ContentInfo:
             imgui.text('N/A - ' + str(e))
 
 
+class TaskMgr:
+    def __init__(self, handle, address):
+        self.handle = handle
+        self.address = address
+
+
+class EventSceneModule:
+    class offsets:
+        task_mgr = 0x80
+
+        _validate_ = False
+
+        @classmethod
+        def validate(cls):
+            if cls._validate_: return cls
+            from ff_draw.mem import XivMem
+            cls.task_mgr, = XivMem.instance.scanner_v2.find_val("48 ? ? <? ? ? ?> 48 ? ? e8 ? ? ? ? 48 ? ? 0f ? ? e8 ? ? ? ? 48 ? ? 74")
+
+            cls._validate_ = True
+            return cls
+
+    def __init__(self, handle, address):
+        self.handle = handle
+        self.address = address
+        self.offsets.validate()
+
+    @property
+    def task_mgr(self):
+        return TaskMgr(self.handle, self.address + self.offsets.task_mgr)
+
+
 class EventModule:
     def __init__(self, main: 'XivMem'):
         self.main = main
         self.handle = main.handle
-        self._a_p_event = main.scanner.find_point('48 39 1d * * * * 48 89 b4 24')[0]
-
-        self.content_info = ContentInfo(self)
+        self._address = main.scanner.find_point('48 39 1d * * * * 48 89 b4 24')[0]
+        self._event_scene_module_offset, = self.main.scanner_v2.find_val('48 8B 2D ? ? ? ? 48 8B F9 48 81 C5 <? ? ? ?>')
+        self._content_info_offset, = self.main.scanner_v2.find_val('e8 (* * * *:48 ? ? <? ? ? ?>) 4c ? ? 48 ? ? 74 ? 44 38 b0')
 
     @property
-    def _p_event(self):
-        return ny_mem.read_address(self.handle, self._a_p_event)
+    def address(self):
+        return ny_mem.read_address(self.handle, self._address)
+
+    @property
+    def content_info(self):
+        if (a := self.address) and (ca := ny_mem.read_address(self.handle, a + self._content_info_offset)):
+            return ContentInfo(self.handle, ca)
+
+    @property
+    def event_scene_module(self):
+        if a := self.address:
+            return EventSceneModule(self.handle, a + self._event_scene_module_offset)
 
     def render_debug(self):
         with imgui_ctx.TreeNode('ContentInfo') as n, n:
-            self.content_info.render_debug()
+            (ci := self.content_info) and ci.render_debug()

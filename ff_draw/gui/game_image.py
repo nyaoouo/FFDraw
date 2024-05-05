@@ -121,10 +121,10 @@ class GameImage:
     def load_game_texture(self):
         while True:
             try:
-                texture_path, res = self._game_res_queue.get_nowait()
+                k, res = self._game_res_queue.get_nowait()
             except queue.Empty:
                 break
-            self._game_texture_cache[texture_path] = img2tex(res), (res.width, res.height)
+            self._game_texture_cache[k] = img2tex(res), (res.width, res.height)
 
     def assert_frame_load(self):
         fc = self.main.gui.frame_cache
@@ -135,27 +135,34 @@ class GameImage:
     def load_game_res(self):
         while True:
             try:
-                texture_path = self._game_to_load_queue.get_nowait()
+                k = self._game_to_load_queue.get_nowait()
             except queue.Empty:
                 self._load_game_icon_thread = None
                 break
-            if self._game_texture_cache.get(texture_path) is None:
+            if self._game_texture_cache.get(k) is None:
+                texture_path, gray = k
                 try:
                     res = self.main.sq_pack.pack.get_texture_file(texture_path).get_image()
+                    if gray:
+                        gray_res = res.convert('L')
+                        gray_res.putalpha(res.split()[3])
+                        gray_res = gray_res.convert('RGBA')
+                        res = gray_res
                 except Exception as e:
-                    self._game_texture_cache[texture_path] = e
+                    self._game_texture_cache[k] = e
                 else:
-                    self._game_res_queue.put((texture_path, res))
+                    self._game_res_queue.put((k, res))
 
-    def get_game_texture(self, texture_path):
+    def get_game_texture(self, texture_path, gray=False):
         self.assert_frame_load()
-        if texture_path not in self._game_texture_cache:
-            self._game_texture_cache[texture_path] = None
-            self._game_to_load_queue.put(texture_path)
+        k = (texture_path, gray)
+        if k not in self._game_texture_cache:
+            self._game_texture_cache[k] = None
+            self._game_to_load_queue.put(k)
             if not self._load_game_icon_thread or not self._load_game_icon_thread.is_alive():
                 self._load_game_icon_thread = threading.Thread(target=self.load_game_res, daemon=True)
                 self._load_game_icon_thread.start()
-        return self._game_texture_cache[texture_path]
+        return self._game_texture_cache[k]
 
     def is_load(self, texture_path, auto_load=False):
         if self._game_texture_cache.get(texture_path) is None:
@@ -187,42 +194,45 @@ class GameImage:
         imgui.image(texture, width, height, **kwargs)
         return 0
 
-    def image(self, texture_path, width=None, height=None, exc_handling=2, **kwargs):
+    def image(self, texture_path, width=None, height=None, exc_handling=2, gray=False, **kwargs):
         """
         :param texture_path: texture path
         :param width: image width, None for auto
         :param height: image height, None for auto
         :param exc_handling: 0 for ignore, 1 for show exception, 2 for show error icon
+        :param gray: gray image
         :param args: imgui.image remain args
         :return: 0 for success, 1 for loading, 2 for load failed
         """
-        return self._image(self.get_game_texture(texture_path), width, height, exc_handling, **kwargs)
+        return self._image(self.get_game_texture(texture_path, gray), width, height, exc_handling, **kwargs)
 
-    def icon_image(self, icon_id, width=None, height=None, hq_icon=True, exc_handling=2, **kwargs):
+    def icon_image(self, icon_id, width=None, height=None, hq_icon=True, exc_handling=2, gray=False, **kwargs):
         """
         :param icon_id: icon id
         :param width: image width, None for auto
         :param height: image height, None for auto
         :param hq_icon: use hq icon
         :param exc_handling: 0 for ignore, 1 for show exception, 2 for show error icon
+        :param gray: gray image
         :param args: imgui.image remain args
         :return: 0 for success, 1 for loading, 2 for load failed
         """
         if icon_id not in self._game_icon_cache:
             texture_path = icon_path(icon_id, hq_icon)
-            res = self.get_game_texture(texture_path)
+            res = self.get_game_texture(texture_path, gray)
             if res is not None: self._game_icon_cache[icon_id] = res
         else:
             res = self._game_icon_cache[icon_id]
         return self._image(res, width, height, exc_handling, **kwargs)
 
-    def map_image(self, map_id, width=None, height=None, size='m', exc_handling=2, **kwargs):
+    def map_image(self, map_id, width=None, height=None, size='m', exc_handling=2, gray=False, **kwargs):
         """
         :param map_id: map id
         :param width: image width, None for auto
         :param height: image height, None for auto
         :param size: map size, 's' for small, 'm' for medium
         :param exc_handling: 0 for ignore, 1 for show exception, 2 for show error icon
+        :param gray: gray image
         :param args: imgui.image remain args
         :return: 0 for success, 1 for loading, 2 for load failed
         """
@@ -232,7 +242,7 @@ class GameImage:
             except Exception as e:
                 res = e
             else:
-                res = self.get_game_texture(texture_path)
+                res = self.get_game_texture(texture_path, gray)
             if res is not None: self._game_map_cache[map_id] = res
         else:
             res = self._game_map_cache[map_id]

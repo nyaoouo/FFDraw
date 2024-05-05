@@ -5,6 +5,7 @@ import imgui
 import win32gui
 import OpenGL.GL as gl
 
+from nylib.utils.imgui import ctx as imgui_ctx
 from nylib.utils.imgui.window_mgr import WindowManager
 from . import window
 
@@ -19,6 +20,8 @@ class DrawWindow:
         self.mgr = mgr
         self.game_hwnd = game_hwnd
         self.window = window.init_window('ffd draw window', True, None, game_hwnd)
+        self.hwnd = glfw.get_win32_window(self.window)
+        self.is_front = False
         try:
             shared_font_atlas = imgui.get_io().fonts
         except imgui.ImGuiError:
@@ -31,10 +34,25 @@ class DrawWindow:
             glfw.swap_interval(1)
             self.imgui_renderer.refresh_font_texture()
 
+    def update_pass_trough(self):
+        want_capture = imgui.get_io().want_capture_mouse
+        if want_capture == glfw.get_window_attrib(self.window, glfw.MOUSE_PASSTHROUGH):
+            if want_capture:
+                glfw.set_window_attrib(self.window, glfw.MOUSE_PASSTHROUGH, False)
+            else:
+                glfw.set_window_attrib(self.window, glfw.MOUSE_PASSTHROUGH, True)
+                try:
+                    win32gui.SetForegroundWindow(self.game_hwnd)
+                except:
+                    pass
+
+
     def update(self):
         gui = self.mgr.gui
         glfw.make_context_current(self.window)
         imgui.set_current_context(self.imgui_ctx)
+        self.update_pass_trough()
+        self.imgui_renderer.process_inputs()
         imgui.new_frame()
         if self.mgr.imgui_font:
             imgui.push_font(self.mgr.imgui_font)
@@ -49,7 +67,8 @@ class DrawWindow:
         pv = gui.get_view().projection_view
         gl.glLoadMatrixf(pv.to_list())
 
-        if gui.always_draw or win32gui.GetForegroundWindow() == self.game_hwnd:
+        self.is_front = win32gui.GetForegroundWindow() in (0, self.game_hwnd, self.hwnd)
+        if gui.always_draw or self.is_front:
             window.set_window_cover(self.window, self.game_hwnd)
             for draw_func in gui.draw_update_call.copy():
                 try:

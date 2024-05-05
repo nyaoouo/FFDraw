@@ -32,6 +32,15 @@ class GameMessageBuffer:
         yield from bundle.decode(self.buffer, self.oodle)
 
 
+class KeyRouteWithMap(KeyRoute):
+    def __init__(self, get_key=lambda v: v, get_map=lambda v: v):
+        super().__init__(get_key)
+        self.get_map = get_map
+
+    def __getitem__(self, item):
+        return super().__getitem__(self.get_map(item))
+
+
 class Sniffer:
     target: tuple[str, int] = None
     logger = logging.getLogger('Sniffer')
@@ -50,21 +59,8 @@ class Sniffer:
         self.sniff_promisc = self.config.setdefault('sniff_promisc', True)
         self.dump_pkt = self.config.setdefault('dump_pkt', False)
         self.dump_zone_down_only = self.config.setdefault('dump_zone_down_only', True)
-        self.auto_update = self.config.setdefault('auto_update', True)
-        self.auto_update_host = self.config.setdefault('auto_update_host', r'https://ffxiv-opcodes.nyao.xyz/')
 
         pno_dir = pathlib.Path(os.environ['ExcPath']) / 'res' / 'proto_no'
-        if self.auto_update:
-            for f_name in ('ChatServerIpc.csv', 'ChatClientIpc.csv', 'ZoneServerIpc.csv', 'ZoneClientIpc.csv'):
-                try:
-                    (res := self.main.requests.get(self.auto_update_host + f_name)).raise_for_status()
-                    assert res.headers.get('content-type', '').startswith('text/csv'), 'Invalid content type'
-                except Exception as e:
-                    self.logger.warning(f'Failed to update {f_name}, {e}')
-                else:
-                    with open(pno_dir / f_name, 'wb') as f:
-                        f.write(res.content)
-                    self.logger.info(f'Updated {f_name}')
 
         self._chat_server_pno_map, self.chat_server_pno = simple.load_pno_map(pno_dir / 'ChatServerIpc.csv', self.main.mem.game_build_date, enums.ChatServer)
         self._chat_client_pno_map, self.chat_client_pno = simple.load_pno_map(pno_dir / 'ChatClientIpc.csv', self.main.mem.game_build_date, enums.ChatClient)
@@ -75,10 +71,10 @@ class Sniffer:
         self._zone_server_pno_map_size = len(self._zone_server_pno_map)
         self._zone_client_pno_map_size = len(self._zone_client_pno_map)
 
-        self.on_chat_server_message = KeyRoute(lambda m: m.proto_no)
-        self.on_chat_client_message = KeyRoute(lambda m: m.proto_no)
-        self.on_zone_server_message = KeyRoute(lambda m: m.proto_no)
-        self.on_zone_client_message = KeyRoute(lambda m: m.proto_no)
+        self.on_chat_server_message = KeyRouteWithMap(lambda m: m.proto_no, lambda k: self._chat_server_pno_map.get(k, k))
+        self.on_chat_client_message = KeyRouteWithMap(lambda m: m.proto_no, lambda k: self._chat_client_pno_map.get(k, k))
+        self.on_zone_server_message = KeyRouteWithMap(lambda m: m.proto_no, lambda k: self._zone_server_pno_map.get(k, k))
+        self.on_zone_client_message = KeyRouteWithMap(lambda m: m.proto_no, lambda k: self._zone_client_pno_map.get(k, k))
         self.on_actor_control = KeyRoute(lambda m: m.id)
         self.on_action_effect = BroadcastHook()
         self.on_add_status_by_action = BroadcastHook()
@@ -180,13 +176,4 @@ class Sniffer:
             clicked, self.dump_zone_down_only = imgui.checkbox("dump_zone_down_only", self.dump_zone_down_only)
             if clicked:
                 self.config['dump_zone_down_only'] = self.dump_zone_down_only
-                self.main.save_config()
-        clicked, self.auto_update = imgui.checkbox("auto_update", self.auto_update)
-        if clicked:
-            self.config['auto_update'] = self.auto_update
-            self.main.save_config()
-        if self.auto_update:
-            is_update, self.auto_update_host = imgui.input_text('auto_update_host', self.auto_update_host, 256)
-            if is_update:
-                self.config['auto_update_host'] = self.auto_update_host
                 self.main.save_config()

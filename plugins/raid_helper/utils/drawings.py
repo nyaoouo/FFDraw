@@ -1,17 +1,40 @@
+import typing
+
 import glm
 
 from ff_draw.omen import Line
+from ff_draw.omen.effector import Effector
 from nylib.utils import safe_lazy, safe
 from .logic import *
 from .trigger import new_thread
 from .typing import *
 
 main = FFDraw.instance
-
-circle_shape = 0x10000
-rect_shape = 0x20000
+raid_helper: 'RaidHelper|None' = None
+circle_shape = lambda: 0x10000
+rect_shape = lambda t=0: 0x20000 | t
 fan_shape = lambda degree: 0x50000 | degree
 donut_shape = lambda inner, outer: 0x10000 | int(inner / outer * 0xffff)
+is_shape_circle = lambda shape: shape >> 16 == 1
+is_shape_rect = lambda shape: shape >> 16 == 2
+is_shape_fan = lambda shape: shape >> 16 == 5
+
+
+class TimeGradientEffector(Effector):
+    start = glm.vec3(1, 1, 0)  # color: yellow
+    percent = 0
+
+    def update(self):
+        if self.omen.duration <= 0: return False
+        self.percent = 1 - (self.omen.remaining_time - 1) / self.omen.duration
+        if self.percent >= 1: return False
+        return True
+
+    def color(self, c: glm.vec4):
+        return glm.vec4(*(
+            glm.mix(self.start[i], c[i], self.percent)
+            for i in range(3)
+        ), c.w)
 
 
 def default_color(is_enemy=True):
@@ -19,9 +42,15 @@ def default_color(is_enemy=True):
     返回敌友字符串
     """
     if is_enemy:
-        return 'enemy'
+        if raid_helper.game_style:
+            return 'g_enemy'
+        else:
+            return 'enemy'
     else:
-        return 'friend'
+        if raid_helper.game_style:
+            return 'g_friend'
+        else:
+            return 'friend'
 
 
 def pos_tracker(actor: Actor):
@@ -462,7 +491,7 @@ def create_game_omen(
         pos = pos_tracker(pos)
     elif facing is None:
         facing = 0
-    return BaseOmen(
+    omen = BaseOmen(
         main=main,
         pos=pos,
         shape=shape,
@@ -473,6 +502,9 @@ def create_game_omen(
         duration=duration,
         alpha=alpha
     )
+    if raid_helper.enemy_gradient and color in ('enemy', 'g_enemy'):
+        omen.apply_effect(TimeGradientEffector)
+    return omen
 
 
 def draw_line(
@@ -565,19 +597,24 @@ class Waypoint:
     REACH_DIS = 1
     POP_WHEN_REACH = 0
     POP_MANUAL = 1
-    DEFAULT_SURFACE_COLOR = glm.vec3(.5, .5, 1)
-    DEFAULT_LINE_COLOR = glm.vec3(.3, .3, 1)
 
     def __init__(self, l: 'WaypointList', pos: glm.vec3, pop_mode=POP_WHEN_REACH, reach_dis=REACH_DIS, auto_pop=-1., surface_color: glm.vec3 = None, line_color: glm.vec3 = None):
         self.l = l
-        self.pos = pos
+        self._pos = pos
         self.pop_mode = pop_mode
         self.reach_dis = reach_dis
         self.auto_pop = auto_pop
-        self.surface_color = surface_color or self.DEFAULT_SURFACE_COLOR
-        self.line_color = line_color or self.DEFAULT_LINE_COLOR
+        self.surface_color = surface_color
+        self.line_color = line_color
         if auto_pop > 0:
+            self.pop_at = time.time() + auto_pop
             new_thread(self._delay_pop)()
+        else:
+            self.pop_at = 1e+99
+
+    @property
+    def pos(self):
+        return self._pos(self) if callable(self._pos) else self._pos
 
     def _delay_pop(self):
         if self.auto_pop > 0:
@@ -600,7 +637,9 @@ class Waypoint:
         return self.l.index(self)
 
     def is_reach(self, pos: glm.vec3):
-        return glm.distance(pos, self.pos) < self.reach_dis
+        pos_ = self.pos
+        if pos_ is None: return True
+        return glm.distance(pos, pos_) < self.reach_dis
 
     def should_pop(self, me_pos):
         if self.pop_mode != self.POP_WHEN_REACH: return False
@@ -610,11 +649,34 @@ class Waypoint:
         return f'<Waypoint {self.pos}>'
 
 
-class WaypointList(list):
+def color_gradient(timestamp):
+    # 设置渐变周期为1秒
+    period = 1
+    # 计算归一化时间
+    t = timestamp % period / period
+    # 计算红色分量
+    red = (math.sin(2 * math.pi * t) + 1) / 2
+    # 计算绿色分量
+    green = (math.sin(2 * math.pi * (t + 1 / 3)) + 1) / 2
+    # 计算蓝色分量
+    blue = (math.sin(2 * math.pi * (t + 2 / 3)) + 1) / 2
+    return glm.vec3(red, green, blue)
+
+
+class WaypointList(list[Waypoint]):
     last_tid = -1
 
-    def append_waypoint(self, pos: glm.vec3, pop_mode=Waypoint.POP_WHEN_REACH, reach_dis=Waypoint.REACH_DIS, auto_pop=-1., surface_color: glm.vec3 = None, line_color: glm.vec3 = None):
-        self.append(w := Waypoint(self, pos, pop_mode, reach_dis, auto_pop, surface_color, line_color))
+    def append_waypoint(self, pos: glm.vec3 | typing.Callable[[Waypoint], glm.vec3], pop_mode=Waypoint.POP_MANUAL, reach_dis=Waypoint.REACH_DIS, auto_pop=-1., surface_color: glm.vec3 = None, line_color: glm.vec3 = None):
+        w = Waypoint(self, pos, pop_mode, reach_dis, auto_pop, surface_color, line_color)
+        if not self or auto_pop <= 0:
+            self.append(w)
+        else:
+            for i, _w in enumerate(self):
+                if _w.pop_at <= 0 or _w.pop_at > w.pop_at:
+                    self.insert(i + 1, w)
+                    break
+            else:
+                self.append(w)
         return w
 
     def set_waypoint(self, *pos: glm.vec3, pop_mode=Waypoint.POP_WHEN_REACH):
@@ -644,27 +706,35 @@ class WaypointList(list):
         if not (me := get_me()): return
         prev_pt = me_pos = me.pos
         i = 0
-        cos_a = (math.cos(time.time() * 4) + 1) * .3 + .1
+        current = time.time()
+        cos_a = (math.cos(current * 4) + 1) * .3 + .1
+        default_color = color_gradient(current)
         while i < len(self):
             next_wp: Waypoint = self[i]
+            wp_pos = next_wp.pos
+            if wp_pos is None:
+                i += 1
+                continue
+            surface_color = next_wp.surface_color or default_color
+            line_color = next_wp.line_color or default_color
             if next_wp.is_reach(me_pos):
                 main.gui.add_3d_shape(
-                    circle_shape,
-                    glm.translate(next_wp.pos) * glm.scale(glm.vec3(next_wp.reach_dis)),
-                    surface_color=glm.vec4(*next_wp.surface_color, .35), line_color=glm.vec4(*next_wp.line_color, .7)
+                    circle_shape(),
+                    glm.translate(wp_pos) * glm.scale(glm.vec3(next_wp.reach_dis)),
+                    surface_color=glm.vec4(surface_color, .35), line_color=glm.vec4(line_color, .7)
                 )
             else:
                 main.gui.add_3d_shape(
                     donut_shape(.5, 1),
-                    glm.translate(next_wp.pos) * glm.scale(glm.vec3(next_wp.reach_dis)),
-                    surface_color=glm.vec4(*next_wp.surface_color, cos_a / 2), line_color=glm.vec4(*next_wp.line_color, cos_a),
+                    glm.translate(wp_pos) * glm.scale(glm.vec3(next_wp.reach_dis)),
+                    surface_color=glm.vec4(surface_color, cos_a / 2), line_color=glm.vec4(line_color, cos_a),
                 )
-                main.gui.add_line(prev_pt, next_wp.pos, glm.vec4(*next_wp.line_color, .7))
+                main.gui.add_line(prev_pt, wp_pos, glm.vec4(line_color, .7), width=5)
                 if i == 0:
                     main.gui.add_3d_shape(
                         0x1010000,
-                        glm.translate(prev_pt) * glm.rotate(glm.polar(next_wp.pos - me_pos).y, glm.vec3(0, 1, 0)),
-                        surface_color=glm.vec4(*next_wp.surface_color, .35), line_color=glm.vec4(*next_wp.line_color, .7),
+                        glm.translate(prev_pt) * glm.rotate(glm.polar(wp_pos - me_pos).y, glm.vec3(0, 1, 0)),
+                        surface_color=glm.vec4(surface_color, .35), line_color=glm.vec4(line_color, .7),
                     )
-            prev_pt = next_wp.pos
+            prev_pt = wp_pos
             i += 1

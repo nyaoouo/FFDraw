@@ -55,7 +55,9 @@ class ZoneServer(enum.Enum):
     NpcSpawn2 = enum.auto()
     NpcYell = enum.auto()
     ObjectSpawn = enum.auto()
+    PartyFinderResult = enum.auto()
     PartyUpdate = enum.auto()
+    PingRes = enum.auto()
     PlaceFieldMarker = enum.auto()
     PlaceFieldMarkerPreset = enum.auto()
     PlayerSetup = enum.auto()
@@ -85,6 +87,7 @@ class ZoneServer(enum.Enum):
 @auto_missing
 class ZoneClient(enum.Enum):
     ActionSend = enum.auto()
+    ActionSendPos = enum.auto()
     ChatHandler = enum.auto()
     ClientTrigger = enum.auto()
     EventAction = enum.auto()
@@ -109,6 +112,7 @@ class ZoneClient(enum.Enum):
     InventoryModifyHandler = enum.auto()
     MarketBoardPurchaseHandler = enum.auto()
     MarketBoardQueryItemCount = enum.auto()
+    PingReq = enum.auto()
     SetSearchInfoHandler = enum.auto()
     UpdatePositionHandler = enum.auto()
     UpdatePositionInstance = enum.auto()
@@ -125,17 +129,18 @@ class ChatClient(enum.Enum):
     Unk = -1
 
 
-class ActorControlId(enum.Enum):
+class ActorControlId(enum.IntEnum):
     SetCombatState = 0X4
     ChangeClassJob = 0x5
     Death = 0x6
     CancelCast = 0XF
     SetRecastGroupDuration = 0X11
-    SetRecastGroupMax = 0X11
     AddStatus = 0X14
     RemoveStatus = 0X15
     SetStatusParam = 0X16
     StatusEffect = 0X17
+    SetRestExp = 0X18
+    SetCharacterState = 0x1F
     SetLockOn = 0X22
     SetChanneling = 0X23
     RemoveChanneling = 0X2F
@@ -146,16 +151,17 @@ class ActorControlId(enum.Enum):
     SetTimelineModelFlag = 0x3F
     EventDirector = 0X6D
     RejectEventFinish = 0X8C
+    SetMoveFlag2 = 0xEc
     SetLimitBreak = 0X1F9
     PlayActionTimeLine = 0X197
     SetActorTimeLine = 0X19D
     RejectSendAction = 0X2BC
     InterruptCast = 0X5F1
-    FateInit = 0X931
-    FateProgress = 0X934
-    FateStart = 0X935
-    FateEnd = 0X936
+    FateState = 0X931
+    FateStart = 0X934
+    FateEnd = 0X935
+    FateProgress = 0X93C
 
 
-class ClientTriggerId(enum.Enum):
+class ClientTriggerId(enum.IntEnum):
     pass

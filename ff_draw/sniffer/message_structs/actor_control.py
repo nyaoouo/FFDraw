@@ -63,16 +63,6 @@ class SetRecastGroupDuration:
     max_time = property(lambda self: self._max_time / 100)
 
 
-@type_map.set(ActorControlId.SetRecastGroupMax)  # 0X11
-@dataclasses.dataclass
-class SetRecastGroupMax:
-    recast_group_id: int
-    action_id: int
-    _max_time: int
-
-    max_time = property(lambda self: self._max_time / 100)
-
-
 @type_map.set(ActorControlId.AddStatus)  # 0X14
 @dataclasses.dataclass
 class AddStatus:
@@ -224,25 +214,46 @@ class RejectSendAction:
     recast_max = property(lambda self: self._recast_max / 100)
 
 
-@type_map.set(ActorControlId.FateInit)  # 0X931
+@type_map.set(ActorControlId.FateState)
 @dataclasses.dataclass
-class FateInit:
+class FateState:
     pass
 
 
-@type_map.set(ActorControlId.FateProgress)  # 0X934
+@type_map.set(ActorControlId.FateProgress)
 @dataclasses.dataclass
 class FateProgress:
     pass
 
 
-@type_map.set(ActorControlId.FateStart)  # 0X935
+@type_map.set(ActorControlId.FateStart)
 @dataclasses.dataclass
 class FateStart:
     pass
 
 
-@type_map.set(ActorControlId.FateEnd)  # 0X936
+@type_map.set(ActorControlId.FateEnd)
 @dataclasses.dataclass
 class FateEnd:
     pass
+
+
+@type_map.set(ActorControlId.SetMoveFlag2)
+@dataclasses.dataclass
+class SetMoveFlag2:
+    flag_2: int
+
+
+@type_map.set(ActorControlId.SetRestExp)
+@dataclasses.dataclass
+class SetRestExp:
+    value: int
+
+@type_map.set(ActorControlId.SetCharacterState)
+@dataclasses.dataclass
+class SetCharacterState:
+    timeline_model_skin: int # highest bit is `clear timeline state`, need to & 0x7fffffff
+    model_scale: int
+    model_attr: int
+    model_attr: int
+    timeline_model_flag: int

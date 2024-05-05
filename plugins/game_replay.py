@@ -27,6 +27,7 @@ class GameReplay(FFDrawPlugin):
         self.handle = mem.handle
         self.replay_zone_init_patch = Patch(self, mem.scanner_v2.find_address("74 ? 48 ? ? ? ? ? ? ba ? ? ? ? 48 ? ? ? e8 ? ? ? ? 83 78 ? ? 74 ? b1"), b"\xEB\x1B")
         self.replay_check_valid = Patch(self, mem.scanner_v2.find_val("e8 * * * * 84 ? 0f 84 ? ? ? ? 40 ? ? ? 4c")[0], b"\xB0\x01\xC3")
+        self.replay_available_check = Patch(self, mem.scanner_v2.find_address("48 ? ? ? e8 ? ? ? ? 66 ? 10 0C 48 ? ? e8"), b"\xB0\x01\xC3")  # mov al, 1; retn
         self.replay_module, = mem.scanner_v2.find_val("48 ? ? * * * * 0f ? ? 88 47 ? 84")
         self.p_confirm_replay_confirm = mem.scanner_v2.find_address("40 ? 48 ? ? ? 0f ? ? ? ? ? ? 48 ? ? a8 ? 74 ? a8 ? 75 ? 80")
         self.p_reload_replay_list = mem.scanner_v2.find_address("40 ? 48 ? ? ? f6 81 ? ? ? ? ? 48 ? ? 0f 85 ? ? ? ? f6 81")
@@ -72,6 +73,7 @@ class GameReplay(FFDrawPlugin):
     def enable(self, value):
         self.replay_zone_init_patch.state = value
         self.replay_check_valid.state = value
+        self.replay_available_check.state = value
 
         ## 强制播放回放相关
         # self.area_playable.state = value
@@ -88,7 +90,7 @@ class GameReplay(FFDrawPlugin):
         return self.mem.call_native_once_game_main(self.p_confirm_replay_confirm, 'c_void_p', ('c_size_t', 'c_uint8'), (self.replay_module, 1))
 
     def reload_replay_list(self):
-        self.mem.call_native_once_game_main(self.p_reload_replay_list, 'c_void_p', ('c_size_t', ), (self.replay_module,))
+        self.mem.call_native_once_game_main(self.p_reload_replay_list, 'c_void_p', ('c_size_t',), (self.replay_module,))
 
     def make_replay_path(self, slot):
         return self.mem.user_path / 'replay' / f'FFXIV_{self.get_character_id():016X}_{slot:03}.dat'

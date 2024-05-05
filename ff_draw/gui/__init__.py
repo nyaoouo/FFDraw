@@ -163,7 +163,7 @@ class Drawing:
 
     def add_line(self, start: glm.vec3, end: glm.vec3, color: glm.vec4, width: float = 3.0):
         distance = glm.distance(start, end)
-        scale = glm.vec3(distance, 1, distance)
+        scale = glm.vec3(1, 1, distance)
         facing = glm.polar(end - start).y
         long = math.atan2(start.y - end.y, glm.distance(start.xz, end.xz))
         self.add_3d_shape(

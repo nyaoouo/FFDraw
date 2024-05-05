@@ -4,7 +4,8 @@ import typing
 import glm
 from fpt4.utils.se_string import SeString
 from nylib.utils.win32 import memory as ny_mem
-from .utils import direct_mem_property, WinAPIError, struct_mem_property
+from nylib.utils import LazyClassAttr
+from .utils import direct_mem_property, WinAPIError, struct_mem_property, int8_arr
 
 if typing.TYPE_CHECKING:
     from . import XivMem
@@ -33,6 +34,14 @@ class Channeling:
 
 
 class StatusManager:
+    @LazyClassAttr
+    def MAX_STATUS(self):
+        from . import XivMem
+        if XivMem.instance.game_version >= (6, 5, 0):
+            return 60
+        else:
+            return 30
+
     def __init__(self, handle, address):
         self.handle = handle
         self.address = address
@@ -41,15 +50,19 @@ class StatusManager:
     def actor(self):
         return Actor(self.handle, ny_mem.read_address(self.handle, self.address))
 
+    # def __iter__(self):
+    #     """id,param,remain,source_id"""
+    #     try:
+    #         for i in range(self.MAX_STATUS):
+    #             yield status_struct.unpack(
+    #                 ny_mem.read_bytes(self.handle, self.address + 8 + (i * status_struct.size), status_struct.size)
+    #             )
+    #     except WinAPIError:
+    #         pass
+
+    # load buffer once to speed up iteration
     def __iter__(self):
-        """id,param,remain,source_id"""
-        try:
-            for i in range(30):
-                yield status_struct.unpack(
-                    ny_mem.read_bytes(self.handle, self.address + 8 + (i * status_struct.size), status_struct.size)
-                )
-        except WinAPIError:
-            pass
+        yield from status_struct.iter_unpack(ny_mem.read_bytes(self.handle, self.address + 8, status_struct.size * self.MAX_STATUS))
 
     def _iter_filter(self, status_id: int, source_id=0):
         for status_id_, param, remain, source_id_ in self:
@@ -117,12 +130,12 @@ class CastInfo:
     used_action_type = direct_mem_property(ctypes.c_uint16)
 
 
-class ActorOffsets:
+class ActorOffsets640:
     name = 0x30
     id = 0x74
     base_id = 0x80
     owner_id = 0x84
-    actor_type = 0x8c
+    actor_type = 0x8C
     status_flag = 0x95
     pos = 0xB0
     facing = 0xC0
@@ -137,21 +150,6 @@ class ActorOffsets:
     max_gp = 0x1D6
     current_cp = 0x1D8
     max_cp = 0x1DA
-    class_job = 0x1E0
-    level = 0x1E1
-    model_attr = 0x1E4
-    mount_id = 0x668
-    pc_target_id = 0xC80
-    channeling = 0x1A20
-    b_npc_target_id = 0x1A88
-    current_world = 0x1AF4
-    home_world = 0x1AF6
-    shield = 0x1B17
-    status = 0x1B60
-    cast_info = 0x1CF0
-
-
-class ActorOffsets640(ActorOffsets):
     class_job = 0x1E2
     level = 0x1E3
     model_attr = 0x1E6
@@ -164,10 +162,48 @@ class ActorOffsets640(ActorOffsets):
     shield = 0x1ED
     status = 0x1B80
     cast_info = 0x1D10
+    name_id = 0x1B00
+
+
+class ActorOffsets650:
+    name = 0x30
+    id = 0x74
+    base_id = 0x80
+    owner_id = 0x84
+    actor_type = 0x8C
+    status_flag = 0x95
+    pos = 0xB0
+    facing = 0xC0
+    radius = 0xD0
+    draw_object = 0x100
+    hide_flag = 0x114
+    current_hp = 0x1BC
+    max_hp = 0x1C0
+    current_mp = 0x1C4
+    max_mp = 0x1C8
+    current_gp = 0x1CC
+    max_gp = 0x1CE
+    current_cp = 0x1D0
+    max_cp = 0x1D2
+    class_job = 0x1DA
+    level = 0x1DB
+    model_attr = 0x1DE
+    timeline_model_skin = 0xc30
+    timeline_model_flag = 0xc31
+    mount_id = 0x688
+    pc_target_id = 0xD00
+    channeling = 0x1390
+    b_npc_target_id = 0x1B58
+    current_world = 0x1BB0
+    home_world = 0x1BB2
+    shield = 0x1E6
+    status = 0x1C10
+    cast_info = 0x1F00
+    name_id = 0x1B98
 
 
 class Actor:
-    offsets = ActorOffsets
+    offsets = ActorOffsets640
 
     def __init__(self, handle, address):
         self.handle = handle
@@ -206,6 +242,8 @@ class Actor:
     class_job = direct_mem_property(ctypes.c_byte)
     level = direct_mem_property(ctypes.c_byte)
     model_attr = direct_mem_property(ctypes.c_byte)
+    timeline_model_skin = direct_mem_property(ctypes.c_byte)
+    timeline_model_flag = struct_mem_property(int8_arr[2])
     mount_id = direct_mem_property(ctypes.c_ushort)
     current_world = direct_mem_property(ctypes.c_ushort)
     home_world = direct_mem_property(ctypes.c_ushort)
@@ -248,6 +286,7 @@ class Actor:
 
     status = struct_mem_property(StatusManager)
     cast_info = struct_mem_property(CastInfo)
+    name_id = direct_mem_property(ctypes.c_uint32)
 
 
 class ActorTable:
@@ -261,10 +300,10 @@ class ActorTable:
         self.sorted_count_address = self.base_address + main.scanner.find_val('44 ? ? * * * * 45 ? ? 41 ? ? ? 48 ? ? 78')[0]
         self.me_ptr = main.scanner.find_point('48 ? ? * * * * 49 39 87')[0]
 
-        if main.game_version >= (6, 4, 0):
-            Actor.offsets = ActorOffsets640
+        if main.game_version >= (6, 5, 0):
+            Actor.offsets = ActorOffsets650
         else:
-            Actor.offsets = ActorOffsets
+            Actor.offsets = ActorOffsets640
 
         self.table_size = main.scanner.find_val('81 bf ? ? ? ? * * * * 72 ? 44 89 b7')[0]
         self.use_brute_search = False

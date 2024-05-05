@@ -253,7 +253,7 @@ def on_tether_ekpyrosis(evt: 'ActorControlMessage[actor_control.SetChanneling]')
 
 @pCs.on_set_channel(84)
 def on_channel_factor_in(evt: 'ActorControlMessage[actor_control.SetChanneling]'):
-    raid_utils.timeout_when_channeling_change(raid_helper.draw_circle(radius=20, pos=raid_utils.NActor.by_id(evt.param.target_id), duration=10), evt)
+    raid_utils.timeout_when_channeling_change(raid_utils.draw_circle(radius=20, pos=raid_utils.NActor.by_id(evt.param.target_id), duration=10), evt)
 
 
 the_classical_concepts = TheClassicalConcepts()

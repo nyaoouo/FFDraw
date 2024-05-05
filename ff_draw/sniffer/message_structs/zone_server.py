@@ -647,3 +647,58 @@ class RetainerInformation(Structure):
     @property
     def name(self) -> str:
         return self._name.split(b'\0', 1)[0].decode('utf-8', errors='ignore')
+
+
+@type_map.set(ZoneServer.PingRes)
+@set_fields_from_annotations
+class PingRes(Structure):
+    _size_ = 0X20
+    time_ms: 'fctypes.c_uint32' = eval('0X0')
+
+
+@type_map.set(ZoneServer.ContainerItemInfo)
+@set_fields_from_annotations
+class ContainerItemInfo(Structure):
+    _size_ = 0x18
+
+
+@set_fields_from_annotations
+class PartyRecruitment(Structure):
+    _size_ = 0X160
+
+    recruitment_id: 'fctypes.c_uint64' = eval('0X0')
+    character_id: 'fctypes.c_uint64' = eval('0X8')
+    purpose: 'fctypes.c_uint64' = eval('0X10')
+    sub_purpose: 'fctypes.c_uint64' = eval('0X18')
+    territory_id: 'fctypes.c_uint64' = eval('0X20')
+    online_status: 'fctypes.c_uint64' = eval('0X28')
+    options: 'fctypes.c_uint64' = eval('0X30')
+    timestamp: 'fctypes.c_uint32' = eval('0X38')
+    end_time: 'fctypes.c_uint32' = eval('0X3C')
+    recruiter_area: 'fctypes.c_uint32' = eval('0X40')
+    item_level: 'fctypes.c_uint16' = eval('0X44')
+    main_world_id: 'fctypes.c_uint16' = eval('0X46')
+    world_id: 'fctypes.c_uint16' = eval('0X48')
+    recruiter_select_area: 'fctypes.c_uint8' = eval('0X4A')
+    max_quantity: 'fctypes.c_uint8' = eval('0X4B')
+    count: 'fctypes.c_uint8' = eval('0X4C')
+    identity: 'fctypes.c_uint8' = eval('0X4D')
+    configuration_flags: 'fctypes.c_uint8' = eval('0X4E')
+    recruitment_type: 'fctypes.c_uint8' = eval('0X4F')
+    team_quantity: 'fctypes.c_uint8' = eval('0X50')
+    roles: 'fctypes.array(fctypes.c_uint32, 8)' = eval('0X54')
+    join_roles: 'fctypes.array(fctypes.c_uint8, 8)' = eval('0X74')
+    character_name: 'fctypes.array(fctypes.c_char, 32)' = eval('0X7C')
+    details: 'fctypes.array(fctypes.c_char, 193)' = eval('0X9C')
+
+
+@type_map.set(ZoneServer.PartyFinderResult)
+@set_fields_from_annotations
+class PartyFinderResult(Structure):
+    _size_ = 0X590
+
+    ui_parameters: 'fctypes.c_uint32' = eval('0X0')
+    search_return_index: 'fctypes.c_uint32' = eval('0X4')
+    search_next_index: 'fctypes.c_uint32' = eval('0X8')
+    next_index: 'fctypes.c_uint16' = eval('0XC')
+    search_results: 'fctypes.array(PartyRecruitment, 4)' = eval('0X10')

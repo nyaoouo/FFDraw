@@ -88,18 +88,41 @@ class ReplayPopPacketHook(Hook):
         return res
 
 
+class ReplayParsePacketHook(Hook):
+    def __init__(self, address, cb):
+        self.cb = cb
+        super().__init__(address, self.on_replay_parse_packet, ctypes.c_void_p, [
+            ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t
+        ])
+
+    def on_replay_parse_packet(self, hook_, a1, p_header, p_data):
+        try:
+            proto_no, size, timestamp, src_id = struct.unpack(b'2H2I', mv_from_mem(p_header, 0xc, 0x100))
+            self.cb(True, False, proto_no, src_id, bytearray(mv_from_mem(p_data, size, 0x100)))
+        except Exception:
+            ctypes.windll.user32.MessageBoxW(
+                0, f"sniffer_error (replay recv)\n" + traceback.format_exc(),
+                "sniffer_error", 0x10
+            )
+        return hook_.original(a1, p_header, p_data)
+
+
 chat_pop_recv_packet_addr: int
 zone_pop_recv_packet_addr: int
 chat_push_send_packet_addr: int
 zone_push_send_packet_addr: int
-replay_pop_load_packet_addr: int
+# replay_pop_load_packet_addr: int
+replay_parse_packet_addr: int
 me_id_addr: int
 
 install = lambda cb: [
     h.install_and_enable() for h in
-    (PopRecvHook(chat_pop_recv_packet_addr, False, cb),
-     PopRecvHook(zone_pop_recv_packet_addr, True, cb),
-     PushSendHook(chat_push_send_packet_addr, False, cb),
-     PushSendHook(zone_push_send_packet_addr, True, cb),
-     ReplayPopPacketHook(replay_pop_load_packet_addr, cb))
+    (
+        PopRecvHook(chat_pop_recv_packet_addr, False, cb),
+        PopRecvHook(zone_pop_recv_packet_addr, True, cb),
+        PushSendHook(chat_push_send_packet_addr, False, cb),
+        PushSendHook(zone_push_send_packet_addr, True, cb),
+        # ReplayPopPacketHook(replay_pop_load_packet_addr, cb),
+        ReplayParsePacketHook(replay_parse_packet_addr, cb)
+    )
 ]

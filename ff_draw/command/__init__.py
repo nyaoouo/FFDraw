@@ -10,6 +10,7 @@ import imgui
 from nylib.utils import imgui as ny_imgui, KeyRoute
 import nylib.utils.win32.memory as ny_mem
 from ..utils import EvtQueue
+from .script import Script
 
 if typing.TYPE_CHECKING:
     from ..main import FFDraw
@@ -47,7 +48,7 @@ class Command:
         self.prefix = self.data.setdefault('prefix', '/#')
         self.on_command = KeyRoute(lambda cmd, args: cmd)
         self.evt_queue = EvtQueue(self.on_command, )
-        # self.on_command['test'].append(lambda _, args: self.logger.debug(f'test {args=}'))
+        self.on_command['script'].append(lambda _, args: Script(self, args[0]).run(args[1:]) if len(args) else None)
 
     @property
     def prefix(self):

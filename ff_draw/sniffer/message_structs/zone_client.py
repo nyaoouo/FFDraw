@@ -91,3 +91,43 @@ class ClientTrigger(Structure):
     arg2: 'fctypes.c_uint32' = eval('0XC')
     arg3: 'fctypes.c_uint32' = eval('0X10')
     target_common_id: 'fctypes.c_uint64' = eval('0X18')
+
+
+@type_map.set(ZoneClient.PingReq)
+@set_fields_from_annotations
+class PingReq(Structure):
+    _size_ = 0X18
+    time_ms: 'fctypes.c_uint32' = eval('0X0')
+
+
+@type_map.set(ZoneClient.ActionSend)
+@set_fields_from_annotations
+class ActionSend(Structure):
+    _size_ = 0X20
+
+    cast_buff: 'fctypes.c_uint8' = eval('0X0')
+    action_kind: 'fctypes.c_uint8' = eval('0X1')
+    action_id: 'fctypes.c_uint32' = eval('0X4')
+    request_id: 'fctypes.c_uint16' = eval('0X8')
+    facing: 'fctypes.c_uint16' = eval('0XA')
+    target_facing: 'fctypes.c_uint16' = eval('0XC')
+    target_id: 'fctypes.c_uint64' = eval('0X10')
+    arg: 'fctypes.c_uint32' = eval('0X18')
+
+
+@type_map.set(ZoneClient.ActionSendPos)
+@set_fields_from_annotations
+class ActionSendPos(Structure):
+    _size_ = 0X20
+
+    cast_buff: 'fctypes.c_uint8' = eval('0X0')
+    action_kind: 'fctypes.c_uint8' = eval('0X1')
+    action_id: 'fctypes.c_uint32' = eval('0X4')
+    request_id: 'fctypes.c_uint16' = eval('0X8')
+    facing: 'fctypes.c_uint16' = eval('0XA')
+    target_facing: 'fctypes.c_uint16' = eval('0XC')
+    _pos: 'fctypes.array(fctypes.c_float, 3)' = eval('0X10')
+
+    @property
+    def pos(self):
+        return glm.vec3(*self._pos)
