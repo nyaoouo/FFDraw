@@ -163,6 +163,7 @@ class ActorOffsets640:
     status = 0x1B80
     cast_info = 0x1D10
     name_id = 0x1B00
+    online_status = 0x1E8
 
 
 class ActorOffsets650:
@@ -200,7 +201,7 @@ class ActorOffsets650:
     status = 0x1C10
     cast_info = 0x1F00
     name_id = 0x1B98
-
+    online_status = 0x1E8
 
 class Actor:
     offsets = ActorOffsets640
@@ -248,7 +249,7 @@ class Actor:
     current_world = direct_mem_property(ctypes.c_ushort)
     home_world = direct_mem_property(ctypes.c_ushort)
     shield = direct_mem_property(ctypes.c_ubyte)
-
+    online_status = direct_mem_property(ctypes.c_uint)
     def target_radian(self, target: 'Actor'):
         return glm.polar(target.pos - self.pos).y
 
