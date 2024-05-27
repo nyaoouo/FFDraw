@@ -6,7 +6,7 @@ from .control import Control
 # from .event_framework import EventFramework
 from .framework import Framework
 # from .game_main import GameMain
-# from .game_object_manager import GameObjectManager
+from .game_object_manager import GameObjectManager
 # from .group_manager import GroupManager
 from .pkt_work import PktWorks
 # from .storage_manager import StorageManager
@@ -34,7 +34,7 @@ class Api:
         self.framework = Framework(self)
         # self.ui_manager = UiManager(self)
         # self.game_main = GameMain(self)
-        # self.game_object_manager = GameObjectManager(self)
+        self.game_object_manager = GameObjectManager(self)
         # self.group_manager = GroupManager(self)
         # self.storage_manager = StorageManager(self)
         # self.warp = Warp(self)
@@ -71,7 +71,7 @@ class Api:
         self.framework.render_panel()
         # self.ui_manager.render_panel()
         # self.game_main.render_panel()
-        # self.game_object_manager.render_panel()
+        self.game_object_manager.render_panel()
         # self.group_manager.render_panel()
         # self.storage_manager.render_panel()
         # self.warp.render_panel()
@@ -87,7 +87,7 @@ class Api:
         self.framework.render_game()
         # self.ui_manager.render_game()
         # self.game_main.render_game()
-        # self.game_object_manager.render_game()
+        self.game_object_manager.render_game()
         # self.group_manager.render_game()
         # self.storage_manager.render_game()
         # self.warp.render_game()
