@@ -59,6 +59,23 @@ def build_client_trigger(trigger_id, arg0=0, arg1=0, arg2=0, arg3=0, target_comm
     return packet_builder(zone_proto_no['ClientTrigger'][0], pkt)
 
 
+def build_inventory_handler(context_id, operation_type, src_entity, src_storage_id, src_container_index, src_cnt, src_item_id, dst_entity, dst_storage_id, dst_container_index, dst_cnt, dst_item_id):
+    pkt = zone_client.InventoryModifyHandler()
+    pkt.context_id = context_id
+    pkt.operation_type = operation_type
+    pkt.src_entity = src_entity
+    pkt.src_storage_id = src_storage_id
+    pkt.src_container_index = src_container_index
+    pkt.src_cnt = src_cnt
+    pkt.src_item_id = src_item_id
+    pkt.dst_entity = dst_entity
+    pkt.dst_storage_id = dst_storage_id
+    pkt.dst_container_index = dst_container_index
+    pkt.dst_cnt = dst_cnt
+    pkt.dst_item_id = dst_item_id
+    return packet_builder(zone_proto_no['InventoryModifyHandler'][0], pkt)
+
+
 def add_black_proto_shell(is_zone, key='hook_sniff'):
     return f'''
 def work():
