@@ -131,3 +131,21 @@ class ActionSendPos(Structure):
     @property
     def pos(self):
         return glm.vec3(*self._pos)
+
+
+@type_map.set(ZoneClient.InventoryModifyHandler)
+@set_fields_from_annotations
+class InventoryModifyHandler(Structure):
+    _size_ = 0X30
+    context_id: 'fctypes.c_uint32' = eval('0X0')
+    operation_type: 'fctypes.c_uint32' = eval('0X4')
+    src_entity: 'fctypes.c_uint32' = eval('0X8')
+    src_storage_id: 'fctypes.c_uint32' = eval('0XC')
+    src_container_index: 'fctypes.c_int16' = eval('0X10')
+    src_cnt: 'fctypes.c_uint32' = eval('0X14')
+    src_item_id: 'fctypes.c_uint32' = eval('0X18')
+    dst_entity: 'fctypes.c_uint32' = eval('0X1C')
+    dst_storage_id: 'fctypes.c_uint32' = eval('0X20')
+    dst_container_index: 'fctypes.c_int16' = eval('0X24')
+    dst_cnt: 'fctypes.c_uint32' = eval('0X28')
+    dst_item_id: 'fctypes.c_uint32' = eval('0X2C')
