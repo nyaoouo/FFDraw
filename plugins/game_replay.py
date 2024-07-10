@@ -28,10 +28,13 @@ class GameReplay(FFDrawPlugin):
         self.replay_zone_init_patch = Patch(self, mem.scanner_v2.find_address("74 ? 48 ? ? ? ? ? ? ba ? ? ? ? 48 ? ? ? e8 ? ? ? ? 83 78 ? ? 74 ? b1"), b"\xEB\x1B")
         self.replay_check_valid = Patch(self, mem.scanner_v2.find_val("e8 * * * * 84 ? 0f 84 ? ? ? ? 40 ? ? ? 4c")[0], b"\xB0\x01\xC3")
         self.replay_available_check = Patch(self, mem.scanner_v2.find_address("48 ? ? ? e8 ? ? ? ? 66 ? 10 0C 48 ? ? e8"), b"\xB0\x01\xC3")  # mov al, 1; retn
-        self.replay_module, = mem.scanner_v2.find_val("48 ? ? * * * * 0f ? ? 88 47 ? 84")
+        # self.replay_module, = mem.scanner_v2.find_val("48 ? ? * * * * 0f ? ? 88 47 ? 84")
+        self.replay_module, = mem.scanner_v2.find_val("48 ? ? * * * * e8 ? ? ? ? 84 ? 75 ? 38 86 ? ? ? ? 75 ? b8")
         self.p_confirm_replay_confirm = mem.scanner_v2.find_address("40 ? 48 ? ? ? 0f ? ? ? ? ? ? 48 ? ? a8 ? 74 ? a8 ? 75 ? 80")
         self.p_reload_replay_list = mem.scanner_v2.find_address("40 ? 48 ? ? ? f6 81 ? ? ? ? ? 48 ? ? 0f 85 ? ? ? ? f6 81")
-        self.p_character_id, = mem.scanner_v2.find_val("48 39 05 * * * * 4c 89 7c 24")
+        # self.p_character_id, = mem.scanner_v2.find_val("48 39 05 * * * * 4c 89 7c 24")
+        self.p_character_id, = mem.scanner_v2.find_val("48 39 05 * * * * 74 ? 48")
+
         ## 如果强制在外面播放回放，服务端不会在回放结束后重新初始化区域，导致无法继续游戏
         # self.area_playable = Patch(self, mem.scanner_v2.find_val("e8 * * * * 84 ? 74 ? 83 bb ? ? ? ? ? 75 ? 45")[0], b"\xB0\x01\xC3")
         # real_start_replay_patch = mem.scanner_v2.find_address("40 ? 48 ? ? ? 0f ? ? ? ? ? ? 48 ? ? a8 ? 0f 84 ? ? ? ? 24 ? 88 81")

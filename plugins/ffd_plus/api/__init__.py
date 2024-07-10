@@ -1,7 +1,7 @@
 import typing
 # from .action_manager import ActionManager
 # from .atk_stage import AtkStage
-# from .charapc import CharaPc
+from .charapc import CharaPc
 from .control import Control
 # from .event_framework import EventFramework
 from .framework import Framework
@@ -28,7 +28,7 @@ class Api:
         self.scanner = self._mem.scanner_v2
         # self.action_manager = ActionManager(self)
         # self.atk_stage = AtkStage(self)
-        # self.charapc = CharaPc(self)
+        self.charapc = CharaPc(self)
         self.control = Control(self)
         # self.event_framework = EventFramework(self)
         self.framework = Framework(self)
@@ -65,7 +65,7 @@ class Api:
     def render_panel(self):
         # self.action_manager.render_panel()
         # self.atk_stage.render_panel()
-        # self.charapc.render_panel()
+        self.charapc.render_panel()
         self.control.render_panel()
         # self.event_framework.render_panel()
         self.framework.render_panel()
@@ -81,7 +81,7 @@ class Api:
     def render_game(self):
         # self.action_manager.render_game()
         # self.atk_stage.render_game()
-        # self.charapc.render_game()
+        self.charapc.render_game()
         self.control.render_game()
         # self.event_framework.render_game()
         self.framework.render_game()
