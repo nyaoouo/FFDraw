@@ -12,7 +12,7 @@ def loadShaders(strVS, strFS):
     # create the program object
     program = gl.glCreateProgram()
     if not program:
-        raise RuntimeError('glCreateProgram faled!')
+        raise RuntimeError('glCreateProgram failed!')
 
     # attach shaders
     gl.glAttachShader(program, shaderV)
